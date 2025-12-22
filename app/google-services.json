@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "813924484538",
+    "firebase_url": "https://chillvibes-e80df-default-rtdb.firebaseio.com",
+    "project_id": "chillvibes-e80df",
+    "storage_bucket": "chillvibes-e80df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813924484538:android:6a407b2a8cd8de58124983",
+        "android_client_info": {
+          "package_name": "com.example.musicplayerapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5aJmSX9Kiovh8S1LqmzQCEPjhKB5xaIk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
