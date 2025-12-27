@@ -1,5 +1,8 @@
 package com.example.musicplayerapplication
 
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,13 +25,68 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.model.PlaylistModel
+import com.example.musicplayerapplication.model.Playlist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
 
-// Data Models
+
 @Composable
 fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
+
+
+
+
+
+@Composable
+fun Playlist() {
+    // All songs database
+    val allSongs = remember {
+        mutableStateListOf(
+            Song(1, "kissme", "Red Love", R.drawable.kissme),
+            Song(2, "radio", "Lana Del Rey", R.drawable.lana),
+            Song(3, "Face", "Larosea", R.drawable.larosea),
+            Song(4, "Sunset Dreams", "Ambient Collective", R.drawable.baseline_library_music_24),
+            Song(5, "Midnight Coffee", "Jazz Essentials", R.drawable.baseline_library_music_24)
+        )
+    }
+
+    // Create playlists
+    val playlists = remember {
+        listOf(
+            Playlist(
+                id = 1,
+                name = "Chill Vibes",
+                description = "Your perfect relaxation mix",
+                icon = Icons.Default.LibraryMusic,
+                gradient = Brush.verticalGradient(
+                    colors = listOf(Color(0xFF6AD0A6), Color(0xFF043454))
+                ),
+                songs = allSongs.take(5).toMutableList()
+            ),
+            Playlist(
+                id = 2,
+                name = "Favorite Songs",
+                description = "Your most loved tracks",
+                icon = Icons.Default.Favorite,
+                gradient = Brush.verticalGradient(
+                    colors = listOf(Color(0xFFEC4899), Color(0xFFF43F5E))
+                ),
+                songs = mutableStateListOf() // Empty initially
+            ),
+            Playlist(
+                id = 3,
+                name = "Downloaded",
+                description = "Available offline",
+                icon = Icons.Default.Download,
+                gradient = Brush.verticalGradient(
+                    colors = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1))
+                ),
+                songs = mutableStateListOf() // Empty initially
+            )
+        )
+    }
+
+
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Library) }
 
     when (val screen = currentScreen) {
@@ -59,14 +117,20 @@ fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
 
 sealed class Screen {
     object Library : Screen()
-    data class PlaylistDetail(val playlist: PlaylistModel) : Screen()
+    data class PlaylistDetail(val playlist: Playlist) : Screen()
 }
 
 @Composable
 fun LibraryScreen(
+
     playlists: List<PlaylistModel>,
     allSong: MutableList<Song>,
     onPlaylistClick: (PlaylistModel) -> Unit
+
+    playlists: List<Playlist>,
+    allSongs: List<Song>,
+    onPlaylistClick: (Playlist) -> Unit
+
 ) {
     Column(
         modifier = Modifier
@@ -112,7 +176,7 @@ fun LibraryScreen(
 
 @Composable
 fun PlaylistCard(
-    playlist: PlaylistModel,
+    playlist: Playlist,
     onClick: () -> Unit
 ) {
     Row(
@@ -174,12 +238,17 @@ fun PlaylistCard(
 
 @Composable
 fun PlaylistDetailScreen(
-    playlist: PlaylistModel,
+    playlist: Playlist,
     allSongs: MutableList<Song>,
+
     playlists: List<PlaylistModel>,
     onBackClick: () -> Unit,
     onFavoriteClick: (Int) -> Unit,  // <--- explicitly define type
     onDownloadClick: (Int) -> Unit
+
+    playlists: List<Playlist>,
+    onBackClick: () -> Unit
+
 ) {
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
@@ -378,7 +447,7 @@ fun SongItem(
     number: Int,
     song: Song,
     allSongs: List<Song>,
-    playlists: List<PlaylistModel>,
+    playlists: List<Playlist>,
     onFavoriteClick: () -> Unit,
     onDownloadClick: () -> Unit
 ) {

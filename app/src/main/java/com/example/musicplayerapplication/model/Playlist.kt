@@ -2,7 +2,9 @@ package com.example.musicplayerapplication.model
 
 import androidx.compose.ui.graphics.Brush
 
-data class PlaylistModel(
+
+
+data class Playlist(
     val id: Int,
     val name: String,
     val description: String,
