@@ -27,8 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.musicplayerapplication.model.Playlist
 import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
 
-// Data Models
+
+@Composable
+fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
+
 
 
 
@@ -82,24 +86,34 @@ fun Playlist() {
         )
     }
 
+
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Library) }
 
     when (val screen = currentScreen) {
         is Screen.Library -> LibraryScreen(
-            playlists = playlists,
-            allSongs = allSongs,
+            playlists = viewModel.playlists,
+            allSong = viewModel.allSongs,
             onPlaylistClick = { playlist ->
                 currentScreen = Screen.PlaylistDetail(playlist)
             }
         )
         is Screen.PlaylistDetail -> PlaylistDetailScreen(
             playlist = screen.playlist,
-            allSongs = allSongs,
-            playlists = playlists,
-            onBackClick = { currentScreen = Screen.Library }
+            allSongs = viewModel.allSongs,
+            playlists = viewModel.playlists,
+            onBackClick = { currentScreen = Screen.Library },
+            onFavoriteClick = { songId -> viewModel.onFavoriteClick(songId) },
+            onDownloadClick = { songId -> viewModel.onDownloadClick(songId) }
         )
     }
 }
+
+
+
+
+
+
+    // Create playlists
 
 sealed class Screen {
     object Library : Screen()
@@ -108,9 +122,15 @@ sealed class Screen {
 
 @Composable
 fun LibraryScreen(
+
+    playlists: List<PlaylistModel>,
+    allSong: MutableList<Song>,
+    onPlaylistClick: (PlaylistModel) -> Unit
+
     playlists: List<Playlist>,
     allSongs: List<Song>,
     onPlaylistClick: (Playlist) -> Unit
+
 ) {
     Column(
         modifier = Modifier
@@ -220,8 +240,15 @@ fun PlaylistCard(
 fun PlaylistDetailScreen(
     playlist: Playlist,
     allSongs: MutableList<Song>,
+
+    playlists: List<PlaylistModel>,
+    onBackClick: () -> Unit,
+    onFavoriteClick: (Int) -> Unit,  // <--- explicitly define type
+    onDownloadClick: (Int) -> Unit
+
     playlists: List<Playlist>,
     onBackClick: () -> Unit
+
 ) {
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
