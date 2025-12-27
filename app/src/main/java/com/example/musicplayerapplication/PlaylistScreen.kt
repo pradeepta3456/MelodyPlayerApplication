@@ -26,64 +26,9 @@ import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
 
-
+// Data Models
 @Composable
 fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
-
-
-
-
-
-@Composable
-fun Playlist() {
-    // All songs database
-    val allSongs = remember {
-        mutableStateListOf(
-            Song(1, "kissme", "Red Love", R.drawable.kissme),
-            Song(2, "radio", "Lana Del Rey", R.drawable.lana),
-            Song(3, "Face", "Larosea", R.drawable.larosea),
-            Song(4, "Sunset Dreams", "Ambient Collective", R.drawable.baseline_library_music_24),
-            Song(5, "Midnight Coffee", "Jazz Essentials", R.drawable.baseline_library_music_24)
-        )
-    }
-
-    // Create playlists
-    val playlistModels = remember {
-        listOf(
-            PlaylistModel(
-                id = 1,
-                name = "Chill Vibes",
-                description = "Your perfect relaxation mix",
-                icon = Icons.Default.LibraryMusic,
-                gradient = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF6AD0A6), Color(0xFF043454))
-                ),
-                songs = allSongs.take(5).toMutableList()
-            ),
-            PlaylistModel(
-                id = 2,
-                name = "Favorite Songs",
-                description = "Your most loved tracks",
-                icon = Icons.Default.Favorite,
-                gradient = Brush.verticalGradient(
-                    colors = listOf(Color(0xFFEC4899), Color(0xFFF43F5E))
-                ),
-                songs = mutableStateListOf() // Empty initially
-            ),
-            PlaylistModel(
-                id = 3,
-                name = "Downloaded",
-                description = "Available offline",
-                icon = Icons.Default.Download,
-                gradient = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1))
-                ),
-                songs = mutableStateListOf() // Empty initially
-            )
-        )
-    }
-
-
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Library) }
 
     when (val screen = currentScreen) {
@@ -110,24 +55,18 @@ fun Playlist() {
 
 
 
-    // Create playlists
+// Create playlists
 
 sealed class Screen {
     object Library : Screen()
-    data class PlaylistDetail(val playlistModel: PlaylistModel) : Screen()
+    data class PlaylistDetail(val playlist: PlaylistModel) : Screen()
 }
 
 @Composable
 fun LibraryScreen(
-
     playlists: List<PlaylistModel>,
     allSong: MutableList<Song>,
     onPlaylistClick: (PlaylistModel) -> Unit
-
-    playlistModels: List<PlaylistModel>,
-    allSongs: List<Song>,
-    onPlaylistClick: (PlaylistModel) -> Unit
-
 ) {
     Column(
         modifier = Modifier
@@ -161,7 +100,7 @@ fun LibraryScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(playlistModels) { playlist ->
+            items(playlists) { playlist ->
                 PlaylistCard(
                     playlist = playlist,
                     onClick = { onPlaylistClick(playlist) }
@@ -173,7 +112,7 @@ fun LibraryScreen(
 
 @Composable
 fun PlaylistCard(
-    playlistModel: PlaylistModel,
+    playlist: PlaylistModel,
     onClick: () -> Unit
 ) {
     Row(
@@ -190,11 +129,11 @@ fun PlaylistCard(
             modifier = Modifier
                 .size(70.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(playlistModel.gradient),
+                .background(playlist.gradient),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = playlistModel.icon,
+                imageVector = playlist.icon,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(36.dp)
@@ -206,19 +145,19 @@ fun PlaylistCard(
         // Playlist info
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = playlistModel.name,
+                text = playlist.name,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
             Text(
-                text = playlistModel.description,
+                text = playlist.description,
                 fontSize = 14.sp,
                 color = Color.White.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${playlistModel.songs.size} songs",
+                text = "${playlist.songs.size} songs",
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.5f)
             )
@@ -235,17 +174,12 @@ fun PlaylistCard(
 
 @Composable
 fun PlaylistDetailScreen(
-    playlistModel: PlaylistModel,
+    playlist: PlaylistModel,
     allSongs: MutableList<Song>,
-
     playlists: List<PlaylistModel>,
     onBackClick: () -> Unit,
     onFavoriteClick: (Int) -> Unit,  // <--- explicitly define type
     onDownloadClick: (Int) -> Unit
-
-    playlistModels: List<PlaylistModel>,
-    onBackClick: () -> Unit
-
 ) {
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
@@ -254,7 +188,7 @@ fun PlaylistDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(playlistModel.gradient)
+                .background(playlist.gradient)
         ) {
             // Header section
             Column(
@@ -281,7 +215,7 @@ fun PlaylistDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = playlistModel.icon,
+                        imageVector = playlist.icon,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(70.dp)
@@ -291,20 +225,20 @@ fun PlaylistDetailScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = playlistModel.name,
+                    text = playlist.name,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
 
                 Text(
-                    text = playlistModel.description,
+                    text = playlist.description,
                     fontSize = 16.sp,
                     color = Color.White.copy(0.8f)
                 )
 
                 Text(
-                    text = "${playlistModel.songs.size} songs",
+                    text = "${playlist.songs.size} songs",
                     fontSize = 14.sp,
                     color = Color.White.copy(0.8f)
                 )
@@ -355,14 +289,14 @@ fun PlaylistDetailScreen(
                     )
                     .padding(16.dp)
             ) {
-                itemsIndexed(playlistModel.songs) { index, song ->
+                itemsIndexed(playlist.songs) { index, song ->
                     SongItem(
                         number = index + 1,
                         song = song,
                         allSongs = allSongs,
-                        playlists = playlistModels,
+                        playlists = playlists,
                         onFavoriteClick = {
-                            val favPlaylist = playlistModels.find { it.name == "Favorite Songs" }
+                            val favPlaylist = playlists.find { it.name == "Favorite Songs" }
                             val actualSong = allSongs.find { it.id == song.id }
 
                             actualSong?.let {
@@ -381,7 +315,7 @@ fun PlaylistDetailScreen(
                             }
                         },
                         onDownloadClick = {
-                            val downloadPlaylist = playlistModels.find { it.name == "Downloaded" }
+                            val downloadPlaylist = playlists.find { it.name == "Downloaded" }
                             val actualSong = allSongs.find { it.id == song.id }
 
                             actualSong?.let {
@@ -401,7 +335,7 @@ fun PlaylistDetailScreen(
                         }
                     )
 
-                    if (index < playlistModel.songs.size - 1) {
+                    if (index < playlist.songs.size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -444,7 +378,7 @@ fun SongItem(
     number: Int,
     song: Song,
     allSongs: List<Song>,
-    playlistModels: List<PlaylistModel>,
+    playlists: List<PlaylistModel>,
     onFavoriteClick: () -> Unit,
     onDownloadClick: () -> Unit
 ) {
