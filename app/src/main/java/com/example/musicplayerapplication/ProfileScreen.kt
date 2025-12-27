@@ -5,6 +5,7 @@ package com.example.musicplayerapplication
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -27,10 +28,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicplayerapplication.model.Achievement
+import com.example.musicplayerapplication.model.Artist
+import com.example.musicplayerapplication.model.Song
+
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
 import com.example.musicplayerapplication.viewmodel.ProfileViewModel
-
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 
 class ProfileActivity : ComponentActivity() {
     private val profileViewModel: ProfileViewModel by viewModels()
@@ -52,7 +58,7 @@ class ProfileActivity : ComponentActivity() {
 
 // ---------------------- PROFILE SCREEN ----------------------
 @Composable
-fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel() ) {
+fun ProfileScreen(profileViewModel: ProfileViewModel = viewmodel) {
     val topSongs = profileViewModel.topSongs
     val topArtists = profileViewModel.topArtists
     val achievements = profileViewModel.achievements
@@ -183,7 +189,7 @@ fun TopSongItem(song: Song, rank: Int) {
             Text("$rank", color = Color.White.copy(alpha = 0.8f), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(30.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Box(modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp))) {
-                Image(painter = painterResource(id = song.imageRes), contentDescription = song.name, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                Image(painter = painterResource(id = song.cover), contentDescription = song.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -274,10 +280,3 @@ fun ProfilePreview() {
         ProfileScreen(profileViewModel = previewViewModel)
     }
 }
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
