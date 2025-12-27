@@ -1,6 +1,8 @@
 package com.example.musicplayerapplication
 
-
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +29,6 @@ import com.example.musicplayerapplication.model.Playlist
 import com.example.musicplayerapplication.model.Song
 
 // Data Models
-
 
 
 

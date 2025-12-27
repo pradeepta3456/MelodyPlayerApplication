@@ -1,6 +1,7 @@
 package com.example.musicplayerapplication.model
 
 import androidx.compose.ui.graphics.Brush
+import com.example.musicplayerapplication.Song
 
 
 data class Playlist(
@@ -11,6 +12,8 @@ data class Playlist(
     val gradient: Brush,
     val songs: MutableList<Song>
 )
+
+
 
 
 
