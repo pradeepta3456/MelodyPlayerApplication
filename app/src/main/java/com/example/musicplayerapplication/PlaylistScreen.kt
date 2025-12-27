@@ -45,7 +45,7 @@ fun Playlist() {
     // Create playlists
     val playlists = remember {
         listOf(
-            Playlist(
+            PlaylistModel(
                 id = 1,
                 name = "Chill Vibes",
                 description = "Your perfect relaxation mix",
@@ -55,7 +55,7 @@ fun Playlist() {
                 ),
                 songs = allSongs.take(5).toMutableList()
             ),
-            Playlist(
+            PlaylistModel(
                 id = 2,
                 name = "Favorite Songs",
                 description = "Your most loved tracks",
@@ -65,7 +65,7 @@ fun Playlist() {
                 ),
                 songs = mutableStateListOf() // Empty initially
             ),
-            Playlist(
+            PlaylistModel(
                 id = 3,
                 name = "Downloaded",
                 description = "Available offline",
