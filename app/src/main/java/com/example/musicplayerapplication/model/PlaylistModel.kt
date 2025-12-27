@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Brush
 
 
 
-data class Playlist(
+data class PlaylistModel(
     val id: Int,
     val name: String,
     val description: String,

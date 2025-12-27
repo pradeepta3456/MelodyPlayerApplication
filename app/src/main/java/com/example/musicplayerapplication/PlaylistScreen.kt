@@ -1,8 +1,5 @@
 package com.example.musicplayerapplication
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.model.Playlist
+import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
 
@@ -51,9 +48,9 @@ fun Playlist() {
     }
 
     // Create playlists
-    val playlists = remember {
+    val playlistModels = remember {
         listOf(
-            Playlist(
+            PlaylistModel(
                 id = 1,
                 name = "Chill Vibes",
                 description = "Your perfect relaxation mix",
@@ -63,7 +60,7 @@ fun Playlist() {
                 ),
                 songs = allSongs.take(5).toMutableList()
             ),
-            Playlist(
+            PlaylistModel(
                 id = 2,
                 name = "Favorite Songs",
                 description = "Your most loved tracks",
@@ -73,7 +70,7 @@ fun Playlist() {
                 ),
                 songs = mutableStateListOf() // Empty initially
             ),
-            Playlist(
+            PlaylistModel(
                 id = 3,
                 name = "Downloaded",
                 description = "Available offline",
@@ -117,7 +114,7 @@ fun Playlist() {
 
 sealed class Screen {
     object Library : Screen()
-    data class PlaylistDetail(val playlist: Playlist) : Screen()
+    data class PlaylistDetail(val playlistModel: PlaylistModel) : Screen()
 }
 
 @Composable
@@ -127,9 +124,9 @@ fun LibraryScreen(
     allSong: MutableList<Song>,
     onPlaylistClick: (PlaylistModel) -> Unit
 
-    playlists: List<Playlist>,
+    playlistModels: List<PlaylistModel>,
     allSongs: List<Song>,
-    onPlaylistClick: (Playlist) -> Unit
+    onPlaylistClick: (PlaylistModel) -> Unit
 
 ) {
     Column(
@@ -164,7 +161,7 @@ fun LibraryScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(playlists) { playlist ->
+            items(playlistModels) { playlist ->
                 PlaylistCard(
                     playlist = playlist,
                     onClick = { onPlaylistClick(playlist) }
@@ -176,7 +173,7 @@ fun LibraryScreen(
 
 @Composable
 fun PlaylistCard(
-    playlist: Playlist,
+    playlistModel: PlaylistModel,
     onClick: () -> Unit
 ) {
     Row(
@@ -193,11 +190,11 @@ fun PlaylistCard(
             modifier = Modifier
                 .size(70.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(playlist.gradient),
+                .background(playlistModel.gradient),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = playlist.icon,
+                imageVector = playlistModel.icon,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(36.dp)
@@ -209,19 +206,19 @@ fun PlaylistCard(
         // Playlist info
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = playlist.name,
+                text = playlistModel.name,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
             Text(
-                text = playlist.description,
+                text = playlistModel.description,
                 fontSize = 14.sp,
                 color = Color.White.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${playlist.songs.size} songs",
+                text = "${playlistModel.songs.size} songs",
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.5f)
             )
@@ -238,7 +235,7 @@ fun PlaylistCard(
 
 @Composable
 fun PlaylistDetailScreen(
-    playlist: Playlist,
+    playlistModel: PlaylistModel,
     allSongs: MutableList<Song>,
 
     playlists: List<PlaylistModel>,
@@ -246,7 +243,7 @@ fun PlaylistDetailScreen(
     onFavoriteClick: (Int) -> Unit,  // <--- explicitly define type
     onDownloadClick: (Int) -> Unit
 
-    playlists: List<Playlist>,
+    playlistModels: List<PlaylistModel>,
     onBackClick: () -> Unit
 
 ) {
@@ -257,7 +254,7 @@ fun PlaylistDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(playlist.gradient)
+                .background(playlistModel.gradient)
         ) {
             // Header section
             Column(
@@ -284,7 +281,7 @@ fun PlaylistDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = playlist.icon,
+                        imageVector = playlistModel.icon,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(70.dp)
@@ -294,20 +291,20 @@ fun PlaylistDetailScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = playlist.name,
+                    text = playlistModel.name,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
 
                 Text(
-                    text = playlist.description,
+                    text = playlistModel.description,
                     fontSize = 16.sp,
                     color = Color.White.copy(0.8f)
                 )
 
                 Text(
-                    text = "${playlist.songs.size} songs",
+                    text = "${playlistModel.songs.size} songs",
                     fontSize = 14.sp,
                     color = Color.White.copy(0.8f)
                 )
@@ -358,14 +355,14 @@ fun PlaylistDetailScreen(
                     )
                     .padding(16.dp)
             ) {
-                itemsIndexed(playlist.songs) { index, song ->
+                itemsIndexed(playlistModel.songs) { index, song ->
                     SongItem(
                         number = index + 1,
                         song = song,
                         allSongs = allSongs,
-                        playlists = playlists,
+                        playlists = playlistModels,
                         onFavoriteClick = {
-                            val favPlaylist = playlists.find { it.name == "Favorite Songs" }
+                            val favPlaylist = playlistModels.find { it.name == "Favorite Songs" }
                             val actualSong = allSongs.find { it.id == song.id }
 
                             actualSong?.let {
@@ -384,7 +381,7 @@ fun PlaylistDetailScreen(
                             }
                         },
                         onDownloadClick = {
-                            val downloadPlaylist = playlists.find { it.name == "Downloaded" }
+                            val downloadPlaylist = playlistModels.find { it.name == "Downloaded" }
                             val actualSong = allSongs.find { it.id == song.id }
 
                             actualSong?.let {
@@ -404,7 +401,7 @@ fun PlaylistDetailScreen(
                         }
                     )
 
-                    if (index < playlist.songs.size - 1) {
+                    if (index < playlistModel.songs.size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -447,7 +444,7 @@ fun SongItem(
     number: Int,
     song: Song,
     allSongs: List<Song>,
-    playlists: List<Playlist>,
+    playlistModels: List<PlaylistModel>,
     onFavoriteClick: () -> Unit,
     onDownloadClick: () -> Unit
 ) {
