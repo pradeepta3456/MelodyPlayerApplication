@@ -25,26 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// Data Models
-data class Song(
-    val id: Int,
-    val title: String,
-    val artist: String,
-    val cover: Int,
-    var isFavorite: Boolean = false,
-    var isDownloaded: Boolean = false
-)
-
-data class Playlist(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val gradient: Brush,
-    val songs: MutableList<Song>
-)
-
+import com.example.musicplayerapplication.model.PlaylistModel
+import com.example.musicplayerapplication.model.Song
 
 
 @Composable
@@ -117,14 +99,14 @@ fun Playlist() {
 
 sealed class Screen {
     object Library : Screen()
-    data class PlaylistDetail(val playlist: Playlist) : Screen()
+    data class PlaylistDetail(val playlist: PlaylistModel) : Screen()
 }
 
 @Composable
 fun LibraryScreen(
-    playlists: List<Playlist>,
+    playlists: List<PlaylistModel>,
     allSongs: List<Song>,
-    onPlaylistClick: (Playlist) -> Unit
+    onPlaylistClick: (PlaylistModel) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -170,7 +152,7 @@ fun LibraryScreen(
 
 @Composable
 fun PlaylistCard(
-    playlist: Playlist,
+    playlist: PlaylistModel,
     onClick: () -> Unit
 ) {
     Row(
@@ -232,9 +214,9 @@ fun PlaylistCard(
 
 @Composable
 fun PlaylistDetailScreen(
-    playlist: Playlist,
+    playlist: PlaylistModel,
     allSongs: MutableList<Song>,
-    playlists: List<Playlist>,
+    playlists: List<PlaylistModel>,
     onBackClick: () -> Unit
 ) {
     var showSnackbar by remember { mutableStateOf(false) }
@@ -434,7 +416,7 @@ fun SongItem(
     number: Int,
     song: Song,
     allSongs: List<Song>,
-    playlists: List<Playlist>,
+    playlists: List<PlaylistModel>,
     onFavoriteClick: () -> Unit,
     onDownloadClick: () -> Unit
 ) {

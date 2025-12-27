@@ -1,12 +1,16 @@
-package com.example.musicplayerapplication.viewmodel
+package com.example.musicplayerapplication.model
+
+import androidx.compose.ui.graphics.Brush
 
 
 data class PlaylistModel(
-    val title: String,
+    val id: Int,
+    val name: String,
     val description: String,
-    val songs: List<Song>
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val gradient: Brush,
+    val songs: MutableList<Song>
 )
-
 
 
 

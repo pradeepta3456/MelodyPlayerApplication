@@ -78,7 +78,6 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
     )
 }
 
-// ------------------ Data ------------------
 
 
 
@@ -252,7 +251,6 @@ fun CategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -
     )
 }
 
-// ------------------ Bottom Bar ------------------
 
 
 // ------------------ Simple Placeholder Screen ------------------
