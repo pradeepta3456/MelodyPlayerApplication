@@ -1,8 +1,5 @@
 package com.example.musicplayerapplication
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,30 +22,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.model.PlaylistModel
+import com.example.musicplayerapplication.model.Song
 
 // Data Models
-data class Song(
-    val id: Int,
-    val title: String,
-    val artist: String,
-    val cover: Int,
-    var isFavorite: Boolean = false,
-    var isDownloaded: Boolean = false
-)
 
-data class Playlist(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val gradient: Brush,
-    val songs: MutableList<Song>
-)
+
 
 
 
 @Composable
-fun Playlist() {
+fun PlaylistModel() {
     // All songs database
     val allSongs = remember {
         mutableStateListOf(
@@ -63,7 +47,7 @@ fun Playlist() {
     // Create playlists
     val playlists = remember {
         listOf(
-            Playlist(
+            PlaylistModel(
                 id = 1,
                 name = "Chill Vibes",
                 description = "Your perfect relaxation mix",
@@ -73,7 +57,7 @@ fun Playlist() {
                 ),
                 songs = allSongs.take(5).toMutableList()
             ),
-            Playlist(
+            PlaylistModel(
                 id = 2,
                 name = "Favorite Songs",
                 description = "Your most loved tracks",
@@ -83,7 +67,7 @@ fun Playlist() {
                 ),
                 songs = mutableStateListOf() // Empty initially
             ),
-            Playlist(
+            PlaylistModel(
                 id = 3,
                 name = "Downloaded",
                 description = "Available offline",
@@ -117,14 +101,14 @@ fun Playlist() {
 
 sealed class Screen {
     object Library : Screen()
-    data class PlaylistDetail(val playlist: Playlist) : Screen()
+    data class PlaylistDetail(val playlist: PlaylistModel) : Screen()
 }
 
 @Composable
 fun LibraryScreen(
-    playlists: List<Playlist>,
+    playlists: List<PlaylistModel>,
     allSongs: List<Song>,
-    onPlaylistClick: (Playlist) -> Unit
+    onPlaylistClick: (PlaylistModel) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -170,7 +154,7 @@ fun LibraryScreen(
 
 @Composable
 fun PlaylistCard(
-    playlist: Playlist,
+    playlist: PlaylistModel,
     onClick: () -> Unit
 ) {
     Row(
@@ -232,9 +216,9 @@ fun PlaylistCard(
 
 @Composable
 fun PlaylistDetailScreen(
-    playlist: Playlist,
+    playlist: PlaylistModel,
     allSongs: MutableList<Song>,
-    playlists: List<Playlist>,
+    playlists: List<PlaylistModel>,
     onBackClick: () -> Unit
 ) {
     var showSnackbar by remember { mutableStateOf(false) }
@@ -434,7 +418,7 @@ fun SongItem(
     number: Int,
     song: Song,
     allSongs: List<Song>,
-    playlists: List<Playlist>,
+    playlists: List<PlaylistModel>,
     onFavoriteClick: () -> Unit,
     onDownloadClick: () -> Unit
 ) {
