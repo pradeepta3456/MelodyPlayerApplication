@@ -1,8 +1,6 @@
 package com.example.musicplayerapplication
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,25 +23,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.model.Playlist
+import com.example.musicplayerapplication.model.Song
 
 // Data Models
-data class Song(
-    val id: Int,
-    val title: String,
-    val artist: String,
-    val cover: Int,
-    var isFavorite: Boolean = false,
-    var isDownloaded: Boolean = false
-)
 
-data class Playlist(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val gradient: Brush,
-    val songs: MutableList<Song>
-)
+
 
 
 

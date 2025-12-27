@@ -1,3 +1,10 @@
 package com.example.musicplayerapplication.model
+data class Song(
+    val id: Int,
+    val title: String,
+    val artist: String,
+    val cover: Int,
+    var isFavorite: Boolean = false,
+    var isDownloaded: Boolean = false
+)
 
-data class Song(val name: String, val artist: String, val imageRes: Int, val plays: Int)
