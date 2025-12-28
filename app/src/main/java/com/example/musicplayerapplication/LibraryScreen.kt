@@ -1,7 +1,6 @@
 package com.example.musicplayerapplication
 
-import android.os.Bundle
-import androidx.activity.compose.setContent
+
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
