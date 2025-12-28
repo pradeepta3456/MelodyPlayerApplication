@@ -55,6 +55,26 @@ import com.example.musicplayerapplication.repository.LibraryRepoImpl
 import com.example.musicplayerapplication.viewmodel.LibraryViewModel
 
 
+@Composable
+fun AppNavGraph() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = "library"
+    ) {
+        composable("library") { MusicLibraryScreen(navController) }
+        composable("songs") { SimpleScreen("Songs Screen") }
+        composable("albums") { SimpleScreen("Albums Screen") }
+        composable("artists") { SimpleScreen("Artists Screen") }
+        composable("genres") { SimpleScreen("Genres Screen") }
+        composable("folders") { SimpleScreen("Folders Screen") }
+        composable("profile") { SimpleScreen("Profile Screen") }
+    }
+}
+
+
+
 // ------------------ Theme ------------------
 @Composable
 fun MelodyPlayTheme(content: @Composable () -> Unit) {
@@ -68,16 +88,17 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
     )
 }
 
-// ------------------ Data ------------------
+
 
 
 
 // ------------------ Music Library Screen ------------------
 @Composable
 fun MusicLibraryScreen(navController: NavController) {
-    var searchQuery by remember { mutableStateOf("") }
+
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
+    var searchQuery by remember { mutableStateOf("") }
     val selectedCategory by viewModel.selectedCategory
     val artists = viewModel.artists
     val categories = listOf(
