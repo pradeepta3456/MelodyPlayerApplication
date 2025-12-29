@@ -63,6 +63,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.navigation.compose.rememberNavController
+import com.example.musicplayerapplication.model.PlaylistModel
 
 
 class SettingScreen : ComponentActivity() {
