@@ -52,6 +52,8 @@ import androidx.compose.foundation.shape.CircleShape
 
 import androidx.compose.foundation.layout.size
 
+import androidx.compose.foundation.shape.CircleShape
+
 import androidx.navigation.compose.rememberNavController
 
 
@@ -77,10 +79,7 @@ fun SettingsScreen() {
 
     Scaffold(
         bottomBar = {
-            BottomNavBar(
-                selectedIndex = selectedTab,
-                onItemSelected = { selectedTab = it }
-            )
+
         },
         containerColor = purpleBg
     ) { padding ->
@@ -315,46 +314,6 @@ fun CrossfadeSlider() {
 
 
 
-@Composable
-fun BottomNavBar(
-    selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
-) {
-
-    val items = listOf(
-        Icons.Default.Home to "Home",
-        Icons.Default.LibraryMusic to "Library",
-        Icons.Default.MusicNote to "Playlist",
-        Icons.Default.Person to "Profile",
-        Icons.Default.Settings to "Setting"
-    )
-
-    NavigationBar(
-        containerColor = Color(0xFF9661D1)
-    ) {
-        items.forEachIndexed { index, (icon, label) ->
-
-            NavigationBarItem(
-                selected = selectedIndex == index,
-                onClick = { onItemSelected(index) },
-                icon = {
-                    Icon(
-                        icon,
-                        contentDescription = "",
-                        tint = Color.White
-                    )
-                },
-                label = {
-                    Text(label, color = Color.White)
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    unselectedIconColor = Color.White
-                )
-            )
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
