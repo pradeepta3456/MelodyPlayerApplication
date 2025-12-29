@@ -50,18 +50,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.foundation.shape.CircleShape
 
-import com.example.musicplayerapplication.AudioSettings
-import com.example.musicplayerapplication.GeneralSettings
-import com.example.musicplayerapplication.HomeScreen
-import com.example.musicplayerapplication.LibraryScreen
-import com.example.musicplayerapplication.PlaylistScreen
-import com.example.musicplayerapplication.ProfileScreen
-import com.example.musicplayerapplication.ThemeSettings
-
-
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
+
 import androidx.compose.foundation.shape.CircleShape
+
 import androidx.navigation.compose.rememberNavController
 
 
@@ -102,7 +94,7 @@ fun SettingsScreen() {
             when (selectedTab) {
 
                 0 -> HomeScreen()
-                1 -> LibraryScreen()
+                1 -> LibraryScreen(rememberNavController(  ) )
                 2 -> PlaylistScreen()
 
 
