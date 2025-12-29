@@ -3,6 +3,7 @@ package com.example.musicplayerapplication
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,10 +46,8 @@ data class Playlist(
     val songs: MutableList<Song>
 )
 
-
-
 @Composable
-fun Playlist() {
+fun PlaylistScreen() {
     // All songs database
     val allSongs = remember {
         mutableStateListOf(
