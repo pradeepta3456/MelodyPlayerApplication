@@ -12,7 +12,7 @@ fun ProfileScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.Green)
+            .background(color = Color.Transparent)
     ) {
         Text("Profile Screen")
     }

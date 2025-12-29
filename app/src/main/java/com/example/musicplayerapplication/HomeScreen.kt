@@ -13,7 +13,7 @@ fun HomeScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.Red)
+            .background(color = Color.Transparent)
     ) {
         Text("HomeScreen")
     }

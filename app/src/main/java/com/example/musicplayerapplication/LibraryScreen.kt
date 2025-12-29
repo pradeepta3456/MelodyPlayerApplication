@@ -26,7 +26,7 @@ fun LibraryScreen(){
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.DarkGray)
+            .background(color = Color.Transparent)
     ) {
         Text("Library Screen")
     }

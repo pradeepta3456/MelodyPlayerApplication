@@ -80,8 +80,6 @@ class SettingScreen : ComponentActivity() {
 @Composable
 fun SettingsScreen() {
 
-
-
     var selectedTab by remember { mutableStateOf(4) }
     val purpleBg = Color(0xFF834DCE)
 
@@ -104,14 +102,9 @@ fun SettingsScreen() {
 
             when (selectedTab) {
 
-                0 -> HomeScreen()
-                1 -> LibraryScreen()
-                2 -> PlaylistScreen()
+                2-> PlaylistScreenActivity()
 
-
-
-
-                3 -> ProfileScreen()
+                1 -> ProfileScreen()
                 4 -> {
                     // REAL settings content UI
                     Text(

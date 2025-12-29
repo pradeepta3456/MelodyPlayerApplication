@@ -1,10 +1,7 @@
 package com.example.musicplayerapplication
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -26,29 +24,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.ui.theme.Purple40
+import com.example.musicplayerapplication.viewmodel.Playlist
+import com.example.musicplayerapplication.viewmodel.Song
 
-// Data Models
-data class Song(
-    val id: Int,
-    val title: String,
-    val artist: String,
-    val cover: Int,
-    var isFavorite: Boolean = false,
-    var isDownloaded: Boolean = false
-)
-
-data class Playlist(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val gradient: Brush,
-    val songs: MutableList<Song>
-)
 
 @Composable
-fun PlaylistScreen() {
-    // All songs database
+fun PlaylistScreenActivity() {
+
+    val PurpleBg = Color(0xFF8B5CF6)
+
     val allSongs = remember {
         mutableStateListOf(
             Song(1, "kissme", "Red Love", R.drawable.kissme),
@@ -59,7 +44,7 @@ fun PlaylistScreen() {
         )
     }
 
-    // Create playlists
+    // Create playlists with proper state management
     val playlists = remember {
         listOf(
             Playlist(
@@ -70,7 +55,9 @@ fun PlaylistScreen() {
                 gradient = Brush.verticalGradient(
                     colors = listOf(Color(0xFF6AD0A6), Color(0xFF043454))
                 ),
-                songs = allSongs.take(5).toMutableList()
+                songs = mutableStateListOf<Song>().apply {
+                    addAll(allSongs.take(5))
+                }
             ),
             Playlist(
                 id = 2,
@@ -80,7 +67,7 @@ fun PlaylistScreen() {
                 gradient = Brush.verticalGradient(
                     colors = listOf(Color(0xFFEC4899), Color(0xFFF43F5E))
                 ),
-                songs = mutableStateListOf() // Empty initially
+                songs = mutableStateListOf()
             ),
             Playlist(
                 id = 3,
@@ -88,9 +75,9 @@ fun PlaylistScreen() {
                 description = "Available offline",
                 icon = Icons.Default.Download,
                 gradient = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1))
+                    colors = listOf(PurpleBg, PurpleBg)
                 ),
-                songs = mutableStateListOf() // Empty initially
+                        songs = mutableStateListOf()
             )
         )
     }
@@ -128,7 +115,7 @@ fun LibraryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(Purple40)
             .padding(20.dp)
     ) {
         Spacer(modifier = Modifier.height(24.dp))
@@ -146,7 +133,7 @@ fun LibraryScreen(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "My Library",
+                text = "My Playlist",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -176,7 +163,7 @@ fun PlaylistCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF1E293B))
+            .background(Purple40)
             .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -243,7 +230,7 @@ fun PlaylistDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(playlist.gradient)
+                .background(Purple40)
         ) {
             // Header section
             Column(
@@ -339,7 +326,7 @@ fun PlaylistDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Color(0xFF0F172A),
+                        Purple40,
                         RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
                     )
                     .padding(16.dp)
@@ -383,7 +370,6 @@ fun PlaylistDetailScreen(
                                     snackbarMessage = "Downloaded"
                                 } else {
                                     downloadPlaylist?.songs?.removeAll { s -> s.id == it.id }
-                                    snackbarMessage = "Removed from Downloads"
                                 }
                                 showSnackbar = true
                             }
