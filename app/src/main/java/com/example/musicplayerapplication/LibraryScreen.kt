@@ -1,7 +1,4 @@
 package com.example.musicplayerapplication
-
-
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,7 +41,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ComponentActivity
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,6 +48,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.musicplayerapplication.model.LibraryArtist
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
 import com.example.musicplayerapplication.viewmodel.LibraryViewModel
+
+
 
 
 @Composable
@@ -62,7 +60,7 @@ fun AppNavGraph() {
         navController = navController,
         startDestination = "library"
     ) {
-        composable("library") { MusicLibraryScreen(navController) }
+        composable("library") { LibraryScreen(navController) }
         composable("songs") { SimpleScreen("Songs Screen") }
         composable("albums") { SimpleScreen("Albums Screen") }
         composable("artists") { SimpleScreen("Artists Screen") }
@@ -93,7 +91,7 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
 
 // ------------------ Music Library Screen ------------------
 @Composable
-fun MusicLibraryScreen(navController: NavController) {
+fun LibraryScreen(navController: NavController) {
 
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
@@ -280,6 +278,6 @@ fun SimpleScreen(title: String) {
 fun MelodyPlayPreview() {
     MelodyPlayTheme {
         val navController = rememberNavController()
-        MusicLibraryScreen(navController)
+        LibraryScreen(navController)
     }
 }
