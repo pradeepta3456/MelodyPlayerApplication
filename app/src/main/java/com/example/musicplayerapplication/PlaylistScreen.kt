@@ -1,7 +1,7 @@
 package com.example.musicplayerapplication
 
+import com.example.musicplayerapplication.viewmodel.Playlist
 import androidx.compose.foundation.Image
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,14 +19,16 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ui.theme.Purple40
-import com.example.musicplayerapplication.viewmodel.Playlist
-import com.example.musicplayerapplication.viewmodel.Song
+
+
 
 
 @Composable
@@ -46,7 +48,7 @@ fun PlaylistScreenActivity() {
 
     // Create playlists with proper state management
     val playlists = remember {
-        listOf(
+        mutableStateListOf(
             Playlist(
                 id = 1,
                 name = "Chill Vibes",
@@ -67,7 +69,7 @@ fun PlaylistScreenActivity() {
                 gradient = Brush.verticalGradient(
                     colors = listOf(Color(0xFFEC4899), Color(0xFFF43F5E))
                 ),
-                songs = mutableStateListOf()
+                songs = mutableStateListOf<Song>()
             ),
             Playlist(
                 id = 3,
@@ -77,7 +79,7 @@ fun PlaylistScreenActivity() {
                 gradient = Brush.verticalGradient(
                     colors = listOf(PurpleBg, PurpleBg)
                 ),
-                        songs = mutableStateListOf()
+                songs = mutableStateListOf<Song>()
             )
         )
     }
@@ -223,192 +225,46 @@ fun PlaylistDetailScreen(
     playlists: List<Playlist>,
     onBackClick: () -> Unit
 ) {
-    var showSnackbar by remember { mutableStateOf(false) }
-    var snackbarMessage by remember { mutableStateOf("") }
-
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Purple40)
-        ) {
-            // Header section
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                // Back button
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(20.dp))
+        LazyColumn {
+            itemsIndexed(playlist.songs) { index, song ->
+                SongItem(
+                    number = index + 1,
+                    song = song,
+                    onFavoriteClick = {
+                        val favPlayList = playlists.find { it.name == "Favorite Songs" }
+                        val actualSong = allSongs.find { it.id == song.id }
 
-                // Playlist cover
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = playlist.icon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(70.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = playlist.name,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-
-                Text(
-                    text = playlist.description,
-                    fontSize = 16.sp,
-                    color = Color.White.copy(0.8f)
-                )
-
-                Text(
-                    text = "${playlist.songs.size} songs",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(0.8f)
-                )
-
-                Spacer(modifier = Modifier.height(25.dp))
-
-                // Action buttons
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = {},
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF58E1C3))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play"
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Play")
-                    }
-
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.FavoriteBorder, "", tint = Color.White)
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Download, "", tint = Color.White)
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Share, "", tint = Color.White)
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.MoreVert, "", tint = Color.White)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Song list
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Purple40,
-                        RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                    )
-                    .padding(16.dp)
-            ) {
-                itemsIndexed(playlist.songs) { index, song ->
-                    SongItem(
-                        number = index + 1,
-                        song = song,
-                        allSongs = allSongs,
-                        playlists = playlists,
-                        onFavoriteClick = {
-                            val favPlaylist = playlists.find { it.name == "Favorite Songs" }
-                            val actualSong = allSongs.find { it.id == song.id }
-
-                            actualSong?.let {
-                                it.isFavorite = !it.isFavorite
-
-                                if (it.isFavorite) {
-                                    if (favPlaylist?.songs?.none { s -> s.id == it.id } == true) {
-                                        favPlaylist.songs.add(it)
-                                    }
-                                    snackbarMessage = "Added to Favorites"
-                                } else {
-                                    favPlaylist?.songs?.removeAll { s -> s.id == it.id }
-                                    snackbarMessage = "Removed from Favorites"
+                        actualSong?.let {
+                            it.isFavorite = !it.isFavorite
+                            if (it.isFavorite) {
+                                if (favPlayList?.songs?.removeAll { s -> s.id == it.id } == true) {
+                                    favPlayList.songs.add(it)
                                 }
-                                showSnackbar = true
-                            }
-                        },
-                        onDownloadClick = {
-                            val downloadPlaylist = playlists.find { it.name == "Downloaded" }
-                            val actualSong = allSongs.find { it.id == song.id }
-
-                            actualSong?.let {
-                                it.isDownloaded = !it.isDownloaded
-
-                                if (it.isDownloaded) {
-                                    if (downloadPlaylist?.songs?.none { s -> s.id == it.id } == true) {
-                                        downloadPlaylist.songs.add(it)
-                                    }
-                                    snackbarMessage = "Downloaded"
-                                } else {
-                                    downloadPlaylist?.songs?.removeAll { s -> s.id == it.id }
-                                }
-                                showSnackbar = true
+                            } else {
+                                favPlayList?.songs?.removeAll { s -> s.id == it.id }
                             }
                         }
-                    )
+                    },
 
-                    if (index < playlist.songs.size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    onDownloadClick = {
+                        val downloadPlayList = playlists.find { it.name == "Downloaded" }
+                        val actualSong = allSongs.find { it.id == song.id }
+
+                        actualSong?.let {
+                            it.isDownloaded = !it.isDownloaded
+
+                            if (it.isDownloaded) {
+                                if (downloadPlayList?.songs?.any { s -> s.id == it.id } == false) {
+                                    downloadPlayList.songs.add(it)
+                                }
+                            } else {
+                                downloadPlayList?.songs?.removeAll { s -> s.id == it.id }
+                            }
+                        }
                     }
-                }
-            }
-        }
-
-        // Snackbar
-        if (showSnackbar) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp)),
-                    color = Color(0xFF1E293B)
-                ) {
-                    Text(
-                        text = snackbarMessage,
-                        color = Color.White,
-                        modifier = Modifier.padding(16.dp),
-                        fontSize = 14.sp
-                    )
-                }
-            }
-
-            LaunchedEffect(showSnackbar) {
-                kotlinx.coroutines.delay(2000)
-                showSnackbar = false
+                )
             }
         }
     }
@@ -418,13 +274,9 @@ fun PlaylistDetailScreen(
 fun SongItem(
     number: Int,
     song: Song,
-    allSongs: List<Song>,
-    playlists: List<Playlist>,
     onFavoriteClick: () -> Unit,
     onDownloadClick: () -> Unit
 ) {
-    val actualSong = allSongs.find { it.id == song.id } ?: song
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -442,7 +294,7 @@ fun SongItem(
         )
 
         Image(
-            painter = painterResource(id = actualSong.cover),
+            painter = painterResource(id = song.cover),
             contentDescription = "",
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -454,33 +306,43 @@ fun SongItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = actualSong.title,
+                text = song.title,
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = actualSong.artist,
+                text = song.artist,
                 color = Color.White.copy(0.8f),
                 fontSize = 14.sp
             )
         }
 
-        // Favorite button
         IconButton(onClick = onFavoriteClick) {
             Icon(
-                imageVector = if (actualSong.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                imageVector = if (song.isFavorite)
+                    Icons.Default.Favorite
+                else
+                    Icons.Default.FavoriteBorder,
                 contentDescription = "Favorite",
-                tint = if (actualSong.isFavorite) Color(0xFFEC4899) else Color.White.copy(alpha = 0.7f)
+                tint = if (song.isFavorite)
+                    Color(0xFFEC4899)
+                else
+                    Color.White.copy(alpha = 0.7f)
             )
         }
 
-        // Download button
         IconButton(onClick = onDownloadClick) {
             Icon(
-                imageVector = if (actualSong.isDownloaded) Icons.Default.CheckCircle else Icons.Default.Download,
+                imageVector = if (song.isDownloaded)
+                    Icons.Default.CheckCircle
+                else
+                    Icons.Default.Download,
                 contentDescription = "Download",
-                tint = if (actualSong.isDownloaded) Color(0xFF58E1C3) else Color.White.copy(alpha = 0.7f)
+                tint = if (song.isDownloaded)
+                    Color(0xFF58E1C3)
+                else
+                    Color.White.copy(alpha = 0.7f)
             )
         }
     }

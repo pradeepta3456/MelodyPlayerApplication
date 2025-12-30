@@ -1,12 +1,18 @@
 package com.example.musicplayerapplication.viewmodel
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.musicplayerapplication.model.Song
 
 data class PlaylistModel(
-    val title: String,
+    val id: Int,
+    val name: String,
     val description: String,
-    val songs: List<Song>
+    val icon: ImageVector,
+    val gradient: Brush,
+    val songs: MutableList<Song> = mutableStateListOf()
 )
-
 
 
 

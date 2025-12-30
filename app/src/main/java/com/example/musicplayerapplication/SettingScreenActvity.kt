@@ -50,19 +50,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.foundation.shape.CircleShape
 
-import com.example.musicplayerapplication.AudioSettings
-import com.example.musicplayerapplication.GeneralSettings
-import com.example.musicplayerapplication.HomeScreen
-import com.example.musicplayerapplication.LibraryScreen
-import com.example.musicplayerapplication.PlaylistScreen
-import com.example.musicplayerapplication.ProfileScreen
-import com.example.musicplayerapplication.ThemeSettings
-
-
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
+
 import androidx.compose.foundation.shape.CircleShape
 
+import androidx.navigation.compose.rememberNavController
+import com.example.musicplayerapplication.model.PlaylistModel
 
 
 class SettingScreen : ComponentActivity() {
@@ -80,15 +73,14 @@ class SettingScreen : ComponentActivity() {
 @Composable
 fun SettingsScreen() {
 
+
+
     var selectedTab by remember { mutableStateOf(4) }
     val purpleBg = Color(0xFF834DCE)
 
     Scaffold(
         bottomBar = {
-            BottomNavBar(
-                selectedIndex = selectedTab,
-                onItemSelected = { selectedTab = it }
-            )
+
         },
         containerColor = purpleBg
     ) { padding ->
@@ -102,9 +94,14 @@ fun SettingsScreen() {
 
             when (selectedTab) {
 
-                2-> PlaylistScreenActivity()
+                0 -> HomeScreen()
+                1 -> Lib()
+                2 -> PlaylistScreen()
 
-                1 -> ProfileScreen()
+
+
+
+                3 -> ProfileScreen()
                 4 -> {
                     // REAL settings content UI
                     Text(
@@ -318,46 +315,6 @@ fun CrossfadeSlider() {
 
 
 
-@Composable
-fun BottomNavBar(
-    selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
-) {
-
-    val items = listOf(
-        Icons.Default.Home to "Home",
-        Icons.Default.LibraryMusic to "Library",
-        Icons.Default.MusicNote to "Playlist",
-        Icons.Default.Person to "Profile",
-        Icons.Default.Settings to "Setting"
-    )
-
-    NavigationBar(
-        containerColor = Color(0xFF9661D1)
-    ) {
-        items.forEachIndexed { index, (icon, label) ->
-
-            NavigationBarItem(
-                selected = selectedIndex == index,
-                onClick = { onItemSelected(index) },
-                icon = {
-                    Icon(
-                        icon,
-                        contentDescription = "",
-                        tint = Color.White
-                    )
-                },
-                label = {
-                    Text(label, color = Color.White)
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    unselectedIconColor = Color.White
-                )
-            )
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
