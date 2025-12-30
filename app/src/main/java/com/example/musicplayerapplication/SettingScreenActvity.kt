@@ -55,6 +55,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 
 import androidx.navigation.compose.rememberNavController
+import com.example.musicplayerapplication.model.PlaylistModel
+import com.example.musicplayerapplication.viewmodel.HomeViewModel
 
 
 class SettingScreen : ComponentActivity() {
@@ -93,7 +95,7 @@ fun SettingsScreen() {
 
             when (selectedTab) {
 
-                0 -> HomeScreen()
+                0 -> HomeScreen(HomeViewModel())
                 1 -> LibraryScreen(rememberNavController(  ) )
                 2 -> PlaylistScreen()
 

@@ -27,12 +27,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
+
 import com.example.musicplayerapplication.model.Achievement
 import com.example.musicplayerapplication.model.Artist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
-import com.example.musicplayerapplication.ui.theme.backgroundColor
+
 import com.example.musicplayerapplication.viewmodel.ProfileViewModel
 
 
@@ -61,13 +61,14 @@ fun ProfileScreen(profileViewModel:ProfileViewModel = ProfileViewModel()) {
     val topArtists = profileViewModel.topArtists
     val achievements = profileViewModel.achievements
 
+
     val cardColor = Color(0xFF2D1B4E)
     val highlightColor = Color(0xFFE91E63)
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(Color(0xFFE91E63))
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 32.dp, bottom = 16.dp)
     ) {
