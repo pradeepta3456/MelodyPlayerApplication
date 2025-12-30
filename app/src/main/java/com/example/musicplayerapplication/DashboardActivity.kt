@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 class DashboardActivity : ComponentActivity() {
@@ -111,11 +112,11 @@ fun DashboardBody() {
         ) {
 
             when(selectedindex){
-                0 -> HomeScreen()
+                0 -> HomeScreen(viewModel = viewModel())
                 1 -> SearchScreen()
                 2 -> NotificationScreen()
                 3 -> ProfileScreen()
-                else -> HomeScreen()
+                else -> HomeScreen(viewModel = viewModel())
             }
         }
     }
