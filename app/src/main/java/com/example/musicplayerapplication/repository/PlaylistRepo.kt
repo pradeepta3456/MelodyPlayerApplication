@@ -1,8 +1,5 @@
 package com.example.musicplayerapplication.repository
 
-import com.example.musicplayerapplication.model.PlaylistModel
-import com.example.musicplayerapplication.model.Song
-
 interface PlaylistRepository {
 
     fun getAllSongs(): MutableList<Song>
