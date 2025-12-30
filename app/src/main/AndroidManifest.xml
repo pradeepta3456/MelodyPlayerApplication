@@ -12,21 +12,64 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicPlayerApplication">
         <activity
+            android:name=".LibraryActivity"
+            android:exported="true"
+            android:label="@string/title_activity_library"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".GenreActivity"
+            android:exported="true"
+            android:label="@string/title_activity_genre"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SignInActivity"
+            android:exported="true"
+            android:label="@string/title_activity_sign_in"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="MusicPlayerApplication"
             android:theme="@style/Theme.MusicPlayerApplication">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".DashboardActivity"
+            android:exported="true"
+            android:label="MusicPlayerApplication"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".SettingScreen"
             android:exported="true"
             android:theme="@style/Theme.MusicPlayerApplication" />
-
     </application>
 
 </manifest>
