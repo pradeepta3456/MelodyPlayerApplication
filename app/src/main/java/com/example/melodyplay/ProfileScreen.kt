@@ -2,6 +2,7 @@
 
 package com.example.melodyplay
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,7 +33,7 @@ import com.example.melodyplay.model.Song
 import com.example.melodyplay.ui.theme.MelodyPlayTheme
 import com.example.melodyplay.viewmodel.ProfileViewModel
 import kotlin.collections.take
-import com.example.melodyplay.ProfileScreen
+
 
 
 
@@ -268,6 +269,8 @@ fun ListeningPatternPlaceholder(cardColor: Color) {
         }
     }
 }
+
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ProfilePreview() {
