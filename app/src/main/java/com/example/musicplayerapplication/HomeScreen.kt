@@ -21,8 +21,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.ui.theme.*
 import com.example.musicplayerapplication.viewmodel.HomeViewModel
 
@@ -31,7 +33,7 @@ class HomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MelodyPlayTheme {
-                HomeScreen(HomeViewModel())
+                HomeScreen(viewModel = viewModel())
             }
         }
     }
