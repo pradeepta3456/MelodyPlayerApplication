@@ -5,7 +5,6 @@ package com.example.musicplayerapplication
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -28,22 +27,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.musicplayerapplication.model.Achievement
 import com.example.musicplayerapplication.model.Artist
 import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
 
-import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
 import com.example.musicplayerapplication.viewmodel.ProfileViewModel
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+
 
 class ProfileActivity : ComponentActivity() {
     private val profileViewModel: ProfileViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MelodyPlayTheme {
+            MusicPlayerApplicationTheme() {
                 ProfileScreen(profileViewModel)
             }
         }
@@ -58,18 +56,19 @@ class ProfileActivity : ComponentActivity() {
 
 // ---------------------- PROFILE SCREEN ----------------------
 @Composable
-fun ProfileScreen(profileViewModel: ProfileViewModel = viewmodel) {
+fun ProfileScreen(profileViewModel:ProfileViewModel = ProfileViewModel()) {
     val topSongs = profileViewModel.topSongs
     val topArtists = profileViewModel.topArtists
     val achievements = profileViewModel.achievements
-    val backgroundColor = DarkPurpleBackground
+
+
     val cardColor = Color(0xFF2D1B4E)
     val highlightColor = Color(0xFFE91E63)
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(Color(0xFFE91E63))
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 32.dp, bottom = 16.dp)
     ) {
@@ -193,7 +192,7 @@ fun TopSongItem(song: Song, rank: Int) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(song.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(song.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Text(song.artist, color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
             }
             Text("${song.plays} plays", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.Medium)
@@ -276,7 +275,7 @@ fun ListeningPatternPlaceholder(cardColor: Color) {
 @Composable
 fun ProfilePreview() {
     val previewViewModel = ProfileViewModel()
-    MelodyPlayTheme {
+    MusicPlayerApplicationTheme() {
         ProfileScreen(profileViewModel = previewViewModel)
     }
 }

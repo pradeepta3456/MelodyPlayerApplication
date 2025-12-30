@@ -1,9 +1,4 @@
 package com.example.musicplayerapplication
-
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,6 +42,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.musicplayerapplication.model.LibraryArtist
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
@@ -54,16 +51,26 @@ import com.example.musicplayerapplication.viewmodel.LibraryViewModel
 
 
 
-class LibraryActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MelodyPlayTheme {
-                val navController = rememberNavController()
-            }
-        }
+
+@Composable
+fun AppNavGraph() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = "library"
+    ) {
+        composable("library") { LibraryScreen(navController) }
+        composable("songs") { SimpleScreen("Songs Screen") }
+        composable("albums") { SimpleScreen("Albums Screen") }
+        composable("artists") { SimpleScreen("Artists Screen") }
+        composable("genres") { SimpleScreen("Genres Screen") }
+        composable("folders") { SimpleScreen("Folders Screen") }
+        composable("profile") { SimpleScreen("Profile Screen") }
     }
 }
+
+
 
 // ------------------ Theme ------------------
 @Composable
@@ -81,12 +88,14 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
 
 
 
+
 // ------------------ Music Library Screen ------------------
 @Composable
-fun MusicLibraryScreen(navController: NavController) {
-    var searchQuery by remember { mutableStateOf("") }
+fun LibraryScreen(navController: NavController) {
+
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
+    var searchQuery by remember { mutableStateOf("") }
     val selectedCategory by viewModel.selectedCategory
     val artists = viewModel.artists
     val categories = listOf(
@@ -251,6 +260,7 @@ fun CategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -
     )
 }
 
+// ------------------ Bottom Bar ------------------
 
 
 // ------------------ Simple Placeholder Screen ------------------
@@ -268,8 +278,6 @@ fun SimpleScreen(title: String) {
 fun MelodyPlayPreview() {
     MelodyPlayTheme {
         val navController = rememberNavController()
-        MusicLibraryScreen(navController)
+        LibraryScreen(navController)
     }
 }
-
-
