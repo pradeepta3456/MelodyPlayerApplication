@@ -10,6 +10,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.repository.HomeRepo
+
 import com.example.musicplayerapplication.ui.theme.*
 import com.example.musicplayerapplication.viewmodel.HomeViewModel
 
@@ -76,10 +79,29 @@ fun HomeScreen(viewModel: HomeViewModel) {
             RecentSongItem(song)
         }
 
-        // Trending Header
+        // Trending Header with Icon
         item {
-            Text("Trending", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.TrendingUp,
+                    contentDescription = "Trending Up",
+                    tint = Color.Green,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    "Trending",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
+
+
 
         // Trending Albums Horizontal
         item {
