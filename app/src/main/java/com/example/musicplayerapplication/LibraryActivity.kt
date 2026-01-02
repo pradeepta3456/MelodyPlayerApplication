@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.model.Song
 
 class LibraryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,12 +50,6 @@ fun MusicLibraryTheme(content: @Composable () -> Unit) {
     )
 }
 
-data class Song(
-    val id: Int,
-    val name: String,
-    val artist: String,
-    val imageRes: Int
-)
 
 @Composable
 fun MusicLibraryApp() {
@@ -334,8 +329,8 @@ fun SongItem(song: Song) {
         ) {
             // Album Art
             Image(
-                painter = painterResource(id = song.imageRes),
-                contentDescription = song.name,
+                painter = painterResource(id = song.cover),
+                contentDescription = song.title,
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(12.dp)),
@@ -347,7 +342,7 @@ fun SongItem(song: Song) {
             // Song Info
             Column {
                 Text(
-                    text = song.name,
+                    text = song.title,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White

@@ -53,9 +53,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.size
 
 import androidx.compose.foundation.shape.CircleShape
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.compose.rememberNavController
 import com.example.musicplayerapplication.model.PlaylistModel
+import com.example.musicplayerapplication.repository.HomeRepo
+import com.example.musicplayerapplication.repository.HomeRepoImpl
 import com.example.musicplayerapplication.viewmodel.HomeViewModel
 
 
@@ -75,7 +78,7 @@ class SettingScreen : ComponentActivity() {
 fun SettingsScreen() {
 
 
-
+    val HomeViewModel: HomeViewModel = viewModel()
     var selectedTab by remember { mutableStateOf(4) }
     val purpleBg = Color(0xFF834DCE)
 
@@ -95,7 +98,7 @@ fun SettingsScreen() {
 
             when (selectedTab) {
 
-                0 -> HomeScreen(HomeViewModel())
+                0 -> HomeScreen(HomeViewModel)
                 1 -> LibraryScreen(rememberNavController(  ) )
                 2 -> PlaylistScreen()
 

@@ -56,6 +56,17 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ProfileActivity"
+            android:exported="true"
+            android:label="MusicPlayerApplication"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".DashboardActivity"
             android:exported="true"
             android:label="MusicPlayerApplication"
