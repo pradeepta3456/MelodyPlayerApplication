@@ -1,4 +1,8 @@
 package com.example.musicplayerapplication
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,7 +53,16 @@ import com.example.musicplayerapplication.model.LibraryArtist
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
 import com.example.musicplayerapplication.viewmodel.LibraryViewModel
 
-
+class LibraryScreenActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MelodyPlayTheme {
+                AppNavGraph()
+            }
+        }
+    }
+}
 
 
 @Composable
@@ -96,15 +109,17 @@ fun LibraryScreen(navController: NavController) {
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
     var searchQuery by remember { mutableStateOf("") }
-    val selectedCategory by viewModel.selectedCategory
     val artists = viewModel.artists
     val categories = listOf(
-        "Songs" to R.drawable.baseline_music_note_24,
-        "Albums" to R.drawable.baseline_album_24,
-        "Artists" to R.drawable.baseline_person_24,
-        "Genres" to R.drawable.baseline_library_music_24,
-        "Folders" to R.drawable.baseline_folder_open_24
+        "Songs" to (R.drawable.baseline_music_note_24 to "songs"),
+        "Albums" to (R.drawable.baseline_album_24 to "albums"),
+        "Artists" to (R.drawable.baseline_person_24 to "artists"),
+        "Genres" to (R.drawable.baseline_library_music_24 to "genres"),
+        "Folders" to (R.drawable.baseline_folder_open_24 to "folders")
     )
+    
+    // Fixed category for this screen is "Albums"
+    val fixedCategory = "Albums"
 
     Scaffold(
         topBar = {
@@ -156,13 +171,17 @@ fun LibraryScreen(navController: NavController) {
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    categories.forEach { (label, iconRes) ->
+                    categories.forEach { (label, iconAndRoute) ->
+                        val (iconRes, route) = iconAndRoute
                         CategoryChip(
                             label = label,
                             iconResId = iconRes,
-                            selected = selectedCategory == label
+                            selected = label == fixedCategory
                         ) {
-                            viewModel.selectCategory(label)
+                            // If not Albums, navigate to other screen
+                            if (label != fixedCategory) {
+                                navController.navigate(route)
+                            }
                         }
                     }
                 }
