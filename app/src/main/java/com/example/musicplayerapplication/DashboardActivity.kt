@@ -1,10 +1,10 @@
 package com.example.musicplayerapplication
+
 import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +63,6 @@ fun DashboardBody() {
         NavItem(label = "Settings", icon = R.drawable.baseline_settings_24),
     )
 
-    // Define the purple color from the image
     val purpleColor = Color(0xFF5B4D8F)
 
     Scaffold(
@@ -80,20 +79,19 @@ fun DashboardBody() {
                     IconButton(onClick = {}) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_more_horiz_24),
-                            contentDescription = null
+                            contentDescription = "More options"
                         )
                     }
                     IconButton(onClick = {}) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_visibility_off_24),
-                            contentDescription = null
+                            contentDescription = "Toggle visibility"
                         )
                     }
                 }
             )
         },
         bottomBar = {
-            // Custom styled navigation bar matching the image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -150,33 +148,30 @@ fun DashboardBody() {
                 1 -> LibraryScreen()
                 2 -> PlaylistsScreen()
                 3 -> ProfileScreen()
-                4 -> SettingsScreen()  // Changed from SettingScreen() to SettingsScreen()
+                4 -> SettingsScreen()
                 else -> HomeScreen()
             }
         }
     }
 }
 
-// Placeholder screens - replace with your actual screen implementations
-@Composable
-fun HomeScreenActivity() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        Text("Home Screen", modifier = Modifier.padding(16.dp))
-    }
-}
+// Placeholder screens - implement these with your actual content
+// Add these at the end of your DashboardActivity.kt file
+
+
 
 @Composable
 fun LibraryScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .padding(16.dp)
     ) {
-        Text("Library Screen", modifier = Modifier.padding(16.dp))
+        Text(
+            text = "Library Screen",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -185,9 +180,13 @@ fun PlaylistsScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .padding(16.dp)
     ) {
-        Text("Playlists Screen", modifier = Modifier.padding(16.dp))
+        Text(
+            text = "Playlists Screen",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -196,19 +195,16 @@ fun ProfileScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .padding(16.dp)
     ) {
-        Text("Profile Screen", modifier = Modifier.padding(16.dp))
+        Text(
+            text = "Profile Screen",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
-@Composable
-fun SettingsScreenActivity() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        Text("Settings Screen", modifier = Modifier.padding(16.dp))
-    }
-}
+
+
+
