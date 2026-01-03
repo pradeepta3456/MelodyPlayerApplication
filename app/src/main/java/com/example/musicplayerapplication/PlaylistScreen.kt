@@ -26,7 +26,7 @@ import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
 
-// Data Models
+
 @Composable
 fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Library) }
