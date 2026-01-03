@@ -1,7 +1,6 @@
 package com.example.musicplayerapplication.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.PlaylistRepoImpl
 import com.example.musicplayerapplication.repository.PlaylistRepository

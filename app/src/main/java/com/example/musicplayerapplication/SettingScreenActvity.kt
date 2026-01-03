@@ -49,13 +49,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.foundation.shape.CircleShape
-
 import androidx.compose.foundation.layout.size
-
 import androidx.compose.foundation.shape.CircleShape
-
 import androidx.navigation.compose.rememberNavController
-import com.example.musicplayerapplication.model.PlaylistModel
 
 
 class SettingScreen : ComponentActivity() {
@@ -92,17 +88,7 @@ fun SettingsScreen() {
                 .padding(16.dp)
         ) {
 
-            when (selectedTab) {
 
-                0 -> HomeScreen()
-                1 -> Lib()
-                2 -> PlaylistScreen()
-
-
-
-
-                3 -> ProfileScreen()
-                4 -> {
                     // REAL settings content UI
                     Text(
                         text = "Settings",
@@ -113,12 +99,12 @@ fun SettingsScreen() {
                     Spacer(Modifier.height(20.dp))
 
                     SettingTabs()
-                    Spacer(Modifier.height(25.dp))
+                    Spacer(Modifier.height(20.dp))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.VolumeUp, contentDescription = "", tint = Color.White)
                         Spacer(Modifier.width(10.dp))
-                        Text("Equalizer", color = Color.White, fontSize = 18.sp)
+                        Text("Equalizer", color = Color.White, fontSize = 20.sp)
                     }
 
                     Spacer(Modifier.height(10.dp))
@@ -145,8 +131,7 @@ fun SettingsScreen() {
                 }
             }
         }
-    }
-}
+
 
 @Composable
 fun SettingTabs() {
@@ -188,11 +173,6 @@ fun SettingTabs() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        when (selected) {
-            0 -> AudioSettings()
-            1 -> ThemeSettings()
-            2 -> GeneralSettings()
-        }
 
     }
 }
@@ -272,14 +252,13 @@ fun EqualizerSlider(label: String) {
     }
 }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CrossfadeSlider() {
     var value by remember { mutableStateOf(0.5f) }
 
     Text("Duration", color = Color.White)
+    Text("${(value * 4).toInt()}%", color = Color.White)
 
     Slider(
         value = value,

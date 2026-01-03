@@ -1,7 +1,7 @@
 package com.example.musicplayerapplication.repository
 
-import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.viewmodel.PlaylistModel
 
 interface PlaylistRepository {
 

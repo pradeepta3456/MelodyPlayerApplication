@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicPlayerApplication">
         <activity
-            android:name=".PlaylistScreen"
+            android:name=".PlaylistScreenActivity"
             android:exported="true"
             android:label="MusicPlayerApplication"
             android:theme="@style/Theme.MusicPlayerApplication">

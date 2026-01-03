@@ -9,8 +9,8 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.musicplayerapplication.R
-import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.viewmodel.PlaylistModel
 
 class PlaylistRepoImpl : PlaylistRepository {
 
