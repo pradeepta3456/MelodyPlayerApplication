@@ -21,11 +21,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Data classes
+
 data class Song(
     val id: Int,
     val title: String,
@@ -42,7 +41,7 @@ data class Playlist(
     val isAiGenerated: Boolean = false
 )
 
-// Main Activity
+
 class PlaylistScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,10 +58,17 @@ fun MusicPlayerApp() {
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     var currentSong by remember { mutableStateOf<Song?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
+    var playlists by remember { mutableStateOf(getSamplePlaylists()) }
+
+    // Audio settings state
+    var bassLevel by remember { mutableStateOf(0f) }
+    var trebleLevel by remember { mutableStateOf(0f) }
+    var volumeLevel by remember { mutableStateOf(0.7f) }
 
     when (currentScreen) {
         is Screen.PlaylistList -> {
             PlaylistScreenContent(
+                playlists = playlists,
                 onPlaylistClick = { playlist ->
                     selectedPlaylist = playlist
                     currentScreen = Screen.PlaylistDetail
@@ -72,7 +78,38 @@ fun MusicPlayerApp() {
                     currentSong = playlist.songs.firstOrNull()
                     isPlaying = true
                     currentScreen = Screen.NowPlaying
+                },
+                onCreatePlaylist = {
+                    currentScreen = Screen.CreatePlaylist
                 }
+            )
+        }
+        is Screen.CreatePlaylist -> {
+            CreatePlaylistScreen(
+                onBack = { currentScreen = Screen.PlaylistList },
+                onCreate = { name, description ->
+                    val newPlaylist = Playlist(
+                        id = playlists.size + 1,
+                        name = name,
+                        description = description,
+                        songCount = 0,
+                        songs = emptyList(),
+                        isAiGenerated = false
+                    )
+                    playlists = playlists + newPlaylist
+                    currentScreen = Screen.PlaylistList
+                }
+            )
+        }
+        is Screen.AudioSettings -> {
+            AudioSettingsScreen(
+                bassLevel = bassLevel,
+                trebleLevel = trebleLevel,
+                volumeLevel = volumeLevel,
+                onBassChange = { bassLevel = it },
+                onTrebleChange = { trebleLevel = it },
+                onVolumeChange = { volumeLevel = it },
+                onBack = { currentScreen = Screen.NowPlaying }
             )
         }
         is Screen.PlaylistDetail -> {
@@ -116,7 +153,8 @@ fun MusicPlayerApp() {
                                 currentSong = songs[currentIndex - 1]
                             }
                         }
-                    }
+                    },
+                    onOpenSettings = { currentScreen = Screen.AudioSettings }
                 )
             }
         }
@@ -127,9 +165,10 @@ sealed class Screen {
     object PlaylistList : Screen()
     object PlaylistDetail : Screen()
     object NowPlaying : Screen()
+    object CreatePlaylist : Screen()
+    object AudioSettings : Screen()
 }
 
-// Sample Data
 fun getSamplePlaylists(): List<Playlist> {
     return listOf(
         Playlist(
@@ -187,10 +226,11 @@ fun getSamplePlaylists(): List<Playlist> {
 
 @Composable
 fun PlaylistScreenContent(
+    playlists: List<Playlist>,
     onPlaylistClick: (Playlist) -> Unit,
-    onQuickPlay: (Playlist) -> Unit
+    onQuickPlay: (Playlist) -> Unit,
+    onCreatePlaylist: () -> Unit
 ) {
-    val playlists = remember { getSamplePlaylists() }
     val aiPlaylists = playlists.filter { it.isAiGenerated }
     val userPlaylists = playlists.filter { !it.isAiGenerated }
 
@@ -223,7 +263,7 @@ fun PlaylistScreenContent(
             )
 
             Button(
-                onClick = {},
+                onClick = onCreatePlaylist,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFB040FF)
@@ -313,6 +353,510 @@ fun PlaylistScreenContent(
                 modifier = Modifier.weight(1f),
                 onClick = {}
             )
+        }
+    }
+}
+@Composable
+fun AudioSettingsScreen(
+    bassLevel: Float,
+    trebleLevel: Float,
+    volumeLevel: Float,
+    onBassChange: (Float) -> Unit,
+    onTrebleChange: (Float) -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onBack: () -> Unit
+) {
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Text(
+                text = "Audio Settings",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(Modifier.width(48.dp))
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        // Equalizer Icon
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(CircleShape)
+                .background(Color(0xFFB040FF).copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.GraphicEq,
+                contentDescription = null,
+                tint = Color(0xFFB040FF),
+                modifier = Modifier.size(60.dp)
+            )
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        // Volume Control
+        AudioControlCard(
+            title = "Volume",
+            icon = Icons.Default.VolumeUp,
+            value = volumeLevel,
+            onValueChange = onVolumeChange,
+            valueText = "${(volumeLevel * 100).toInt()}%"
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        // Bass Control
+        AudioControlCard(
+            title = "Bass",
+            icon = Icons.Default.MusicNote,
+            value = (bassLevel + 10f) / 20f,
+            onValueChange = { onBassChange(it * 20f - 10f) },
+            valueText = "${bassLevel.toInt()} dB",
+            minLabel = "-10",
+            maxLabel = "+10"
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        // Treble Control
+        AudioControlCard(
+            title = "Treble",
+            icon = Icons.Default.TrendingUp,
+            value = (trebleLevel + 10f) / 20f,
+            onValueChange = { onTrebleChange(it * 20f - 10f) },
+            valueText = "${trebleLevel.toInt()} dB",
+            minLabel = "-10",
+            maxLabel = "+10"
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        // Presets
+        Text(
+            text = "Presets",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PresetButton(
+                text = "Flat",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(0f)
+                    onTrebleChange(0f)
+                }
+            )
+            PresetButton(
+                text = "Bass Boost",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(6f)
+                    onTrebleChange(-2f)
+                }
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PresetButton(
+                text = "Treble Boost",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(-2f)
+                    onTrebleChange(6f)
+                }
+            )
+            PresetButton(
+                text = "Rock",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(5f)
+                    onTrebleChange(3f)
+                }
+            )
+        }
+
+        Spacer(Modifier.height(32.dp))
+
+        // Info Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF2D1B4E)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = null,
+                        tint = Color(0xFFB040FF),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = "About Audio Settings",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = "Adjust bass for deeper low-end frequencies, treble for clearer highs. Use presets for quick setup or customize to your preference.",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(0.8f),
+                    lineHeight = 20.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AudioControlCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueText: String,
+    minLabel: String = "0",
+    maxLabel: String = "100"
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF2D1B4E)
+        ),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = Color(0xFFB040FF),
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Text(
+                    text = valueText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFB040FF)
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xFFB040FF),
+                    activeTrackColor = Color(0xFFB040FF),
+                    inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                )
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = minLabel,
+                    fontSize = 12.sp,
+                    color = Color.White.copy(0.6f)
+                )
+                Text(
+                    text = maxLabel,
+                    fontSize = 12.sp,
+                    color = Color.White.copy(0.6f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PresetButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF2D1B4E)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+    }
+}
+
+// Create Playlist Screen
+@Composable
+fun CreatePlaylistScreen(
+    onBack: () -> Unit,
+    onCreate: (String, String) -> Unit
+) {
+    var playlistName by remember { mutableStateOf("") }
+    var playlistDescription by remember { mutableStateOf("") }
+
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Text(
+                text = "Create Playlist",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(Modifier.width(48.dp))
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        // Playlist Cover Preview
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFB040FF)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(80.dp)
+            )
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        // Playlist Name Input
+        Text(
+            text = "Playlist Name",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = playlistName,
+            onValueChange = { playlistName = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Enter playlist name", color = Color.White.copy(0.5f)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color(0xFFB040FF),
+                unfocusedBorderColor = Color.White.copy(0.3f),
+                cursorColor = Color(0xFFB040FF)
+            ),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        // Playlist Description Input
+        Text(
+            text = "Description",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = playlistDescription,
+            onValueChange = { playlistDescription = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            placeholder = { Text("Describe your playlist", color = Color.White.copy(0.5f)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color(0xFFB040FF),
+                unfocusedBorderColor = Color.White.copy(0.3f),
+                cursorColor = Color(0xFFB040FF)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            maxLines = 4
+        )
+
+        Spacer(Modifier.height(40.dp))
+
+        // Create Button
+        Button(
+            onClick = {
+                if (playlistName.isNotBlank()) {
+                    onCreate(playlistName, playlistDescription)
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFB040FF),
+                disabledContainerColor = Color(0xFFB040FF).copy(0.5f)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            enabled = playlistName.isNotBlank()
+        ) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = "Create Playlist",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // Tips Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF2D1B4E)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Text(
+                    text = "💡 Tips",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = "• Give your playlist a catchy name\n" +
+                            "• Add a description to help you remember\n" +
+                            "• You can add songs later\n" +
+                            "• Share with friends when ready",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(0.8f),
+                    lineHeight = 20.sp
+                )
+            }
         }
     }
 }
@@ -701,7 +1245,8 @@ fun NowPlayingScreen(
     onPlayPauseClick: () -> Unit,
     onBack: () -> Unit,
     onNext: () -> Unit,
-    onPrevious: () -> Unit
+    onPrevious: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val bg = Brush.verticalGradient(
         listOf(
@@ -740,10 +1285,10 @@ fun NowPlayingScreen(
                 color = Color.White
             )
 
-            IconButton(onClick = {}) {
+            IconButton(onClick = onOpenSettings) {
                 Icon(
-                    Icons.Default.MoreVert,
-                    contentDescription = "More",
+                    Icons.Default.Settings,
+                    contentDescription = "Audio Settings",
                     tint = Color.White,
                     modifier = Modifier.size(28.dp)
                 )
@@ -895,10 +1440,4 @@ fun NowPlayingScreen(
             }
         }
     }
-
-}
-@Preview(showBackground = true)
-@Composable
-fun PlaylistScreenActivity1() {
-    MusicPlayerApp()
 }
