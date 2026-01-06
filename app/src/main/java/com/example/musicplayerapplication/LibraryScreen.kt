@@ -126,7 +126,7 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
 
 // ------------------ Music Library Screen ------------------
 @Composable
-fun LibraryScreen(navController: NavController) {
+fun LibraryScreen(navController: NavController = rememberNavController()) {
 
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
