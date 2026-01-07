@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,12 +33,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
-
 import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.repository.HomeRepoImpl
-
 import com.example.musicplayerapplication.ui.theme.*
 import com.example.musicplayerapplication.viewmodel.HomeViewModel
 
@@ -113,36 +113,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 RecentSongItem(song)
             }
 
-        // Trending Header with Icon
-        item {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.TrendingUp,
-                    contentDescription = "Trending Up",
-                    tint = Color.Green,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    "Trending",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-
-
-        // Trending Albums Horizontal
-        item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(viewModel.trendingAlbums) { album ->
-                    TrendingAlbumCard(album)
-
             // Trending Today Header
             item {
                 Row(
@@ -165,16 +135,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
             }
 
-            // Trending Albums - Two side by side
+            // Trending Albums Horizontal
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    viewModel.trendingAlbums.take(2).forEach { album ->
-                        TrendingAlbumCard(album, modifier = Modifier.weight(1f))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    items(viewModel.trendingAlbums) { album ->
+                        TrendingAlbumCard(album)
                     }
-
                 }
             }
         }
@@ -384,6 +350,7 @@ fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
 }
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomeScreenPreview() {
