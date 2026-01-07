@@ -13,4 +13,3 @@ class NotificationViewModel(
     val recentActivities: List<RecentActivity> = repository.getRecentActivities()
     val notifications: List<Notification> = repository.getNotifications()
 }
-
