@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,7 +57,11 @@ class HomeActivity : ComponentActivity() {
 
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onNotificationClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {}
+) {
     val context = LocalContext.current
     var selectedSongId by remember { mutableStateOf<Int?>(null) }
 
@@ -69,18 +75,48 @@ fun HomeScreen(viewModel: HomeViewModel) {
     ) {
             // Welcome Header
             item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "Good evening",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        "Welcome Back",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Good evening",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            "Welcome Back",
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    // Search Icon
+                    IconButton(
+                        onClick = onSearchClick,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    // Notification Icon
+                    IconButton(
+                        onClick = onNotificationClick,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
 
@@ -391,6 +427,10 @@ fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
 @Composable
 fun HomeScreenPreview() {
     MelodyPlayTheme {
-        HomeScreen(viewModel = HomeViewModel(HomeRepoImpl()))
+        HomeScreen(
+            viewModel = HomeViewModel(HomeRepoImpl()),
+            onNotificationClick = {},
+            onSearchClick = {}
+        )
     }
 }

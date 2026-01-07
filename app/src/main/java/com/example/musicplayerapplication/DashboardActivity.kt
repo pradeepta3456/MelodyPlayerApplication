@@ -46,6 +46,7 @@ fun DashboardBody() {
     data class NavItem(val label: String, val icon: Int)
 
     var selectedIndex by remember { mutableStateOf(0) }
+    var showNotificationScreen by remember { mutableStateOf(false) }
 
     val listItem = listOf(
         NavItem(label = "Home", icon = R.drawable.baseline_home_24),
@@ -72,6 +73,7 @@ fun DashboardBody() {
                         label = { Text(item.label, fontSize = 12.sp) },
                         onClick = {
                             selectedIndex = index
+                            showNotificationScreen = false // Close notification screen when navigating
                         },
                         selected = selectedIndex == index,
                         colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
@@ -92,13 +94,27 @@ fun DashboardBody() {
                 .background(DarkPurpleBackground)
                 .padding(padding)
         ) {
-            when (selectedIndex) {
-                0 -> HomeScreen(viewModel = viewModel())
-                1 -> LibraryScreen()
-                2 -> PlaylistScreen()
-                3 -> ProfileScreen()
-                4 -> SettingsScreen()
-                else -> HomeScreen(viewModel = viewModel())
+            if (showNotificationScreen) {
+                NotificationScreen(
+                    onBackClick = { showNotificationScreen = false }
+                )
+            } else {
+                when (selectedIndex) {
+                    0 -> HomeScreen(
+                        viewModel = viewModel(),
+                        onNotificationClick = { showNotificationScreen = true },
+                        onSearchClick = { /* TODO: Implement search functionality */ }
+                    )
+                    1 -> LibraryScreen()
+                    2 -> PlaylistScreen()
+                    3 -> ProfileScreen()
+                    4 -> SettingsScreen()
+                    else -> HomeScreen(
+                        viewModel = viewModel(),
+                        onNotificationClick = { showNotificationScreen = true },
+                        onSearchClick = { /* TODO: Implement search functionality */ }
+                    )
+                }
             }
         }
     }
