@@ -126,7 +126,7 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
 
 // ------------------ Music Library Screen ------------------
 @Composable
-fun LibraryScreen(navController: NavController) {
+fun LibraryScreen(navController: NavController = rememberNavController()) {
 
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
@@ -139,7 +139,7 @@ fun LibraryScreen(navController: NavController) {
         "Genres" to (R.drawable.baseline_library_music_24 to "genres"),
         "Folders" to (R.drawable.baseline_folder_open_24 to "folders")
     )
-    
+
     // Fixed category for this screen is "Albums"
     val fixedCategory = "Albums"
 
@@ -311,11 +311,11 @@ fun AlbumDetailScreen(albumName: String, navController: NavController) {
     val songs = remember(albumName) {
         getSongsForArtist(albumName)
     }
-    
+
     val durations = remember(albumName) {
         getDurationsForArtist(albumName)
     }
-    
+
     Scaffold(
         topBar = {
             Row(
@@ -365,7 +365,7 @@ fun AlbumDetailScreen(albumName: String, navController: NavController) {
                         onSongClick = { /* Navigate to song detail or play */ }
                     )
                 }
-                
+
                 // Sign in promotional section
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -384,7 +384,7 @@ fun AlbumSongItem(
 ) {
     var isFavorite by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -410,7 +410,7 @@ fun AlbumSongItem(
                     .size(60.dp)
                     .clip(RoundedCornerShape(8.dp))
             )
-            
+
             // Song Name and Duration in same line
             Row(
                 modifier = Modifier.weight(1f),
@@ -429,7 +429,7 @@ fun AlbumSongItem(
                     fontSize = 14.sp
                 )
             }
-            
+
             // Heart Icon
             IconButton(
                 onClick = { isFavorite = !isFavorite },
@@ -442,7 +442,7 @@ fun AlbumSongItem(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             // Play/Pause Icon
             IconButton(
                 onClick = { isPlaying = !isPlaying },
@@ -455,7 +455,7 @@ fun AlbumSongItem(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             // More Options Icon
             IconButton(
                 onClick = { /* Show menu */ },
@@ -514,7 +514,7 @@ fun SignInPromoCard() {
                     )
                 }
             }
-            
+
             // Promotional Text
             Text(
                 text = "Create more Playlist and Costumize your music",

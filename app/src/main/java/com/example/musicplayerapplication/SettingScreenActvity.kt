@@ -195,7 +195,7 @@ fun SettingTabs() {
         when (selected) {
             0 -> AudioSettings()
             1 -> ThemeSettings()
-            2 -> GeneralSettings()
+
         }
 
     }
