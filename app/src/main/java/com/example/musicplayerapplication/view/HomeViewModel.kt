@@ -12,3 +12,4 @@ class HomeViewModel(
     val recentSongs: List<Song> = repository.getRecentSongs()
     val trendingAlbums: List<Album> = repository.getTrendingAlbums()
 }
+
