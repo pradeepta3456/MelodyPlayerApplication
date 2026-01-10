@@ -223,7 +223,24 @@ fun SignInBody() {
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Forgot Password
+                    TextButton(
+                        onClick = {
+                            val intent = Intent(context, ForgotPasswordActivity::class.java)
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            text = "Forgot password?",
+                            color = Color(0xFF8B5CF6),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Sign In Button
                     Button(
@@ -304,30 +321,6 @@ fun SignInBody() {
                         )
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Continue as Guest Button
-            OutlinedButton(
-                onClick = {
-                    // Navigate to dashboard as guest with empty credentials
-                    navigateToDashboard("guest@melodyplay.com", "guest_user")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White.copy(alpha = 0.9f)
-                ),
-                border = null
-            ) {
-                Text(
-                    text = "Continue as guest",
-                    color = Color.Gray,
-                    fontSize = 16.sp
-                )
             }
         }
     }
