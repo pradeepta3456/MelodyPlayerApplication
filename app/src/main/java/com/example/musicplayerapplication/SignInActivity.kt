@@ -63,15 +63,23 @@ fun SignInBody() {
             email.isEmpty() -> {
                 Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
             }
+
             !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                 Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
             }
+
             password.isEmpty() -> {
                 Toast.makeText(context, "Please enter your password", Toast.LENGTH_SHORT).show()
             }
+
             password.length < 6 -> {
-                Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Password must be at least 6 characters",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             else -> {
                 // Successful validation
                 navigateToDashboard(email, password)
@@ -223,7 +231,24 @@ fun SignInBody() {
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Forgot Password
+                    TextButton(
+                        onClick = {
+                            val intent = Intent(context, ForgotPasswordActivity::class.java)
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            text = "Forgot password?",
+                            color = Color(0xFF8B5CF6),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Sign In Button
                     Button(
@@ -275,9 +300,11 @@ fun SignInBody() {
                             // Simulate Google Sign-In by using a demo Google account
                             // In a real app, you would integrate Google Sign-In SDK
                             val googleEmail = "user@gmail.com"
-                            val googlePassword = "google_auth_token" // This would be a token in real implementation
+                            val googlePassword =
+                                "google_auth_token" // This would be a token in real implementation
 
-                            Toast.makeText(context, "Signing in with Google...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Signing in with Google...", Toast.LENGTH_SHORT)
+                                .show()
 
                             // Navigate to dashboard with Google credentials
                             navigateToDashboard(googleEmail, googlePassword)
@@ -304,30 +331,6 @@ fun SignInBody() {
                         )
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Continue as Guest Button
-            OutlinedButton(
-                onClick = {
-                    // Navigate to dashboard as guest with empty credentials
-                    navigateToDashboard("guest@melodyplay.com", "guest_user")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White.copy(alpha = 0.9f)
-                ),
-                border = null
-            ) {
-                Text(
-                    text = "Continue as guest",
-                    color = Color.Gray,
-                    fontSize = 16.sp
-                )
             }
         }
     }
