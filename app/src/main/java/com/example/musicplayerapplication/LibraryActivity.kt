@@ -223,9 +223,6 @@ fun NavItemWithDrawable(
 
 @Composable
 fun MusicLibraryScreen() {
-    var selectedTab by remember { mutableStateOf("Songs") }
-    val tabs = listOf("Albums", "Artists", "Songs")
-
     val songs = remember {
         listOf(
             Song(1, "Song Name", "Artist Name", R.drawable.img_10),
@@ -255,30 +252,7 @@ fun MusicLibraryScreen() {
             modifier = Modifier.padding(top = 4.dp)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Tabs
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(50),
-            color = Color(0x807C3AED)
-        ) {
-            Row(
-                modifier = Modifier.padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                tabs.forEach { tab ->
-                    TabButton(
-                        text = tab,
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Song List
         LazyColumn(
@@ -287,34 +261,6 @@ fun MusicLibraryScreen() {
             items(songs) { song ->
                 SongItem(song = song)
             }
-        }
-    }
-}
-
-@Composable
-fun TabButton(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(50),
-        color = if (selected) Color(0xFF9333EA) else Color.Transparent
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(vertical = 10.dp, horizontal = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                color = if (selected) Color.White else Color(0xFFE9D5FF),
-                fontSize = 14.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-            )
         }
     }
 }
