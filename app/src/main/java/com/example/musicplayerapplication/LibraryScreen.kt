@@ -66,7 +66,8 @@ import androidx.navigation.navArgument
 import com.example.musicplayerapplication.model.LibraryArtist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
-import com.example.musicplayerapplication.viewmodel.LibraryViewModel
+import com.example.musicplayerapplication.view.LibraryViewModel
+
 
 class LibraryScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
