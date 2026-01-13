@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicPlayerApplication">
         <activity
-            android:name=".SongActivity"
+            android:name=".FolderActivity"
             android:exported="true"
             android:label="@string/title_activity_song"
             android:theme="@style/Theme.MusicPlayerApplication">
@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LibraryActivity"
+            android:name=".SongActivity"
             android:exported="true"
             android:label="@string/title_activity_library"
             android:theme="@style/Theme.MusicPlayerApplication">
@@ -117,6 +117,17 @@
 
         <activity
             android:name=".ProfileActivity"
+            android:exported="true"
+            android:label="MusicPlayerApplication"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ForgotPasswordActivity"
             android:exported="true"
             android:label="MusicPlayerApplication"
             android:theme="@style/Theme.MusicPlayerApplication">
