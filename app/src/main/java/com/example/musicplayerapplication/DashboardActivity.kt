@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
-import com.example.musicplayerapplication.viewmodel.HomeViewModel
+
 
 
 class DashboardActivity : ComponentActivity() {
@@ -101,7 +101,7 @@ fun DashboardBody() {
             } else {
                 when (selectedIndex) {
                     0 -> HomeScreen(
-                        viewModel = viewModel(),
+                        viewModel = viewModelw(),
                         onNotificationClick = { showNotificationScreen = true },
                         onSearchClick = { /* TODO: Implement search functionality */ }
                     )
