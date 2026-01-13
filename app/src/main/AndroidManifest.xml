@@ -12,6 +12,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MusicPlayerApplication">
         <activity
+            android:name=".ArtistActivity"
+            android:exported="true"
+            android:label="@string/title_activity_artist"
+            android:theme="@style/Theme.MusicPlayerApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".PlaylistScreenActivity"
             android:exported="true"
             android:label="MusicPlayerApplication"

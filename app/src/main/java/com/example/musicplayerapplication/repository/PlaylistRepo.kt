@@ -13,3 +13,4 @@ interface PlaylistRepository {
 
     fun addOrRemoveDownload(songId: Int)
 }
+
