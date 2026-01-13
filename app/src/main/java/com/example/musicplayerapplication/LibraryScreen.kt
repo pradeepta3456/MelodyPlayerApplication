@@ -1,4 +1,8 @@
 package com.example.musicplayerapplication
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,9 +21,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -42,14 +58,26 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.musicplayerapplication.model.LibraryArtist
+import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
 import com.example.musicplayerapplication.viewmodel.LibraryViewModel
 
-
+class LibraryScreenActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MelodyPlayTheme {
+                AppNavGraph()
+            }
+        }
+    }
+}
 
 
 @Composable
@@ -67,6 +95,13 @@ fun AppNavGraph() {
         composable("genres") { SimpleScreen("Genres Screen") }
         composable("folders") { SimpleScreen("Folders Screen") }
         composable("profile") { SimpleScreen("Profile Screen") }
+        composable(
+            route = "album_detail/{albumName}",
+            arguments = listOf(navArgument("albumName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val albumName = backStackEntry.arguments?.getString("albumName") ?: ""
+            AlbumDetailScreen(albumName = albumName, navController = navController)
+        }
     }
 }
 
@@ -91,20 +126,22 @@ fun MelodyPlayTheme(content: @Composable () -> Unit) {
 
 // ------------------ Music Library Screen ------------------
 @Composable
-fun LibraryScreen(navController: NavController) {
+fun LibraryScreen(navController: NavController = rememberNavController()) {
 
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
 
     var searchQuery by remember { mutableStateOf("") }
-    val selectedCategory by viewModel.selectedCategory
     val artists = viewModel.artists
     val categories = listOf(
-        "Songs" to R.drawable.baseline_music_note_24,
-        "Albums" to R.drawable.baseline_album_24,
-        "Artists" to R.drawable.baseline_person_24,
-        "Genres" to R.drawable.baseline_library_music_24,
-        "Folders" to R.drawable.baseline_folder_open_24
+        "Songs" to (R.drawable.baseline_music_note_24 to "songs"),
+        "Albums" to (R.drawable.baseline_album_24 to "albums"),
+        "Artists" to (R.drawable.baseline_person_24 to "artists"),
+        "Genres" to (R.drawable.baseline_library_music_24 to "genres"),
+        "Folders" to (R.drawable.baseline_folder_open_24 to "folders")
     )
+
+    // Fixed category for this screen is "Albums"
+    val fixedCategory = "Albums"
 
     Scaffold(
         topBar = {
@@ -156,13 +193,17 @@ fun LibraryScreen(navController: NavController) {
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    categories.forEach { (label, iconRes) ->
+                    categories.forEach { (label, iconAndRoute) ->
+                        val (iconRes, route) = iconAndRoute
                         CategoryChip(
                             label = label,
                             iconResId = iconRes,
-                            selected = selectedCategory == label
+                            selected = label == fixedCategory
                         ) {
-                            viewModel.selectCategory(label)
+                            // If not Albums, navigate to other screen
+                            if (label != fixedCategory) {
+                                navController.navigate(route)
+                            }
                         }
                     }
                 }
@@ -171,14 +212,14 @@ fun LibraryScreen(navController: NavController) {
         containerColor = Color(0xFF6176E3)
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            ArtistListScreen(artists = artists) { /* handle artist click */ }
+            ArtistListScreen(artists = artists, navController = navController)
         }
     }
 }
 
 // ------------------ Artist List ------------------
 @Composable
-fun ArtistListScreen(artists: List<LibraryArtist>, onArtistClick: (LibraryArtist) -> Unit) {
+fun ArtistListScreen(artists: List<LibraryArtist>, navController: NavController) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -188,7 +229,7 @@ fun ArtistListScreen(artists: List<LibraryArtist>, onArtistClick: (LibraryArtist
     ) {
         items(artists) { artist ->
             ArtistCard(artist = artist) {
-                onArtistClick(artist)
+                navController.navigate("album_detail/${artist.name}")
             }
         }
     }
@@ -262,6 +303,279 @@ fun CategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -
 
 // ------------------ Bottom Bar ------------------
 
+
+// ------------------ Album Detail Screen ------------------
+@Composable
+fun AlbumDetailScreen(albumName: String, navController: NavController) {
+    // Get different songs based on the artist name
+    val songs = remember(albumName) {
+        getSongsForArtist(albumName)
+    }
+
+    val durations = remember(albumName) {
+        getDurationsForArtist(albumName)
+    }
+
+    Scaffold(
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF414C91))
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_menu_24),
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .clickable { navController.popBackStack() }
+                        .size(24.dp)
+                )
+                Text(
+                    text = albumName,
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        containerColor = Color(0xFF2C3C72)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xFF2C3C72))
+        ) {
+            // Songs List
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(songs.size) { index ->
+                    AlbumSongItem(
+                        song = songs[index],
+                        duration = durations[index],
+                        onSongClick = { /* Navigate to song detail or play */ }
+                    )
+                }
+
+                // Sign in promotional section
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SignInPromoCard()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AlbumSongItem(
+    song: Song,
+    duration: String,
+    onSongClick: () -> Unit
+) {
+    var isFavorite by remember { mutableStateOf(false) }
+    var isPlaying by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onSongClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF3A4A7A)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Album Art Thumbnail
+            Image(
+                painter = painterResource(id = song.cover),
+                contentDescription = song.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+
+            // Song Name and Duration in same line
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = song.title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                Text(
+                    text = duration,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
+
+            // Heart Icon
+            IconButton(
+                onClick = { isFavorite = !isFavorite },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) Color(0xFFEC4899) else Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Play/Pause Icon
+            IconButton(
+                onClick = { isPlaying = !isPlaying },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // More Options Icon
+            IconButton(
+                onClick = { /* Show menu */ },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SignInPromoCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF2A3A6A)
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Sign in Button
+            Button(
+                onClick = { /* Navigate to sign in */ },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Sign in",
+                        color = Color(0xFF2C3C72),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color(0xFF2C3C72),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            // Promotional Text
+            Text(
+                text = "Create more Playlist and Costumize your music",
+                color = Color.White,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+
+// ------------------ Helper Functions for Artist Details ------------------
+fun getSongsForArtist(artistName: String): List<Song> {
+    return when (artistName) {
+        "Luna Eclipse" -> listOf(
+            Song(1, "Katsee", "Artist", R.drawable.img_1, 0),
+            Song(2, "Miline", "Artist", R.drawable.img_5, 0),
+            Song(3, "Star", "Artist", R.drawable.img_6, 0),
+            Song(4, "Eclipse", "Artist", R.drawable.img_7, 0),
+            Song(5, "Moon", "Artist", R.drawable.img_10, 0)
+        )
+        "Sunshine" -> listOf(
+            Song(1, "Lily", "Artist", R.drawable.img_2, 0),
+            Song(2, "Bright ", "Artist", R.drawable.img_11, 0),
+            Song(3, "Golden", "Artist", R.drawable.img_12, 0),
+            Song(4, "Summe", "Artist", R.drawable.img14, 0),
+            Song(5, "Radian", "Artist", R.drawable.img15, 0)
+        )
+        "Poster Girl" -> listOf(
+            Song(1, "Casitia", "Artist", R.drawable.img_3, 0),
+            Song(2, "Fashion", "Artist", R.drawable.img_4, 0),
+            Song(3, "Style", "Artist", R.drawable.img_5, 0),
+            Song(4, "Glam", "Artist", R.drawable.img_6, 0),
+            Song(5, "Trend", "Artist", R.drawable.img_7, 0)
+        )
+        "Disco Drive" -> listOf(
+            Song(1, "Danielle", "Artist", R.drawable.img_4, 0),
+            Song(2, "Risern", "Artist", R.drawable.img_5, 0),
+            Song(3, "Nigh", "Artist", R.drawable.img_6, 0),
+            Song(4, "Dance", "Artist", R.drawable.img_7, 0),
+            Song(5, "Groove", "Artist", R.drawable.img_10, 0)
+        )
+        else -> listOf(
+            Song(1, "Song 1", "Artist", R.drawable.img_1, 0),
+            Song(2, "Song 2", "Artist", R.drawable.img_2, 0),
+            Song(3, "Song 3", "Artist", R.drawable.img_3, 0),
+            Song(4, "Song 4", "Artist", R.drawable.img_4, 0),
+            Song(5, "Song 5", "Artist", R.drawable.img_5, 0)
+        )
+    }
+}
+
+fun getDurationsForArtist(artistName: String): List<String> {
+    return when (artistName) {
+        "Luna Eclipse" -> listOf("2:50", "3:15", "4:20", "3:45", "5:10")
+        "Sunshine" -> listOf("3:05", "2:30", "3:55", "4:10", "3:20")
+        "Poster Girl" -> listOf("3:54", "2:45", "3:30", "4:05", "3:15")
+        "Disco Drive" -> listOf("2:45", "5:12", "4:30", "3:25", "4:50")
+        else -> listOf("2:50", "3:05", "3:54", "2:45", "5:12")
+    }
+}
 
 // ------------------ Simple Placeholder Screen ------------------
 @Composable

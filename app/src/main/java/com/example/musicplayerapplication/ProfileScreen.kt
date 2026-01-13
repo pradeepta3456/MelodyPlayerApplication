@@ -68,7 +68,7 @@ fun ProfileScreen(profileViewModel:ProfileViewModel = ProfileViewModel()) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFE91E63))
+            .background(Color(0xFF21133B))
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 32.dp, bottom = 16.dp)
     ) {
