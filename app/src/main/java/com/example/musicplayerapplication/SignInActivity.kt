@@ -3,10 +3,13 @@ package com.example.musicplayerapplication
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,41 +27,111 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.repository.UserRepoImpl
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
+import com.example.musicplayerapplication.viewmodel.UserViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.auth
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 
 class SignInActivity : ComponentActivity() {
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = Firebase.auth
+
         enableEdgeToEdge()
         setContent {
-            MusicPlayerApplicationTheme  () {
-                SignInBody()
+            MusicPlayerApplicationTheme {
+                SignInBody(auth)
             }
         }
     }
 }
 
 @Composable
-fun SignInBody() {
+fun SignInBody(auth: FirebaseAuth) {
+    val userViewModel = remember { UserViewModel(UserRepoImpl()) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val activity = context as? Activity
+    val scope = rememberCoroutineScope()
+
+    // Google Sign-In configuration
+    val gso = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+    }
+
+    val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account?.idToken?.let { token ->
+                    isLoading = true
+                    scope.launch {
+                        try {
+                            val credential = GoogleAuthProvider.getCredential(token, null)
+                            val authResult = auth.signInWithCredential(credential).await()
+                            val user = authResult.user
+
+                            if (user != null) {
+                                Toast.makeText(context, "Welcome!", Toast.LENGTH_SHORT).show()
+
+                                // Navigate to dashboard
+                                val intent = Intent(context, DashboardActivity::class.java)
+                                intent.putExtra("email", user.email)
+                                intent.putExtra("name", user.displayName)
+                                context.startActivity(intent)
+                                activity?.finish()
+                            }
+                        } catch (e: Exception) {
+                            Log.e("SignIn", "Google auth failed", e)
+                            Toast.makeText(context, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                }
+            } catch (e: ApiException) {
+                Log.e("SignIn", "Google sign-in failed", e)
+                Toast.makeText(context, "Google sign-in failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // Function to navigate to Dashboard
-    fun navigateToDashboard(userEmail: String, userPassword: String) {
+    fun navigateToDashboard(userEmail: String, userName: String?) {
         val intent = Intent(context, DashboardActivity::class.java)
         intent.putExtra("email", userEmail)
-        intent.putExtra("password", userPassword)
+        intent.putExtra("name", userName)
         context.startActivity(intent)
         activity?.finish()
     }
 
-    // Function to validate email and password
-    fun validateAndSignIn() {
+    // Function to sign in with email and password
+    fun signInWithEmailPassword() {
         when {
             email.isEmpty() -> {
                 Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
@@ -73,8 +146,27 @@ fun SignInBody() {
                 Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                // Successful validation
-                navigateToDashboard(email, password)
+                isLoading = true
+                scope.launch {
+                    try {
+                        auth.signInWithEmailAndPassword(email, password).await()
+                        val user = auth.currentUser
+
+                        if (user != null) {
+                            Toast.makeText(context, "Welcome back!", Toast.LENGTH_SHORT).show()
+                            navigateToDashboard(user.email ?: email, user.displayName)
+                        }
+                    } catch (e: FirebaseAuthInvalidUserException) {
+                        Toast.makeText(context, "No account found with this email", Toast.LENGTH_LONG).show()
+                    } catch (e: FirebaseAuthInvalidCredentialsException) {
+                        Toast.makeText(context, "Invalid password", Toast.LENGTH_LONG).show()
+                    } catch (e: Exception) {
+                        Log.e("SignIn", "Sign in failed", e)
+                        Toast.makeText(context, "Sign in failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        isLoading = false
+                    }
+                }
             }
         }
     }
@@ -170,7 +262,8 @@ fun SignInBody() {
                             unfocusedTextColor = Color.White,
                             cursorColor = Color.White
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -220,7 +313,8 @@ fun SignInBody() {
                             unfocusedTextColor = Color.White,
                             cursorColor = Color.White
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -231,7 +325,8 @@ fun SignInBody() {
                             val intent = Intent(context, ForgotPasswordActivity::class.java)
                             context.startActivity(intent)
                         },
-                        modifier = Modifier.align(Alignment.End)
+                        modifier = Modifier.align(Alignment.End),
+                        enabled = !isLoading
                     ) {
                         Text(
                             text = "Forgot password?",
@@ -244,21 +339,29 @@ fun SignInBody() {
 
                     // Sign In Button
                     Button(
-                        onClick = { validateAndSignIn() },
+                        onClick = { signInWithEmailPassword() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF8B5CF6)
-                        )
+                        ),
+                        enabled = !isLoading
                     ) {
-                        Text(
-                            text = "Sign in",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "Sign in",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -289,15 +392,8 @@ fun SignInBody() {
                     // Continue with Google Button
                     OutlinedButton(
                         onClick = {
-                            // Simulate Google Sign-In by using a demo Google account
-                            // In a real app, you would integrate Google Sign-In SDK
-                            val googleEmail = "user@gmail.com"
-                            val googlePassword = "google_auth_token" // This would be a token in real implementation
-
-                            Toast.makeText(context, "Signing in with Google...", Toast.LENGTH_SHORT).show()
-
-                            // Navigate to dashboard with Google credentials
-                            navigateToDashboard(googleEmail, googlePassword)
+                            val signInIntent = googleSignInClient.signInIntent
+                            launcher.launch(signInIntent)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -306,19 +402,27 @@ fun SignInBody() {
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = Color.White
                         ),
-                        border = null
+                        border = null,
+                        enabled = !isLoading
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_5),
-                            contentDescription = "Google",
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Continue with Google",
-                            color = Color.Black,
-                            fontSize = 16.sp
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.Black
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(R.drawable.img_5),
+                                contentDescription = "Google",
+                                modifier = Modifier.size(24.dp),
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Continue with Google",
+                                color = Color.Black,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 }
             }

@@ -59,6 +59,12 @@ dependencies {
     implementation(libs.androidx.benchmark.traceprocessor)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+
+
+
 
 
     testImplementation(libs.junit)

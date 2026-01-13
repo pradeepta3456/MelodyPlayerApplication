@@ -4,4 +4,5 @@
     <string name="title_activity_genre">GenreActivity</string>
     <string name="title_activity_library">LibraryActivity</string>
     <string name="title_activity_song">SongActivity</string>
+    <string name="default_web_client_id"><![CDATA[<string name=\"default_web_client_id\">YOUR_WEB_CLIENT_ID</string>]]></string>
 </resources>

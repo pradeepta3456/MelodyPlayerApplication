@@ -104,7 +104,7 @@ fun ProfileScreen(profileViewModel:ProfileViewModel = ProfileViewModel()) {
         // Stats Row
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatCard("1247h", "Listening Time", R.drawable.baseline_access_time_filled_24, cardColor, Modifier.weight(1f))
+                StatCard("1247h", "Listening Time", R.drawable.baseline_access_time_filled_24_2, cardColor, Modifier.weight(1f))
                 StatCard("3421", "Songs Played", R.drawable.baseline_music_note_24, cardColor, Modifier.weight(1f))
             }
             Spacer(modifier = Modifier.height(10.dp))
