@@ -13,3 +13,6 @@ val DarkPurpleBackground = Color(0xFF1A0E2E)
 val CardBackground = Color(0xFF2D1B4E)
 val AccentPink = Color(0xFFE91E63)
 val TextYellow = Color(0xFFE9D200)
+val PurpleBackground = Color(0xFF6B46C1) // Purple background for onboarding
+val PurpleButton = Color(0xFF8B5CF6) // Purple button color
+val WhiteSoft = Color(0xFFE5E7EB) // Soft white/gray color

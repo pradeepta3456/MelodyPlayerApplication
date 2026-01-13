@@ -3,4 +3,5 @@
     <string name="title_activity_sign_in">SignInActivity</string>
     <string name="title_activity_genre">GenreActivity</string>
     <string name="title_activity_library">LibraryActivity</string>
+    <string name="title_activity_get_started_acticity">GetStartedActicity</string>
 </resources>
