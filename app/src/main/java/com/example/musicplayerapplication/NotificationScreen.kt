@@ -31,7 +31,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Notification
 import com.example.musicplayerapplication.model.RecentActivity
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
-import com.example.musicplayerapplication.viewmodel.NotificationViewModel
+import com.example.musicplayerapplication.view.NotificationViewModel
+
 
 @Composable
 fun NotificationScreen(

@@ -40,7 +40,7 @@ import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.repository.HomeRepoImpl
 import com.example.musicplayerapplication.ui.theme.*
-import com.example.musicplayerapplication.viewmodel.HomeViewModel
+import com.example.musicplayerapplication.view.HomeViewModel
 import kotlin.jvm.java
 
 class HomeActivity : ComponentActivity() {
