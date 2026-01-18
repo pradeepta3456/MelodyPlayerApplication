@@ -101,7 +101,7 @@ fun DashboardBody() {
             } else {
                 when (selectedIndex) {
                     0 -> HomeScreen(
-                        viewModel = viewModelw(),
+                        viewModel = viewModel(),
                         onNotificationClick = { showNotificationScreen = true },
                         onSearchClick = { /* TODO: Implement search functionality */ }
                     )
