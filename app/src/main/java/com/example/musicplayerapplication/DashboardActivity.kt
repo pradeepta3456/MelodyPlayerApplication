@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
 
 
+
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,12 +112,13 @@ fun DashboardBody() {
                     else -> HomeScreen(
                         viewModel = viewModel(),
                         onNotificationClick = { showNotificationScreen = true },
-                        onSearchClick = {   }
+                        onSearchClick = { /* TODO: Implement search functionality */ }
                     )
                 }
             }
         }
     }
 }
+
 
 
