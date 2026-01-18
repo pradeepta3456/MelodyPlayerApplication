@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
@@ -33,10 +32,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.repository.HomeRepoImpl
 import com.example.musicplayerapplication.ui.theme.*
 import com.example.musicplayerapplication.view.HomeViewModel
@@ -45,7 +42,7 @@ class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MelodyPlayTheme {
+            MusicPlayerTheme {
                 val viewModel: HomeViewModel = viewModel()
                 HomeScreen(
                     viewModel = viewModel,
@@ -151,17 +148,16 @@ fun HomeScreen(
             }
 
             // Recently Played Songs
-            items(viewModel.recentSongs) { song ->
-                RecentSongItem(
-                    song = song,
-                    isSelected = song.id == selectedSongId,
-                    onClick = {
-                        selectedSongId = song.id
-                        // Navigate to LibraryActivity when a recent song is tapped
-                        context.startActivity(Intent(context, LibraryScreenActivity::class.java))
-                    }
-                )
-            }
+        items(viewModel.recentSongs) { song ->
+            RecentSongItem(
+                song = song,
+                isSelected = song.id == selectedSongId,
+                onClick = {
+                    selectedSongId = song.id
+                    // Navigation removed for now
+                }
+            )
+        }
 
         // Trending Today Header
         item {
@@ -306,16 +302,16 @@ fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
 @Composable
 fun RecentSongItem(
     song: Song,
-    isSelected: Boolean,
-    onClick: () -> Unit
+    onClick:   () -> Unit,  // Make sure there's NO @Composable here
+    isSelected: Boolean
 ) {
-    val highlightColor = Color(0xFF4F46E5) // Indigo-like highlight similar to your mock
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
-            .clickable(onClick = onClick),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },  // This is how you use it
+        // ... rest of your code
+
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) CardBackground.copy(alpha = 0.9f) else CardBackground
         ),
@@ -361,6 +357,7 @@ fun RecentSongItem(
                 onClick = onClick,
                 modifier = Modifier.size(40.dp)
             ) {
+                val highlightColor = Color(0xFFE91E63)
                 Icon(
                     painter = painterResource(id = R.drawable.baseline_play_arrow_24),
                     contentDescription = "Play",
@@ -429,7 +426,7 @@ fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomeScreenPreview() {
-    MelodyPlayTheme {
+    MusicPlayerTheme {
         HomeScreen(
             viewModel = HomeViewModel(HomeRepoImpl()),
             onNotificationClick = {},
