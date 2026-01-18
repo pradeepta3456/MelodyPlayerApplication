@@ -32,8 +32,8 @@ import com.example.musicplayerapplication.model.Achievement
 import com.example.musicplayerapplication.model.Artist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
+import com.example.musicplayerapplication.view.ProfileViewModel
 
-import com.example.musicplayerapplication.viewmodel.ProfileViewModel
 
 
 class ProfileActivity : ComponentActivity() {
@@ -56,7 +56,7 @@ class ProfileActivity : ComponentActivity() {
 
 // ---------------------- PROFILE SCREEN ----------------------
 @Composable
-fun ProfileScreen(profileViewModel:ProfileViewModel = ProfileViewModel()) {
+fun ProfileScreen(profileViewModel: ProfileViewModel = ProfileViewModel()) {
     val topSongs = profileViewModel.topSongs
     val topArtists = profileViewModel.topArtists
     val achievements = profileViewModel.achievements
