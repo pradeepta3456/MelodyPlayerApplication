@@ -59,7 +59,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.repository.HomeRepoImpl
-import com.example.musicplayerapplication.viewmodel.HomeViewModel
+import com.example.musicplayerapplication.view.HomeViewModel
+
 
 
 class SettingScreen : ComponentActivity() {

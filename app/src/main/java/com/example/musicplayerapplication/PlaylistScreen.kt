@@ -24,7 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
+import com.example.musicplayerapplication.view.PlaylistViewModel
+
 
 
 @Composable
