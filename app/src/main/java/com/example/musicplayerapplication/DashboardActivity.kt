@@ -31,6 +31,7 @@ import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
 import com.example.musicplayerapplication.view.HomeViewModel
 
 
+
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,5 +121,6 @@ fun DashboardBody() {
         }
     }
 }
+
 
 
