@@ -10,7 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,14 +40,18 @@ import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.repository.HomeRepoImpl
 import com.example.musicplayerapplication.ui.theme.*
 import com.example.musicplayerapplication.view.HomeViewModel
-import kotlin.jvm.java
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MelodyPlayTheme {
-                HomeScreen(viewModel = viewModel())
+                val viewModel: HomeViewModel = viewModel()
+                HomeScreen(
+                    viewModel = viewModel,
+                    onNotificationClick = {},
+                    onSearchClick = {}
+                )
             }
         }
     }
@@ -188,8 +191,8 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.trendingAlbums.take(2).forEach { album ->
-                    TrendingAlbumCard(album, modifier = Modifier.weight(1f))
+                viewModel.trendingAlbums.take(2).forEach { album: Album ->
+                    TrendingAlbumCard(album = album, modifier = Modifier.weight(1f))
                 }
             }
         }

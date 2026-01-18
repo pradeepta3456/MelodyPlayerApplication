@@ -51,6 +51,12 @@ fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
     }
 }
 
+// Wrapper used by Dashboard and Settings bottom navigation
+@Composable
+fun PlaylistScreen() {
+    MusicApp()
+}
+
 
 
 

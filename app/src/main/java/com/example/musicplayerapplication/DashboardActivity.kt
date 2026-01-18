@@ -26,7 +26,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
+import com.example.musicplayerapplication.view.HomeViewModel
 
 
 class DashboardActivity : ComponentActivity() {
@@ -98,20 +100,20 @@ fun DashboardBody() {
                     onBackClick = { showNotificationScreen = false }
                 )
             } else {
-                when (selectedIndex) {
+            when (selectedIndex) {
                     0 -> HomeScreen(
-                        viewModel = viewModel(),
+                        viewModel = viewModel<HomeViewModel>(),
                         onNotificationClick = { showNotificationScreen = true },
                         onSearchClick = { /* TODO: Implement search functionality */ }
                     )
-                    1 -> LibraryScreen()
-                    2 -> PlaylistScreen()
-                    3 -> ProfileScreen()
-                    4 -> SettingsScreen()
+                1 -> LibraryScreen()
+                2 -> PlaylistScreen()
+                3 -> ProfileScreen()
+                4 -> SettingsScreen()
                     else -> HomeScreen(
-                        viewModel = viewModel(),
+                        viewModel = viewModel<HomeViewModel>(),
                         onNotificationClick = { showNotificationScreen = true },
-                        onSearchClick = {   }
+                        onSearchClick = { /* TODO: Implement search functionality */ }
                     )
                 }
             }
