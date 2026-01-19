@@ -4,4 +4,5 @@
     <string name="title_activity_genre">GenreActivity</string>
     <string name="title_activity_library">LibraryActivity</string>
     <string name="title_activity_get_started_acticity">GetStartedActicity</string>
+    <string name="title_activity_permission_request_screen">PermissionRequestScreenActivity</string>
 </resources>

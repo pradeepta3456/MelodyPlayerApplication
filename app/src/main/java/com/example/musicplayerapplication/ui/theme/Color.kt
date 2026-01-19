@@ -16,3 +16,5 @@ val TextYellow = Color(0xFFE9D200)
 val PurpleBackground = Color(0xFF6B46C1) // Purple background for onboarding
 val PurpleButton = Color(0xFF8B5CF6) // Purple button color
 val WhiteSoft = Color(0xFFE5E7EB) // Soft white/gray color
+val DarkPurpleCard = Color(0xFF3A2A5C) // Dark purple card color
+val BrightPurple = Color(0xFF9333EA) // Bright purple for buttons
