@@ -30,7 +30,7 @@ class GetStartedActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PremiumAudioOnboardingScreen(
+            GetStartedOnboardingScreen(
                 onNextClick = { /* Navigate to next screen */ },
                 onSkipClick = { /* Skip onboarding */ }
             )
@@ -39,7 +39,7 @@ class GetStartedActivity : ComponentActivity() {
 }
 
 @Composable
-fun PremiumAudioOnboardingScreen(
+fun GetStartedOnboardingScreen(
     onNextClick: () -> Unit = {},
     onSkipClick: () -> Unit = {}
 ) {
@@ -152,7 +152,7 @@ fun PremiumAudioOnboardingScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun melodyplayPreview() {
-    PremiumAudioOnboardingScreen(
+    GetStartedOnboardingScreen(
         onNextClick = { },
         onSkipClick = { }
     )
