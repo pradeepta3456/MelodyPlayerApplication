@@ -1,17 +1,16 @@
 package com.example.musicplayerapplication.View
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,72 +18,66 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.R
-import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicplayerapplication.ViewModel.AuthState
+import com.example.musicplayerapplication.ViewModel.AuthViewModel
 
 class SignInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            MusicPlayerApplicationTheme  () {
-                SignInBody()
-            }
+            SignInScreen()
         }
     }
 }
 
 @Composable
-fun SignInBody() {
+fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val activity = context as? Activity
+    val authState by viewModel.authState
+    val isLoading by viewModel.isLoading
 
-    // Function to navigate to Dashboard
-    fun navigateToDashboard(userEmail: String, userPassword: String) {
-        val intent = Intent(context, DashboardActivity::class.java)
-        intent.putExtra("email", userEmail)
-        intent.putExtra("password", userPassword)
-        context.startActivity(intent)
-        activity?.finish()
+    // Handle auth state changes
+    LaunchedEffect(authState) {
+        when (val state = authState) {
+            is AuthState.Success -> {
+                Toast.makeText(context, "Welcome back!", Toast.LENGTH_SHORT).show()
+                val intent = Intent(context, DashboardActivity::class.java)
+                context.startActivity(intent)
+                (context as? ComponentActivity)?.finish()
+            }
+            is AuthState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
+        }
     }
 
-    // Function to validate email and password
     fun validateAndSignIn() {
         when {
             email.isEmpty() -> {
                 Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
             }
-
-            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                 Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
             }
-
             password.isEmpty() -> {
                 Toast.makeText(context, "Please enter your password", Toast.LENGTH_SHORT).show()
             }
-
             password.length < 6 -> {
-                Toast.makeText(
-                    context,
-                    "Password must be at least 6 characters",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
             }
-
             else -> {
-                // Successful validation
-                navigateToDashboard(email, password)
+                viewModel.signIn(email, password)
             }
         }
     }
@@ -102,7 +95,6 @@ fun SignInBody() {
             ),
         contentAlignment = Alignment.Center
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -110,22 +102,12 @@ fun SignInBody() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Music Icon
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .background(
-                        color = Color(0xFF9333EA),
-                        shape = RoundedCornerShape(30.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.baseline_music_note_24),
-                    contentDescription = "Music Note",
-                    tint = Color.White,
-                    modifier = Modifier.size(60.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = "Music Note",
+                tint = Color.White,
+                modifier = Modifier.size(80.dp)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -162,10 +144,10 @@ fun SignInBody() {
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        placeholder = { Text("Your@gmail.com", color = Color.Gray) },
+                        placeholder = { Text("your@email.com", color = Color.Gray) },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.baseline_email_24),
+                                imageVector = Icons.Default.Email,
                                 contentDescription = "Email",
                                 tint = Color.Gray
                             )
@@ -186,6 +168,7 @@ fun SignInBody() {
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // Password Field
                     Text(
                         text = "Password",
                         color = Color.White,
@@ -196,10 +179,10 @@ fun SignInBody() {
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        placeholder = { Text("••••••••••••••", color = Color.Gray) },
+                        placeholder = { Text("••••••••", color = Color.Gray) },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.baseline_lock_24),
+                                imageVector = Icons.Default.Lock,
                                 contentDescription = "Lock",
                                 tint = Color.Gray
                             )
@@ -211,10 +194,10 @@ fun SignInBody() {
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    painter = painterResource(
-                                        if (passwordVisible) R.drawable.baseline_visibility_off_24
-                                        else R.drawable.baseline_visibility_24
-                                    ),
+                                    imageVector = if (passwordVisible)
+                                        Icons.Default.VisibilityOff
+                                    else
+                                        Icons.Default.Visibility,
                                     contentDescription = if (passwordVisible) "Hide password" else "Show password",
                                     tint = Color.Gray
                                 )
@@ -234,24 +217,7 @@ fun SignInBody() {
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Forgot Password
-                    TextButton(
-                        onClick = {
-                            val intent = Intent(context, ForgotPasswordActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text(
-                            text = "Forgot password?",
-                            color = Color(0xFF8B5CF6),
-                            fontSize = 14.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // Sign In Button
                     Button(
@@ -262,24 +228,49 @@ fun SignInBody() {
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF8B5CF6)
-                        )
+                        ),
+                        enabled = !isLoading
                     ) {
-                        Text(
-                            text = "Sign in",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "Sign in",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // OR Divider
+                    // Forgot Password
+                    Text(
+                        text = "Forgot Password?",
+                        color = Color(0xFF8B5CF6),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = Intent(context, ForgotPasswordActivity::class.java)
+                                context.startActivity(intent)
+                            }
+                            .padding(vertical = 8.dp))
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Divider
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        HorizontalDivider(
+                        Divider(
                             modifier = Modifier.weight(1f),
                             color = Color.Gray.copy(alpha = 0.3f)
                         )
@@ -289,28 +280,21 @@ fun SignInBody() {
                             fontSize = 14.sp,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
-                        HorizontalDivider(
+                        Divider(
                             modifier = Modifier.weight(1f),
                             color = Color.Gray.copy(alpha = 0.3f)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Continue with Google Button
+                    // Google Sign In Button
                     OutlinedButton(
                         onClick = {
-                            // Simulate Google Sign-In by using a demo Google account
-                            // In a real app, you would integrate Google Sign-In SDK
-                            val googleEmail = "user@gmail.com"
-                            val googlePassword =
-                                "google_auth_token" // This would be a token in real implementation
-
-                            Toast.makeText(context, "Signing in with Google...", Toast.LENGTH_SHORT)
-                                .show()
-
-                            // Navigate to dashboard with Google credentials
-                            navigateToDashboard(googleEmail, googlePassword)
+                            // Navigate to dashboard with demo account
+                            val intent = Intent(context, DashboardActivity::class.java)
+                            context.startActivity(intent)
+                            (context as? ComponentActivity)?.finish()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -318,13 +302,13 @@ fun SignInBody() {
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = Color.White
-                        ),
-                        border = null
+                        )
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_5),
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Google",
-                            modifier = Modifier.size(24.dp),
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -333,8 +317,33 @@ fun SignInBody() {
                             fontSize = 16.sp
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Don't have an account
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Don't have an account? ",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            "Sign Up",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable {
+                                val intent = Intent(context, SignUpActivity::class.java)
+                                context.startActivity(intent)
+                                (context as? ComponentActivity)?.finish()
+                            }
+                        )
+                    }
                 }
             }
         }
     }
-}

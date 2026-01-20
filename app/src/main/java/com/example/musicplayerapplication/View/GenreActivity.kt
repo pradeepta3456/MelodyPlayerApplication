@@ -9,6 +9,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,11 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.R
 
 class GenreActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +35,16 @@ class GenreActivity: ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MusicPlayerTheme {
-                MusicPlayerScreen()
+                // Pass song data from intent or use default
+                val songTitle = intent.getStringExtra("SONG_TITLE") ?: "Song Name"
+                val artistName = intent.getStringExtra("ARTIST_NAME") ?: "Artist Name"
+                val albumArtUrl = intent.getStringExtra("ALBUM_ART_URL")
+
+                MusicPlayerScreen(
+                    songTitle = songTitle,
+                    artistName = artistName,
+                    albumArtUrl = albumArtUrl
+                )
             }
         }
     }
@@ -48,7 +63,11 @@ fun MusicPlayerTheme(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MusicPlayerScreen() {
+fun MusicPlayerScreen(
+    songTitle: String = "Song Name",
+    artistName: String = "Artist Name",
+    albumArtUrl: String? = null
+) {
     var sliderPosition by remember { mutableFloatStateOf(82f) }
     var isPlaying by remember { mutableStateOf(false) }
 
@@ -74,7 +93,7 @@ fun MusicPlayerScreen() {
 
             // Song title and artist
             Text(
-                text = "Song Name",
+                text = songTitle,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -83,26 +102,47 @@ fun MusicPlayerScreen() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Artist Name",
+                text = artistName,
                 fontSize = 16.sp,
                 color = Color.White.copy(alpha = 0.8f)
             )
 
             Spacer(modifier = Modifier.height(60.dp))
 
-            // Album artwork
+            // Album artwork - show icon if no image URL provided
             Box(
                 modifier = Modifier
                     .size(280.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFD97652))
+                    .background(Color(0xFFD97652)),
+                contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_13),
-                    contentDescription = "Album Art",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                if (albumArtUrl != null) {
+                    // TODO: Use Coil or Glide to load image from URL
+                    // Example with Coil:
+                    // AsyncImage(
+                    //     model = albumArtUrl,
+                    //     contentDescription = "Album Art",
+                    //     modifier = Modifier.fillMaxSize(),
+                    //     contentScale = ContentScale.Crop
+                    // )
+
+                    // Placeholder until image loading library is added
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "Album Art",
+                        modifier = Modifier.size(120.dp),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                } else {
+                    // Default music note icon
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "Album Art",
+                        modifier = Modifier.size(120.dp),
+                        tint = Color.White.copy(alpha = 0.7f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -168,7 +208,7 @@ fun MusicPlayerScreen() {
             ) {
                 IconButton(onClick = { /* Shuffle */ }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_shuffle_24),
+                        imageVector = Icons.Default.Shuffle,
                         contentDescription = "Shuffle",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
@@ -180,7 +220,7 @@ fun MusicPlayerScreen() {
                     sliderPosition = 0f
                 }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_skip_previous_24),
+                        imageVector = Icons.Default.SkipPrevious,
                         contentDescription = "Previous",
                         tint = Color.White,
                         modifier = Modifier.size(36.dp)
@@ -193,10 +233,8 @@ fun MusicPlayerScreen() {
                     modifier = Modifier.size(64.dp)
                 ) {
                     Icon(
-                        painter = painterResource(
-                            id = if (isPlaying) R.drawable.baseline_pause_24
-                            else R.drawable.baseline_play_arrow_24
-                        ),
+                        imageVector = if (isPlaying) Icons.Default.Pause
+                        else Icons.Default.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = Color(0xFF6B4C9A),
                         modifier = Modifier.size(32.dp)
@@ -208,7 +246,7 @@ fun MusicPlayerScreen() {
                     sliderPosition = 0f
                 }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_skip_next_24),
+                        imageVector = Icons.Default.SkipNext,
                         contentDescription = "Next",
                         tint = Color.White,
                         modifier = Modifier.size(36.dp)
@@ -217,7 +255,7 @@ fun MusicPlayerScreen() {
 
                 IconButton(onClick = { /* Repeat */ }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_repeat_24),
+                        imageVector = Icons.Default.Repeat,
                         contentDescription = "Repeat",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)

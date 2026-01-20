@@ -11,6 +11,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,11 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.R
 
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
 
@@ -89,7 +96,7 @@ fun DashboardScreen() {
                 leadingIcon = {
                     IconButton(onClick = { /* Menu action */ }) {
                         Icon(
-                            painter = painterResource(R.drawable.baseline_menu_24),
+                            imageVector = Icons.Default.Menu,
                             contentDescription = "Menu",
                             tint = Color.Gray
                         )
@@ -98,7 +105,7 @@ fun DashboardScreen() {
                 trailingIcon = {
                     IconButton(onClick = { /* Search action */ }) {
                         Icon(
-                            painter = painterResource(R.drawable.baseline_search_24),
+                            imageVector = Icons.Default.Search,
                             contentDescription = "Search",
                             tint = Color.Gray
                         )
@@ -131,31 +138,31 @@ fun DashboardScreen() {
                     selected = selectedTab == FilterTab.SONGS,
                     onClick = { selectedTab = FilterTab.SONGS },
                     label = "Songs",
-                    icon = R.drawable.baseline_music_note_24
+                    icon = Icons.Default.MusicNote
                 )
                 FilterChip(
                     selected = selectedTab == FilterTab.ARTISTS,
                     onClick = { selectedTab = FilterTab.ARTISTS },
                     label = "Artists",
-                    icon = R.drawable.baseline_person_24
+                    icon = Icons.Default.Person
                 )
                 FilterChip(
                     selected = selectedTab == FilterTab.ALBUMS,
                     onClick = { selectedTab = FilterTab.ALBUMS },
                     label = "Albums",
-                    icon = R.drawable.baseline_album_24
+                    icon = Icons.Default.Album
                 )
                 FilterChip(
                     selected = selectedTab == FilterTab.GENRES,
                     onClick = { selectedTab = FilterTab.GENRES },
                     label = "Genres",
-                    icon = R.drawable.baseline_library_music_24
+                    icon = Icons.Default.LibraryMusic
                 )
                 FilterChip(
                     selected = selectedTab == FilterTab.FOLDERS,
                     onClick = { selectedTab = FilterTab.FOLDERS },
                     label = "Folders",
-                    icon = R.drawable.baseline_folder_24
+                    icon = Icons.Default.Folder
                 )
             }
 
@@ -185,7 +192,7 @@ fun FilterChip(
     selected: Boolean,
     onClick: () -> Unit,
     label: String,
-    icon: Int
+    icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
     Surface(
         onClick = onClick,
@@ -199,7 +206,7 @@ fun FilterChip(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                painter = painterResource(icon),
+                imageVector = icon,
                 contentDescription = label,
                 tint = Color.White,
                 modifier = Modifier.size(20.dp)
@@ -239,7 +246,7 @@ fun SongItem(song: Song) {
                 // Placeholder for album art
                 // In a real app, use AsyncImage with song.imageUrl
                 Icon(
-                    painter = painterResource(R.drawable.baseline_music_note_24),
+                    imageVector = Icons.Default.MusicNote,
                     contentDescription = "Album Art",
                     tint = Color.White,
                     modifier = Modifier
@@ -294,7 +301,7 @@ fun AIDiscoverCard() {
             ) {
                 // Sparkle Icon
                 Icon(
-                    painter = painterResource(R.drawable.baseline_auto_awesome_24),
+                    imageVector = Icons.Default.AutoAwesome,
                     contentDescription = "AI",
                     tint = Color(0xFFFBBF24),
                     modifier = Modifier.size(32.dp)
