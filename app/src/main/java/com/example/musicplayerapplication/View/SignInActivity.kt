@@ -1,8 +1,9 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
 
 
@@ -64,7 +66,7 @@ fun SignInBody() {
                 Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
             }
 
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                 Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
             }
 

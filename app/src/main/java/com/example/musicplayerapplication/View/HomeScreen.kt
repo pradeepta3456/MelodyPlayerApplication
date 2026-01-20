@@ -1,7 +1,6 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,11 +31,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.HomeRepoImpl
 import com.example.musicplayerapplication.ui.theme.*
-import com.example.musicplayerapplication.view.HomeViewModel
+import com.example.musicplayerapplication.ViewModel.HomeViewModel
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

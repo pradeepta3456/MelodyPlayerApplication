@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.R
 
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
 

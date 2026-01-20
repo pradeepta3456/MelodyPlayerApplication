@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 
 class SmartShuffle(private val allSongs: List<String>) {
