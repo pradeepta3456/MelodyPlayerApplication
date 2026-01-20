@@ -50,7 +50,7 @@ fun SearchScreen(
             .background( Color(0xFF272F72))
             .padding(16.dp)
     ) {
-        SearchBar(
+        SearchTextField(
             query = query,
             onQueryChange = viewModel::onQueryChange
         )
@@ -71,7 +71,7 @@ fun SearchScreen(
 
 
 @Composable
-fun SearchBar(
+fun SearchTextField(
     query: String,
     onQueryChange: (String) -> Unit
 ) {
@@ -82,7 +82,11 @@ fun SearchBar(
             .background(Color(0xFF2A3F9D), RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Icon(Icons.Default.Menu, contentDescription = null, tint = Color.White)
+        Icon(
+            imageVector = Icons.Default.Menu,
+            contentDescription = null,
+            tint = Color.White
+        )
         Spacer(modifier = Modifier.width(8.dp))
 
         TextField(
@@ -97,7 +101,11 @@ fun SearchBar(
             )
         )
 
-        Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = null,
+            tint = Color.White
+        )
     }
 }
 

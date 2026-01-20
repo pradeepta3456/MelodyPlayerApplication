@@ -5,6 +5,17 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,11 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.R
 
 
 class MainActivity : ComponentActivity() {
@@ -29,10 +38,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Updated SongData to accept optional image URL instead of drawable resource
 data class SongData(
     val title: String,
     val artist: String,
-    val image: Int,
+    val imageUrl: String? = null, // Changed from Int to String? for URL
     val duration: String
 )
 
@@ -42,12 +52,13 @@ fun FinalMusicUIScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf("Genres") }
 
+    // Updated list without hardcoded drawable resources
     val list = listOf(
-        SongData("Katseye", "Black eye", R.drawable.img_10, "2:50"),
-        SongData("No More", "LILLY", R.drawable.img_11, "3:05"),
-        SongData("Ocean Eyes", "Billie eilish", R.drawable.img_12, "3:54"),
-        SongData("Sunrise", "Heat Waves", R.drawable.img_11, "2:45"),
-        SongData("Bite Me", "Risern", R.drawable.img_12, "5:12")
+        SongData("Katseye", "Black eye", null, "2:50"),
+        SongData("No More", "LILLY", null, "3:05"),
+        SongData("Ocean Eyes", "Billie eilish", null, "3:54"),
+        SongData("Sunrise", "Heat Waves", null, "2:45"),
+        SongData("Bite Me", "Risern", null, "5:12")
     )
 
     // Filter songs based on search query
@@ -97,12 +108,12 @@ fun FinalMusicUIScreen() {
                     )
                 }
             } else {
-                SongsList(filteredList,)
+                SongsList(filteredList)
             }
 
             Spacer(Modifier.height(24.dp))
             GenreSection()
-            Spacer(Modifier.height(16.dp)) // Bottom padding for comfortable scrolling
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -122,7 +133,7 @@ fun SearchBar(
             .clip(RoundedCornerShape(20.dp)),
         leadingIcon = {
             Icon(
-                painter = painterResource(R.drawable.baseline_menu_24),
+                imageVector = Icons.Default.Menu,
                 contentDescription = null,
                 tint = Color.White.copy(alpha = 0.7f)
             )
@@ -131,14 +142,14 @@ fun SearchBar(
             if (searchQuery.isNotEmpty()) {
                 IconButton(onClick = { onSearchQueryChange("") }) {
                     Icon(
-                        painter = painterResource(android.R.drawable.ic_menu_close_clear_cancel),
+                        imageVector = Icons.Default.Close,
                         contentDescription = "Clear search",
                         tint = Color.White.copy(alpha = 0.7f)
                     )
                 }
             } else {
                 Icon(
-                    painter = painterResource(R.drawable.baseline_search_24),
+                    imageVector = Icons.Default.Search,
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.7f)
                 )
@@ -167,35 +178,35 @@ fun TabsRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()) // Make tabs scrollable horizontally if needed
+            .horizontalScroll(rememberScrollState())
     ) {
         TabChipWithIcon(
             text = "Songs",
-            iconRes = R.drawable.baseline_music_note_24,
+            icon = Icons.Default.MusicNote,
             isSelected = selectedTab == "Songs",
             onClick = { onTabSelected("Songs") }
         )
         TabChipWithIcon(
             text = "Artists",
-            iconRes = R.drawable.baseline_person_24,
+            icon = Icons.Default.Person,
             isSelected = selectedTab == "Artists",
             onClick = { onTabSelected("Artists") }
         )
         TabChipWithIcon(
             text = "Albums",
-            iconRes = R.drawable.baseline_album_24,
+            icon = Icons.Default.Album,
             isSelected = selectedTab == "Albums",
             onClick = { onTabSelected("Albums") }
         )
         TabChipWithIcon(
             text = "Genres",
-            iconRes = R.drawable.baseline_library_music_24,
+            icon = Icons.Default.LibraryMusic,
             isSelected = selectedTab == "Genres",
             onClick = { onTabSelected("Genres") }
         )
         TabChipWithIcon(
             text = "Folders",
-            iconRes = R.drawable.baseline_folder_24,
+            icon = Icons.Default.Folder,
             isSelected = selectedTab == "Folders",
             onClick = { onTabSelected("Folders") }
         )
@@ -205,7 +216,7 @@ fun TabsRow(
 @Composable
 fun TabChipWithIcon(
     text: String,
-    iconRes: Int,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
@@ -219,7 +230,7 @@ fun TabChipWithIcon(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            imageVector = icon,
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(18.dp)
@@ -233,9 +244,8 @@ fun SongsList(list: List<SongData>) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         list.forEach { song ->
             SongCard(
-                song= song,
+                song = song,
                 onFavoriteClick = {
-                    val it = null
                     println("Favorite clicked: ${song.title}")
                 },
                 onMoreClick = {
@@ -254,24 +264,50 @@ fun SongCard(
     song: SongData,
     onFavoriteClick: () -> Unit = {},
     onMoreClick: () -> Unit = {},
-    onSongClick: () -> Unit ={}
+    onSongClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0x773E4A9F), RoundedCornerShape(22.dp))
-            .clickable {onSongClick(song) }
+            .clickable { onSongClick() }
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(song.image),
-            contentDescription = null,
+        // Album art or music note icon
+        Box(
             modifier = Modifier
                 .size(55.dp)
-                .clip(RoundedCornerShape(14.dp)),
-            contentScale = ContentScale.Crop
-        )
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0xFF9D77FF).copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (song.imageUrl != null) {
+                // TODO: Use Coil or Glide to load image from URL
+                // Example with Coil:
+                // AsyncImage(
+                //     model = song.imageUrl,
+                //     contentDescription = null,
+                //     modifier = Modifier.fillMaxSize(),
+                //     contentScale = ContentScale.Crop
+                // )
+
+                // Placeholder until image loading library is added
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(30.dp)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
 
         Spacer(Modifier.width(14.dp))
 
@@ -285,23 +321,21 @@ fun SongCard(
 
         IconButton(onClick = { onFavoriteClick() }) {
             Icon(
-                painter = painterResource(R.drawable.baseline_favorite_24),
+                imageVector = Icons.Default.Favorite,
                 contentDescription = "Favorite",
                 tint = Color.White
             )
         }
         Spacer(Modifier.width(8.dp))
         IconButton(onClick = { onMoreClick() }) {
+            Icon(
+                imageVector = Icons.Default.MoreHoriz,
+                contentDescription = null,
+                tint = Color.White
+            )
         }
-        Icon(
-            painter = painterResource(R.drawable.baseline_more_horiz_24),
-            contentDescription = null,
-            tint = Color.White
-        )
     }
 }
-
-fun onSongClick(song: SongData) {}
 
 @Composable
 fun GenreSection() {

@@ -1,10 +1,5 @@
 package com.example.musicplayerapplication.View
 
-import android.annotation.SuppressLint
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,10 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,138 +15,111 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.repository.HomeRepoImpl
-import com.example.musicplayerapplication.ui.theme.*
 import com.example.musicplayerapplication.ViewModel.HomeViewModel
-
-class HomeActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MusicPlayerTheme {
-                val viewModel: HomeViewModel = viewModel()
-                HomeScreen(
-                    viewModel = viewModel,
-                    onNotificationClick = {},
-                    onSearchClick = {}
-                )
-            }
-        }
-    }
-}
-
-
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
+    viewModel: HomeViewModel = viewModel(),
     onNotificationClick: () -> Unit = {},
     onSearchClick: () -> Unit = {}
 ) {
-    val context = LocalContext.current
     var selectedSongId by remember { mutableStateOf<Int?>(null) }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkPurpleBackground)
+            .background(Color(0xFF21133B))
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-            // Welcome Header
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            "Good evening",
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            "Welcome Back",
-                            color = Color.White,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    // Search Icon
-                    IconButton(
-                        onClick = onSearchClick,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                    // Notification Icon
-                    IconButton(
-                        onClick = onNotificationClick,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
-
-            // Featured Album
-            item {
-                FeaturedAlbumCard("Luna Eclipse", "Sunsets", R.drawable.img_6)
-            }
-
-            // Recently Played Header
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_play_arrow_24),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+        // Welcome Header
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Good evening",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 14.sp
                     )
                     Text(
-                        "Recently Played",
+                        "Welcome Back",
                         color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                // Search Icon
+                IconButton(
+                    onClick = onSearchClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                // Notification Icon
+                IconButton(
+                    onClick = onNotificationClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
+        }
 
-            // Recently Played Songs
+        // Featured Album
+        item {
+            FeaturedAlbumCard("Luna Eclipse", "Sunsets")
+        }
+
+        // Recently Played Header
+        item {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    "Recently Played",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
+        // Recently Played Songs
         items(viewModel.recentSongs) { song ->
             RecentSongItem(
                 song = song,
                 isSelected = song.id == selectedSongId,
                 onClick = {
                     selectedSongId = song.id
-                    // Navigation removed for now
                 }
             )
         }
@@ -167,7 +132,7 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_trending_up_24),
+                    imageVector = Icons.Default.TrendingUp,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -196,35 +161,21 @@ fun HomeScreen(
 }
 
 @Composable
-fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
+fun FeaturedAlbumCard(title: String, artist: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp)
             .clip(RoundedCornerShape(20.dp))
-    ) {
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-        
-        // Gradient overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.6f),
-                            Color.Transparent
-                        )
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFF8B5CF6),
+                        Color(0xFF6366F1)
                     )
                 )
-        )
-        
-        // Content overlay
+            )
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -255,7 +206,7 @@ fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     title,
-                    color = TextYellow,
+                    color = Color(0xFFFBBF24),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -266,14 +217,14 @@ fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
                     fontSize = 14.sp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 // Play Now Button
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = Color.White,
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .clickable(onClick = { /* Play action */ })
+                        .clickable(onClick = { })
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -281,14 +232,14 @@ fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.baseline_play_arrow_24),
+                            imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Play",
-                            tint = DarkPurpleBackground,
+                            tint = Color(0xFF21133B),
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
                             "Play Now",
-                            color = DarkPurpleBackground,
+                            color = Color(0xFF21133B),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -302,18 +253,16 @@ fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
 @Composable
 fun RecentSongItem(
     song: Song,
-    onClick:   () -> Unit,  // Make sure there's NO @Composable here
+    onClick: () -> Unit,
     isSelected: Boolean
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { onClick() },  // This is how you use it
-        // ... rest of your code
-
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) CardBackground.copy(alpha = 0.9f) else CardBackground
+            containerColor = if (isSelected) Color(0xFF3D2766).copy(alpha = 0.9f) else Color(0xFF2D1B4E)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -324,15 +273,21 @@ fun RecentSongItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Album Art Thumbnail
-            Image(
-                painter = painterResource(id = song.cover),
-                contentDescription = song.title,
-                contentScale = ContentScale.Crop,
+            // Album Art - Use Material Icon
+            Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-            )
+                    .background(Color(0xFF6B4FA0)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Album,
+                    contentDescription = song.title,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
 
             // Song Info
             Column(
@@ -352,23 +307,23 @@ fun RecentSongItem(
                 )
             }
 
-            // Play Icon (shares same action as row click)
+            // Play Icon
             IconButton(
                 onClick = onClick,
                 modifier = Modifier.size(40.dp)
             ) {
                 val highlightColor = Color(0xFFE91E63)
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_play_arrow_24),
+                    imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Play",
                     tint = if (isSelected) highlightColor else Color.White,
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            // Vertical Menu Icon
+            // More Icon
             IconButton(
-                onClick = { /* Vertical menu action */ },
+                onClick = { },
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
@@ -385,21 +340,27 @@ fun RecentSongItem(
 @Composable
 fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier
-            .aspectRatio(1f),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        modifier = modifier.aspectRatio(1f),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = album.imageRes),
-                contentDescription = album.title,
-                contentScale = ContentScale.Crop,
+            // Album cover - Use Material Icon
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            )
+                    .background(Color(0xFF6B4FA0)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Album,
+                    contentDescription = album.title,
+                    tint = Color.White,
+                    modifier = Modifier.size(64.dp)
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -418,19 +379,5 @@ fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
                 )
             }
         }
-    }
-}
-
-
-@SuppressLint("ViewModelConstructorInComposable")
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun HomeScreenPreview() {
-    MusicPlayerTheme {
-        HomeScreen(
-            viewModel = HomeViewModel(HomeRepoImpl()),
-            onNotificationClick = {},
-            onSearchClick = {}
-        )
     }
 }

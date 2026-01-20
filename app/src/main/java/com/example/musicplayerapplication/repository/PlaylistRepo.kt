@@ -1,16 +1,17 @@
 package com.example.musicplayerapplication.repository
 
+import com.example.musicplayerapplication.model.Playlist
 import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.viewmodel.PlaylistModel
+
 
 interface PlaylistRepository {
-
-    fun getAllSongs(): MutableList<Song>
-
-    fun getPlaylists(allSongs: MutableList<Song>): List<PlaylistModel>
-
-    fun addOrRemoveFavorite(songId: Int)
-
-    fun addOrRemoveDownload(songId: Int)
+    fun getAllPlaylists(): List<Playlist>
+    fun getPlaylistById(id: Int): Playlist?
+    fun createPlaylist(playlist: Playlist)
+    fun updatePlaylist(playlist: Playlist)
+    fun deletePlaylist(playlistId: Int)
+    fun addSongToPlaylist(playlistId: Int, songId: Int)
+    fun removeSongFromPlaylist(playlistId: Int, songId: Int)
+    fun getPlaylistSongs(playlistId: Int): List<Song>
 }
 

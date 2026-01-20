@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -14,9 +16,9 @@
         android:theme="@style/Theme.MusicPlayerApplication"
         tools:targetApi="31">
 
-        <!-- MAIN LAUNCHER ACTIVITY -->
+        <!-- SPLASH SCREEN - LAUNCHER ACTIVITY -->
         <activity
-            android:name=".View.DashboardActivity"
+            android:name=".View.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.MusicPlayerApplication">
             <intent-filter>
@@ -24,6 +26,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- SIGN IN ACTIVITY -->
+        <activity
+            android:name=".View.SignInActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MusicPlayerApplication" />
+
+        <!-- SIGN UP ACTIVITY -->
+        <activity
+            android:name=".View.SignUpActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MusicPlayerApplication" />
+
+        <!-- FORGOT PASSWORD ACTIVITY -->
+        <activity
+            android:name=".View.ForgotPasswordActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MusicPlayerApplication" />
+
+        <!-- DASHBOARD ACTIVITY -->
+        <activity
+            android:name=".View.DashboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MusicPlayerApplication" />
 
     </application>
 
