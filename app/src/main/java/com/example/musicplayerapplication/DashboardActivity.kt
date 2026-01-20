@@ -1,5 +1,5 @@
 package com.example.musicplayerapplication
-import android.app.Activity
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,14 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
-import com.example.musicplayerapplication.viewmodel.HomeViewModel
-
+import com.example.musicplayerapplication.view.HomeViewModel
+import com.example.musicplayerapplication.view.ProfileViewModel
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +71,7 @@ fun DashboardBody() {
                         label = { Text(item.label, fontSize = 12.sp) },
                         onClick = {
                             selectedIndex = index
-                            showNotificationScreen = false // Close notification screen when navigating
+                            showNotificationScreen = false
                         },
                         selected = selectedIndex == index,
                         colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
@@ -101,16 +99,16 @@ fun DashboardBody() {
             } else {
                 when (selectedIndex) {
                     0 -> HomeScreen(
-                        viewModel = viewModel(),
+                        viewModel = viewModel<HomeViewModel>(),
                         onNotificationClick = { showNotificationScreen = true },
                         onSearchClick = { /* TODO: Implement search functionality */ }
                     )
                     1 -> LibraryScreen()
                     2 -> PlaylistScreen()
-                    3 -> ProfileScreen()
+                    3 -> ProfileScreen(profileViewModel = viewModel<ProfileViewModel>())
                     4 -> SettingsScreen()
                     else -> HomeScreen(
-                        viewModel = viewModel(),
+                        viewModel = viewModel<HomeViewModel>(),
                         onNotificationClick = { showNotificationScreen = true },
                         onSearchClick = { /* TODO: Implement search functionality */ }
                     )
@@ -119,5 +117,3 @@ fun DashboardBody() {
         }
     }
 }
-
-

@@ -1,13 +1,12 @@
 package com.example.musicplayerapplication
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,430 +16,1334 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.model.PlaylistModel
-import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.viewmodel.PlaylistViewModel
 
+// Data classes (local to this file since they're specific to playlist feature)
+data class PlaylistSong(
+    val id: Int,
+    val title: String,
+    val artist: String,
+    val duration: String
+)
 
+data class Playlist(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val songCount: Int,
+    val songs: List<PlaylistSong>,
+    val isAiGenerated: Boolean = false
+)
+
+// Main Playlist Screen - Use this in DashboardActivity
 @Composable
-fun MusicApp(viewModel: PlaylistViewModel = PlaylistViewModel()) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Library) }
+fun PlaylistScreen() {
+    var currentView by remember { mutableStateOf<PlaylistView>(PlaylistView.List) }
+    var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
+    var currentSong by remember { mutableStateOf<PlaylistSong?>(null) }
+    var isPlaying by remember { mutableStateOf(false) }
+    var playlists by remember { mutableStateOf(getPlaylistData()) }
 
-    when (val screen = currentScreen) {
-        is Screen.Library -> LibraryScreen(
-            playlists = viewModel.playlists,
-            allSong = viewModel.allSongs,
-            onPlaylistClick = { playlist ->
-                currentScreen = Screen.PlaylistDetail(playlist)
-            }
-        )
-        is Screen.PlaylistDetail -> PlaylistDetailScreen(
-            playlist = screen.playlist,
-            allSongs = viewModel.allSongs,
-            playlists = viewModel.playlists,
-            onBackClick = { currentScreen = Screen.Library },
-            onFavoriteClick = { songId -> viewModel.onFavoriteClick(songId) },
-            onDownloadClick = { songId -> viewModel.onDownloadClick(songId) }
-        )
-    }
-}
+    // Audio settings state
+    var bassLevel by remember { mutableStateOf(0f) }
+    var trebleLevel by remember { mutableStateOf(0f) }
+    var volumeLevel by remember { mutableStateOf(0.7f) }
 
-
-
-
-
-
-// Create playlists
-
-sealed class Screen {
-    object Library : Screen()
-    data class PlaylistDetail(val playlist: PlaylistModel) : Screen()
-}
-
-@Composable
-fun LibraryScreen(
-    playlists: List<PlaylistModel>,
-    allSong: MutableList<Song>,
-    onPlaylistClick: (PlaylistModel) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F172A))
-            .padding(20.dp)
-    ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.LibraryMusic,
-                contentDescription = "Library",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = "My Library",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+    when (currentView) {
+        is PlaylistView.List -> {
+            PlaylistListContent(
+                playlists = playlists,
+                onPlaylistClick = { playlist ->
+                    selectedPlaylist = playlist
+                    currentView = PlaylistView.Detail
+                },
+                onQuickPlay = { playlist ->
+                    selectedPlaylist = playlist
+                    currentSong = playlist.songs.firstOrNull()
+                    isPlaying = true
+                    currentView = PlaylistView.NowPlaying
+                },
+                onCreatePlaylist = {
+                    currentView = PlaylistView.Create
+                }
             )
         }
-
-        // Playlist folders
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(playlists) { playlist ->
-                PlaylistCard(
+        is PlaylistView.Create -> {
+            CreatePlaylistContent(
+                onBack = { currentView = PlaylistView.List },
+                onCreate = { name, description ->
+                    val newPlaylist = Playlist(
+                        id = playlists.size + 1,
+                        name = name,
+                        description = description,
+                        songCount = 0,
+                        songs = emptyList(),
+                        isAiGenerated = false
+                    )
+                    playlists = playlists + newPlaylist
+                    currentView = PlaylistView.List
+                }
+            )
+        }
+        is PlaylistView.AudioSettings -> {
+            AudioSettingsContent(
+                bassLevel = bassLevel,
+                trebleLevel = trebleLevel,
+                volumeLevel = volumeLevel,
+                onBassChange = { bassLevel = it },
+                onTrebleChange = { trebleLevel = it },
+                onVolumeChange = { volumeLevel = it },
+                onBack = { currentView = PlaylistView.NowPlaying }
+            )
+        }
+        is PlaylistView.Detail -> {
+            selectedPlaylist?.let { playlist ->
+                PlaylistDetailContent(
                     playlist = playlist,
-                    onClick = { onPlaylistClick(playlist) }
+                    onBack = { currentView = PlaylistView.List },
+                    onSongClick = { song ->
+                        currentSong = song
+                        isPlaying = true
+                        currentView = PlaylistView.NowPlaying
+                    },
+                    onPlayAll = {
+                        currentSong = playlist.songs.firstOrNull()
+                        isPlaying = true
+                        currentView = PlaylistView.NowPlaying
+                    }
+                )
+            }
+        }
+        is PlaylistView.NowPlaying -> {
+            currentSong?.let { song ->
+                NowPlayingContent(
+                    song = song,
+                    playlist = selectedPlaylist,
+                    isPlaying = isPlaying,
+                    onPlayPauseClick = { isPlaying = !isPlaying },
+                    onBack = { currentView = PlaylistView.Detail },
+                    onNext = {
+                        selectedPlaylist?.songs?.let { songs ->
+                            val currentIndex = songs.indexOf(song)
+                            if (currentIndex < songs.size - 1) {
+                                currentSong = songs[currentIndex + 1]
+                            }
+                        }
+                    },
+                    onPrevious = {
+                        selectedPlaylist?.songs?.let { songs ->
+                            val currentIndex = songs.indexOf(song)
+                            if (currentIndex > 0) {
+                                currentSong = songs[currentIndex - 1]
+                            }
+                        }
+                    },
+                    onOpenSettings = { currentView = PlaylistView.AudioSettings }
                 )
             }
         }
     }
 }
 
+sealed class PlaylistView {
+    object List : PlaylistView()
+    object Detail : PlaylistView()
+    object NowPlaying : PlaylistView()
+    object Create : PlaylistView()
+    object AudioSettings : PlaylistView()
+}
+
 @Composable
-fun PlaylistCard(
-    playlist: PlaylistModel,
+fun PlaylistListContent(
+    playlists: List<Playlist>,
+    onPlaylistClick: (Playlist) -> Unit,
+    onQuickPlay: (Playlist) -> Unit,
+    onCreatePlaylist: () -> Unit
+) {
+    val aiPlaylists = playlists.filter { it.isAiGenerated }
+    val userPlaylists = playlists.filter { !it.isAiGenerated }
+
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Playlists",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Button(
+                onClick = onCreatePlaylist,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB040FF)),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Create", fontSize = 14.sp)
+            }
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        Text(
+            text = "✨ AI Smart Playlists",
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            aiPlaylists.forEach { playlist ->
+                AiPlaylistCardItem(
+                    playlist = playlist,
+                    onClick = { onPlaylistClick(playlist) },
+                    onPlayClick = { onQuickPlay(playlist) }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
+
+        Text(
+            text = "🎵 Your Playlists",
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        userPlaylists.forEach { playlist ->
+            UserPlaylistRowItem(
+                playlist = playlist,
+                onClick = { onPlaylistClick(playlist) }
+            )
+        }
+
+        Spacer(Modifier.height(32.dp))
+
+        Text(
+            text = "⚡ Quick Create",
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            QuickCreateCardItem(
+                title = "Liked Songs",
+                subtitle = "Auto playlist",
+                icon = Icons.Default.Favorite,
+                gradient = Brush.horizontalGradient(
+                    listOf(Color(0xFFE91E63), Color(0xFF9C27B0))
+                ),
+                modifier = Modifier.weight(1f),
+                onClick = {}
+            )
+            QuickCreateCardItem(
+                title = "Recently Added",
+                subtitle = "Last 30 days",
+                icon = Icons.Default.AccessTime,
+                gradient = Brush.horizontalGradient(
+                    listOf(Color(0xFF2196F3), Color(0xFF00BCD4))
+                ),
+                modifier = Modifier.weight(1f),
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Composable
+fun AiPlaylistCardItem(
+    playlist: Playlist,
+    onClick: () -> Unit,
+    onPlayClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF3D1F5C))
+            .clickable { onClick() }
+            .padding(20.dp)
+    ) {
+        Text(
+            text = "✨ AI Generated",
+            color = Color(0xFFFFB74D),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = playlist.name,
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = "${playlist.songCount} songs",
+            color = Color.White.copy(0.6f),
+            fontSize = 13.sp
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Button(
+            onClick = { onPlayClick() },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB040FF)),
+            shape = RoundedCornerShape(12.dp),
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) {
+            Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Play", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+fun UserPlaylistRowItem(
+    playlist: Playlist,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF1E293B))
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF2D1B4E))
             .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon
         Box(
             modifier = Modifier
-                .size(70.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(playlist.gradient),
+                .size(60.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFB040FF)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = playlist.icon,
-                contentDescription = null,
+                Icons.Default.MusicNote,
+                null,
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(Modifier.width(16.dp))
 
-        // Playlist info
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = playlist.name,
-                fontSize = 18.sp,
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                fontSize = 16.sp
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = playlist.description,
-                fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.7f)
+                color = Color.White.copy(0.6f),
+                fontSize = 13.sp
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
-                text = "${playlist.songs.size} songs",
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.5f)
+                text = "${playlist.songCount} songs",
+                color = Color.White.copy(0.4f),
+                fontSize = 12.sp
             )
         }
+    }
 
+    Spacer(Modifier.height(12.dp))
+}
+
+@Composable
+fun QuickCreateCardItem(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    gradient: Brush,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .height(120.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(gradient)
+            .clickable { onClick() }
+            .padding(20.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
         Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = "Open",
-            tint = Color.White.copy(alpha = 0.5f),
+            icon,
+            null,
+            tint = Color.White,
             modifier = Modifier.size(24.dp)
         )
+
+        Column {
+            Text(
+                text = title,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = subtitle,
+                color = Color.White.copy(0.8f),
+                fontSize = 12.sp
+            )
+        }
     }
 }
 
 @Composable
-fun PlaylistDetailScreen(
-    playlist: PlaylistModel,
-    allSongs: MutableList<Song>,
-    playlists: List<PlaylistModel>,
-    onBackClick: () -> Unit,
-    onFavoriteClick: (Int) -> Unit,  // <--- explicitly define type
-    onDownloadClick: (Int) -> Unit
+fun CreatePlaylistContent(
+    onBack: () -> Unit,
+    onCreate: (String, String) -> Unit
 ) {
-    var showSnackbar by remember { mutableStateOf(false) }
-    var snackbarMessage by remember { mutableStateOf("") }
+    var playlistName by remember { mutableStateOf("") }
+    var playlistDescription by remember { mutableStateOf("") }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(playlist.gradient)
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header section
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Text(
+                text = "Create Playlist",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(Modifier.width(48.dp))
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFB040FF)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(80.dp)
+            )
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Text(
+            text = "Playlist Name",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = playlistName,
+            onValueChange = { playlistName = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Enter playlist name", color = Color.White.copy(0.5f)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color(0xFFB040FF),
+                unfocusedBorderColor = Color.White.copy(0.3f),
+                cursorColor = Color(0xFFB040FF)
+            ),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = "Description",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = playlistDescription,
+            onValueChange = { playlistDescription = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            placeholder = { Text("Describe your playlist", color = Color.White.copy(0.5f)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color(0xFFB040FF),
+                unfocusedBorderColor = Color.White.copy(0.3f),
+                cursorColor = Color(0xFFB040FF)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            maxLines = 4
+        )
+
+        Spacer(Modifier.height(40.dp))
+
+        Button(
+            onClick = {
+                if (playlistName.isNotBlank()) {
+                    onCreate(playlistName, playlistDescription)
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFB040FF),
+                disabledContainerColor = Color(0xFFB040FF).copy(0.5f)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            enabled = playlistName.isNotBlank()
+        ) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = "Create Playlist",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
             Column(
                 modifier = Modifier.padding(20.dp)
             ) {
-                // Back button
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Playlist cover
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = playlist.icon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(70.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
                 Text(
-                    text = playlist.name,
-                    fontSize = 26.sp,
+                    text = "💡 Tips",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
 
-                Text(
-                    text = playlist.description,
-                    fontSize = 16.sp,
-                    color = Color.White.copy(0.8f)
-                )
+                Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = "${playlist.songs.size} songs",
+                    text = "• Give your playlist a catchy name\n" +
+                            "• Add a description to help you remember\n" +
+                            "• You can add songs later\n" +
+                            "• Share with friends when ready",
                     fontSize = 14.sp,
-                    color = Color.White.copy(0.8f)
+                    color = Color.White.copy(0.8f),
+                    lineHeight = 20.sp
                 )
-
-                Spacer(modifier = Modifier.height(25.dp))
-
-                // Action buttons
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = {},
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF58E1C3))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play"
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Play")
-                    }
-
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.FavoriteBorder, "", tint = Color.White)
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Download, "", tint = Color.White)
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Share, "", tint = Color.White)
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.MoreVert, "", tint = Color.White)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Song list
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Color(0xFF0F172A),
-                        RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                    )
-                    .padding(16.dp)
-            ) {
-                itemsIndexed(playlist.songs) { index, song ->
-                    SongItem(
-                        number = index + 1,
-                        song = song,
-                        allSongs = allSongs,
-                        playlists = playlists,
-                        onFavoriteClick = {
-                            val favPlaylist = playlists.find { it.name == "Favorite Songs" }
-                            val actualSong = allSongs.find { it.id == song.id }
-
-                            actualSong?.let {
-                                it.isFavorite = !it.isFavorite
-
-                                if (it.isFavorite) {
-                                    if (favPlaylist?.songs?.none { s -> s.id == it.id } == true) {
-                                        favPlaylist.songs.add(it)
-                                    }
-                                    snackbarMessage = "Added to Favorites"
-                                } else {
-                                    favPlaylist?.songs?.removeAll { s -> s.id == it.id }
-                                    snackbarMessage = "Removed from Favorites"
-                                }
-                                showSnackbar = true
-                            }
-                        },
-                        onDownloadClick = {
-                            val downloadPlaylist = playlists.find { it.name == "Downloaded" }
-                            val actualSong = allSongs.find { it.id == song.id }
-
-                            actualSong?.let {
-                                it.isDownloaded = !it.isDownloaded
-
-                                if (it.isDownloaded) {
-                                    if (downloadPlaylist?.songs?.none { s -> s.id == it.id } == true) {
-                                        downloadPlaylist.songs.add(it)
-                                    }
-                                    snackbarMessage = "Downloaded"
-                                } else {
-                                    downloadPlaylist?.songs?.removeAll { s -> s.id == it.id }
-                                    snackbarMessage = "Removed from Downloads"
-                                }
-                                showSnackbar = true
-                            }
-                        }
-                    )
-
-                    if (index < playlist.songs.size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-        }
-
-        // Snackbar
-        if (showSnackbar) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp)),
-                    color = Color(0xFF1E293B)
-                ) {
-                    Text(
-                        text = snackbarMessage,
-                        color = Color.White,
-                        modifier = Modifier.padding(16.dp),
-                        fontSize = 14.sp
-                    )
-                }
-            }
-
-            LaunchedEffect(showSnackbar) {
-                kotlinx.coroutines.delay(2000)
-                showSnackbar = false
             }
         }
     }
 }
 
 @Composable
-fun SongItem(
-    number: Int,
-    song: Song,
-    allSongs: List<Song>,
-    playlists: List<PlaylistModel>,
-    onFavoriteClick: () -> Unit,
-    onDownloadClick: () -> Unit
+fun AudioSettingsContent(
+    bassLevel: Float,
+    trebleLevel: Float,
+    volumeLevel: Float,
+    onBassChange: (Float) -> Unit,
+    onTrebleChange: (Float) -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onBack: () -> Unit
 ) {
-    val actualSong = allSongs.find { it.id == song.id } ?: song
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Text(
+                text = "Audio Settings",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(Modifier.width(48.dp))
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(CircleShape)
+                .background(Color(0xFFB040FF).copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.GraphicEq,
+                contentDescription = null,
+                tint = Color(0xFFB040FF),
+                modifier = Modifier.size(60.dp)
+            )
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        AudioControlCardItem(
+            title = "Volume",
+            icon = Icons.Default.VolumeUp,
+            value = volumeLevel,
+            onValueChange = onVolumeChange,
+            valueText = "${(volumeLevel * 100).toInt()}%"
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        AudioControlCardItem(
+            title = "Bass",
+            icon = Icons.Default.MusicNote,
+            value = (bassLevel + 10f) / 20f,
+            onValueChange = { onBassChange(it * 20f - 10f) },
+            valueText = "${bassLevel.toInt()} dB",
+            minLabel = "-10",
+            maxLabel = "+10"
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        AudioControlCardItem(
+            title = "Treble",
+            icon = Icons.Default.TrendingUp,
+            value = (trebleLevel + 10f) / 20f,
+            onValueChange = { onTrebleChange(it * 20f - 10f) },
+            valueText = "${trebleLevel.toInt()} dB",
+            minLabel = "-10",
+            maxLabel = "+10"
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        Text(
+            text = "Presets",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PresetButtonItem(
+                text = "Flat",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(0f)
+                    onTrebleChange(0f)
+                }
+            )
+            PresetButtonItem(
+                text = "Bass Boost",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(6f)
+                    onTrebleChange(-2f)
+                }
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PresetButtonItem(
+                text = "Treble Boost",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(-2f)
+                    onTrebleChange(6f)
+                }
+            )
+            PresetButtonItem(
+                text = "Rock",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onBassChange(5f)
+                    onTrebleChange(3f)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun AudioControlCardItem(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueText: String,
+    minLabel: String = "0",
+    maxLabel: String = "100"
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = Color(0xFFB040FF),
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Text(
+                    text = valueText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFB040FF)
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xFFB040FF),
+                    activeTrackColor = Color(0xFFB040FF),
+                    inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                )
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = minLabel,
+                    fontSize = 12.sp,
+                    color = Color.White.copy(0.6f)
+                )
+                Text(
+                    text = maxLabel,
+                    fontSize = 12.sp,
+                    color = Color.White.copy(0.6f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PresetButtonItem(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D1B4E)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
+fun PlaylistDetailContent(
+    playlist: Playlist,
+    onBack: () -> Unit,
+    onSongClick: (PlaylistSong) -> Unit,
+    onPlayAll: () -> Unit
+) {
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF5DBDA6),
+            Color(0xFF4A9B8E),
+            Color(0xFF2B7A7A),
+            Color(0xFF1A5563),
+            Color(0xFF0D3947)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp)
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFF7FC9BC)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(80.dp)
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = playlist.name,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = playlist.description,
+            fontSize = 16.sp,
+            color = Color.White.copy(alpha = 0.8f)
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = "${playlist.songs.size} songs • 21 min",
+            fontSize = 14.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onPlayAll,
+                modifier = Modifier.height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5DBDA6)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text(
+                    text = "Play",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Download,
+                    contentDescription = "Download",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.MoreVert,
+                    contentDescription = "More",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
+
+        playlist.songs.forEachIndexed { index, song ->
+            PlaylistSongItem(
+                index = index + 1,
+                song = song,
+                onClick = { onSongClick(song) }
+            )
+        }
+    }
+}
+
+@Composable
+fun PlaylistSongItem(
+    index: Int,
+    song: PlaylistSong,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable { }
-            .padding(vertical = 8.dp),
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "$number.",
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.width(30.dp)
+            text = "$index.",
+            fontSize = 16.sp,
+            color = Color.White.copy(alpha = 0.7f),
+            modifier = Modifier.width(32.dp)
         )
 
-        Image(
-            painter = painterResource(id = actualSong.cover),
-            contentDescription = "",
-            contentScale = ContentScale.Crop,
+        Spacer(Modifier.width(12.dp))
+
+        Box(
             modifier = Modifier
                 .size(60.dp)
-                .clip(RoundedCornerShape(10.dp))
-        )
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF4A9B8E)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(30.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.width(15.dp))
+        Spacer(Modifier.width(16.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = actualSong.title,
-                color = Color.White,
+                text = song.title,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
+
+            Spacer(Modifier.height(4.dp))
+
             Text(
-                text = actualSong.artist,
-                color = Color.White.copy(0.8f),
-                fontSize = 14.sp
+                text = song.artist,
+                fontSize = 14.sp,
+                color = Color.White.copy(alpha = 0.7f)
             )
         }
 
-        // Favorite button
-        IconButton(onClick = onFavoriteClick) {
+        Text(
+            text = song.duration,
+            fontSize = 14.sp,
+            color = Color.White.copy(alpha = 0.6f)
+        )
+    }
+}
+
+@Composable
+fun NowPlayingContent(
+    song: PlaylistSong,
+    playlist: Playlist?,
+    isPlaying: Boolean,
+    onPlayPauseClick: () -> Unit,
+    onBack: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            Text(
+                text = "Now Playing",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Audio Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFB040FF)),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
-                imageVector = if (actualSong.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = "Favorite",
-                tint = if (actualSong.isFavorite) Color(0xFFEC4899) else Color.White.copy(alpha = 0.7f)
+                Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(120.dp)
             )
         }
 
-        // Download button
-        IconButton(onClick = onDownloadClick) {
-            Icon(
-                imageVector = if (actualSong.isDownloaded) Icons.Default.CheckCircle else Icons.Default.Download,
-                contentDescription = "Download",
-                tint = if (actualSong.isDownloaded) Color(0xFF58E1C3) else Color.White.copy(alpha = 0.7f)
+        Spacer(Modifier.height(40.dp))
+
+        Text(
+            text = song.title,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = song.artist,
+            fontSize = 18.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+
+        Spacer(Modifier.height(40.dp))
+
+        var progress by remember { mutableStateOf(0.3f) }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Slider(
+                value = progress,
+                onValueChange = { progress = it },
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color(0xFFB040FF),
+                    inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                )
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("1:23", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Text(song.duration, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Shuffle,
+                    contentDescription = "Shuffle",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = onPrevious) {
+                Icon(
+                    Icons.Default.SkipPrevious,
+                    contentDescription = "Previous",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            FloatingActionButton(
+                onClick = onPlayPauseClick,
+                containerColor = Color(0xFFB040FF),
+                modifier = Modifier.size(72.dp)
+            ) {
+                Icon(
+                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = onNext) {
+                Icon(
+                    Icons.Default.SkipNext,
+                    contentDescription = "Next",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Repeat,
+                    contentDescription = "Repeat",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.FavoriteBorder,
+                    contentDescription = "Like",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
+}
+
+// Sample data
+fun getPlaylistData(): List<Playlist> {
+    return listOf(
+        Playlist(
+            id = 1,
+            name = "Focus Flow",
+            description = "AI curated for productivity",
+            songCount = 32,
+            isAiGenerated = true,
+            songs = listOf(
+                PlaylistSong(1, "Deep Focus", "Ambient Collective", "4:32"),
+                PlaylistSong(2, "Concentration Mode", "Study Beats", "3:45"),
+                PlaylistSong(3, "Mind Flow", "Zen Masters", "5:12"),
+                PlaylistSong(4, "Brain Waves", "Focus Music", "4:20")
+            )
+        ),
+        Playlist(
+            id = 2,
+            name = "Evening Calm",
+            description = "Relaxing evening vibes",
+            songCount = 15,
+            isAiGenerated = true,
+            songs = listOf(
+                PlaylistSong(5, "Sunset Dreams", "Chill Artists", "3:28"),
+                PlaylistSong(6, "Evening Breeze", "Smooth Sounds", "4:15"),
+                PlaylistSong(7, "Twilight Hour", "Relaxation Zone", "5:03")
+            )
+        ),
+        Playlist(
+            id = 3,
+            name = "Chill Vibes",
+            description = "Relaxing tunes for any time",
+            songCount = 24,
+            isAiGenerated = false,
+            songs = listOf(
+                PlaylistSong(8, "kissme", "Red Love", "3:12"),
+                PlaylistSong(9, "radio", "Lana Del Rey", "4:28"),
+                PlaylistSong(10, "Face", "Larosea", "3:45"),
+                PlaylistSong(11, "Moonlight", "Indie Dreams", "4:02")
+            )
+        ),
+        Playlist(
+            id = 4,
+            name = "Workout Energy",
+            description = "High energy beats",
+            songCount = 18,
+            isAiGenerated = false,
+            songs = listOf(
+                PlaylistSong(12, "Power Up", "Gym Beats", "3:30"),
+                PlaylistSong(13, "Maximum Drive", "Workout Mix", "3:55"),
+                PlaylistSong(14, "Beast Mode", "Fitness Music", "4:10")
+            )
+        )
+    )
 }
