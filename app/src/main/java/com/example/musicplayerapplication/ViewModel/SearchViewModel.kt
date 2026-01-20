@@ -1,49 +1,100 @@
 package com.example.musicplayerapplication.ViewModel
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.musicplayerapplication.model.SearchResult
 import com.example.musicplayerapplication.model.SearchSongs
 import com.example.musicplayerapplication.repository.SearchRepoImpl
 import com.example.musicplayerapplication.repository.SearchRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
 class SearchViewModel(
-    private val repo: SearchRepository = SearchRepoImpl()
+    private val repository: SearchRepository = SearchRepoImpl()
 ) : ViewModel() {
 
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query
+    var query = mutableStateOf("")
+    var searchResults = mutableStateOf<SearchResult?>(null)
+    var recentSearches = mutableStateListOf<String>()
+    var isSearching = mutableStateOf(false)
+    var errorMessage = mutableStateOf<String?>(null)
 
-    private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
-    val recentSearches: StateFlow<List<String>> = _recentSearches
+    init {
+        loadRecentSearches()
+    }
 
-    val songs: StateFlow<List<SearchSongs>> =
-        _query
-            .flatMapLatest { repo.searchSongs(it) }
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                emptyList()
-            )
-
-    fun onQueryChange(newQuery: String) {
-        _query.value = newQuery
-
-        if (newQuery.isNotBlank()) {
-            _recentSearches.value =
-                (_recentSearches.value - newQuery).toMutableList()
-                    .apply {
-                        add(0, newQuery)
-                    }
-                    .take(5)
+    /**
+     * Load recent searches
+     */
+    private fun loadRecentSearches() {
+        viewModelScope.launch {
+            try {
+                recentSearches.addAll(repository.getRecentSearches())
+            } catch (e: Exception) {
+                errorMessage.value = "Failed to load recent searches"
+            }
         }
     }
 
-    fun onRecentSearchClick(search: String) {
-        _query.value = search
+    /**
+     * Perform search
+     */
+    fun search(searchQuery: String) {
+        query.value = searchQuery
+
+        if (searchQuery.isBlank()) {
+            searchResults.value = null
+            return
+        }
+
+        viewModelScope.launch {
+            isSearching.value = true
+            try {
+                delay(300) // Debounce
+                searchResults.value = repository.search(searchQuery)
+
+                // Add to recent searches
+                if (!recentSearches.contains(searchQuery)) {
+                    recentSearches.add(0, searchQuery)
+                    if (recentSearches.size > 10) {
+                        recentSearches.removeLast()
+                    }
+                }
+
+                isSearching.value = false
+            } catch (e: Exception) {
+                errorMessage.value = "Search failed"
+                isSearching.value = false
+            }
+        }
+    }
+
+    /**
+     * Clear recent searches
+     */
+    fun clearRecentSearches() {
+        recentSearches.clear()
+        repository.clearRecentSearches()
+    }
+
+    /**
+     * Remove specific search from recent
+     */
+    fun removeRecentSearch(searchQuery: String) {
+        recentSearches.remove(searchQuery)
+    }
+
+    /**
+     * Clear error message
+     */
+    fun clearError() {
+        errorMessage.value = null
     }
 }
