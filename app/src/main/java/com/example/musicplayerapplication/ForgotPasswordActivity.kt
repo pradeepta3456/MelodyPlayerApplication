@@ -93,7 +93,7 @@ fun ForgotPasswordBody() {
                     onClick = { (context as? ComponentActivity)?.finish() }
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.baseline_arrow_back_24),
+                        painter = painterResource(R.drawable.outline_arrow_back_24),
                         contentDescription = "Back",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
