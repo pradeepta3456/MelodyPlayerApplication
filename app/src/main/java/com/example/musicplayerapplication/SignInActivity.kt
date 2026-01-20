@@ -183,6 +183,7 @@ fun SignInBody(auth: FirebaseAuth) {
             ),
         contentAlignment = Alignment.Center
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()

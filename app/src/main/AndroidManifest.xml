@@ -1,142 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="MusicPlayerApplication"
+        android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MusicPlayerApplication">
-        <activity
-            android:name=".FolderActivity"
-            android:exported="true"
-            android:label="@string/title_activity_song"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+        android:theme="@style/Theme.MusicPlayerApplication"
+        tools:targetApi="31">
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".SongActivity"
-            android:exported="true"
-            android:label="@string/title_activity_library"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".GenreActivity"
-            android:exported="true"
-            android:label="@string/title_activity_genre"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".LibraryScreenActivity"
-            android:exported="true"
-            android:label="@string/title_activity_genre"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".HomeActivity"
-            android:exported="true"
-            android:label="@string/title_activity_genre"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".SignInActivity"
-            android:exported="true"
-            android:label="@string/title_activity_sign_in"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="MusicPlayerApplication"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="true"
-            android:label="MusicPlayerApplication"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- MAIN LAUNCHER ACTIVITY -->
         <activity
             android:name=".DashboardActivity"
             android:exported="true"
-            android:label="MusicPlayerApplication"
             android:theme="@style/Theme.MusicPlayerApplication">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SettingScreen"
-            android:exported="true"
-            android:theme="@style/Theme.MusicPlayerApplication" />
 
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="true"
-            android:label="MusicPlayerApplication"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".ForgotPasswordActivity"
-            android:exported="true"
-            android:label="MusicPlayerApplication"
-            android:theme="@style/Theme.MusicPlayerApplication">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
     </application>
 
 </manifest>

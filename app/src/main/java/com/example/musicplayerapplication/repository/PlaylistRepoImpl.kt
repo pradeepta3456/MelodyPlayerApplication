@@ -9,8 +9,8 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.musicplayerapplication.R
-import com.example.musicplayerapplication.model.PlaylistModel
 import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.viewmodel.PlaylistModel
 
 class PlaylistRepoImpl : PlaylistRepository {
 
@@ -21,6 +21,7 @@ class PlaylistRepoImpl : PlaylistRepository {
         Song(4, "Sunset Dreams", "Ambient Collective", R.drawable.baseline_library_music_24),
         Song(5, "Midnight Coffee", "Jazz Essentials", R.drawable.baseline_library_music_24)
     )
+
 
     private val playlists = mutableListOf<PlaylistModel>()
 

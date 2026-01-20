@@ -32,8 +32,8 @@ import com.example.musicplayerapplication.model.Achievement
 import com.example.musicplayerapplication.model.Artist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
+import com.example.musicplayerapplication.view.ProfileViewModel
 
-import com.example.musicplayerapplication.viewmodel.ProfileViewModel
 
 
 class ProfileActivity : ComponentActivity() {
@@ -56,7 +56,7 @@ class ProfileActivity : ComponentActivity() {
 
 // ---------------------- PROFILE SCREEN ----------------------
 @Composable
-fun ProfileScreen(profileViewModel:ProfileViewModel = ProfileViewModel()) {
+fun ProfileScreen(profileViewModel: ProfileViewModel = ProfileViewModel()) {
     val topSongs = profileViewModel.topSongs
     val topArtists = profileViewModel.topArtists
     val achievements = profileViewModel.achievements
@@ -187,8 +187,19 @@ fun TopSongItem(song: Song, rank: Int) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("$rank", color = Color.White.copy(alpha = 0.8f), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(30.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Box(modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp))) {
-                Image(painter = painterResource(id = song.cover), contentDescription = song.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            ) {
+                val coverId = song.coverResId ?: R.drawable.baseline_library_music_24
+
+                Image(
+                    painter = painterResource(id = coverId),
+                    contentDescription = song.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {

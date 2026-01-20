@@ -1,52 +1,18 @@
 package com.example.musicplayerapplication
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,97 +20,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.musicplayerapplication.model.LibraryArtist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
-import com.example.musicplayerapplication.viewmodel.LibraryViewModel
+import com.example.musicplayerapplication.view.LibraryViewModel
 
-class LibraryScreenActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MelodyPlayTheme {
-                AppNavGraph()
-            }
-        }
-    }
-}
-
-
+// Main Library Screen - Use this in DashboardActivity
 @Composable
-fun AppNavGraph() {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = "library"
-    ) {
-        composable("library") { LibraryScreen(navController) }
-        composable("songs") { SimpleScreen("Songs Screen") }
-        composable("albums") { SimpleScreen("Albums Screen") }
-        composable("artists") { SimpleScreen("Artists Screen") }
-        composable("genres") { SimpleScreen("Genres Screen") }
-        composable("folders") { SimpleScreen("Folders Screen") }
-        composable("profile") { SimpleScreen("Profile Screen") }
-        composable(
-            route = "album_detail/{albumName}",
-            arguments = listOf(navArgument("albumName") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val albumName = backStackEntry.arguments?.getString("albumName") ?: ""
-            AlbumDetailScreen(albumName = albumName, navController = navController)
-        }
-    }
-}
-
-
-
-// ------------------ Theme ------------------
-@Composable
-fun MelodyPlayTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = darkColorScheme(
-            primary = Color(0xFF7B8BC4),
-            secondary = Color(0xFF4F649F),
-            background = Color(0xFF2B3A6B)
-        ),
-        content = content
-    )
-}
-
-
-
-
-
-// ------------------ Music Library Screen ------------------
-@Composable
-fun LibraryScreen(navController: NavController = rememberNavController()) {
-
+fun LibraryScreen() {
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
-
     var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("Albums") }
+    var selectedArtist by remember { mutableStateOf<String?>(null) }
+
     val artists = viewModel.artists
     val categories = listOf(
-        "Songs" to (R.drawable.baseline_music_note_24 to "songs"),
-        "Albums" to (R.drawable.baseline_album_24 to "albums"),
-        "Artists" to (R.drawable.baseline_person_24 to "artists"),
-        "Genres" to (R.drawable.baseline_library_music_24 to "genres"),
-        "Folders" to (R.drawable.baseline_folder_open_24 to "folders")
+        "Songs" to R.drawable.baseline_music_note_24,
+        "Albums" to R.drawable.baseline_album_24,
+        "Artists" to R.drawable.baseline_person_24,
+        "Genres" to R.drawable.baseline_library_music_24,
+        "Folders" to R.drawable.baseline_folder_open_24
     )
 
-    // Fixed category for this screen is "Albums"
-    val fixedCategory = "Albums"
-
-    Scaffold(
-        topBar = {
+    // Show album detail if artist is selected
+    if (selectedArtist != null) {
+        AlbumDetailScreenContent(
+            albumName = selectedArtist!!,
+            onBack = { selectedArtist = null }
+        )
+    } else {
+        // Main library view
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF6176E3))
+        ) {
+            // Search Bar and Categories
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -188,55 +101,59 @@ fun LibraryScreen(navController: NavController = rememberNavController()) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    categories.forEach { (label, iconAndRoute) ->
-                        val (iconRes, route) = iconAndRoute
-                        CategoryChip(
+                    categories.forEach { (label, iconRes) ->
+                        LibraryCategoryChip(
                             label = label,
                             iconResId = iconRes,
-                            selected = label == fixedCategory
+                            selected = label == selectedCategory
                         ) {
-                            // If not Albums, navigate to other screen
-                            if (label != fixedCategory) {
-                                navController.navigate(route)
-                            }
+                            selectedCategory = label
                         }
                     }
                 }
             }
-        },
-        containerColor = Color(0xFF6176E3)
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            ArtistListScreen(artists = artists, navController = navController)
-        }
-    }
-}
 
-// ------------------ Artist List ------------------
-@Composable
-fun ArtistListScreen(artists: List<LibraryArtist>, navController: NavController) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF2C3C72))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(artists) { artist ->
-            ArtistCard(artist = artist) {
-                navController.navigate("album_detail/${artist.name}")
+            // Content based on selected category
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF2C3C72))
+            ) {
+                when (selectedCategory) {
+                    "Albums" -> LibraryArtistList(
+                        artists = artists,
+                        onArtistClick = { artist -> selectedArtist = artist.name }
+                    )
+                    else -> SimpleCategoryScreen(selectedCategory)
+                }
             }
         }
     }
 }
 
 @Composable
-fun ArtistCard(artist: LibraryArtist, onClick: () -> Unit) {
+fun LibraryArtistList(
+    artists: List<LibraryArtist>,
+    onArtistClick: (LibraryArtist) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(artists) { artist ->
+            LibraryArtistCard(artist = artist, onClick = { onArtistClick(artist) })
+        }
+    }
+}
+
+@Composable
+fun LibraryArtistCard(artist: LibraryArtist, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -284,14 +201,19 @@ fun ArtistCard(artist: LibraryArtist, onClick: () -> Unit) {
     }
 }
 
-// ------------------ Chips ------------------
 @Composable
-fun CategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -> Unit) {
+fun LibraryCategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,
         label = { Text(label, fontSize = 13.sp) },
-        leadingIcon = { Icon(painter = painterResource(id = iconResId), contentDescription = label, modifier = Modifier.size(18.dp)) },
+        leadingIcon = {
+            Icon(
+                painter = painterResource(id = iconResId),
+                contentDescription = label,
+                modifier = Modifier.size(18.dp)
+            )
+        },
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = Color(0xFF9199B4),
             selectedLabelColor = Color.White,
@@ -301,97 +223,71 @@ fun CategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -
     )
 }
 
-// ------------------ Bottom Bar ------------------
-
-
-// ------------------ Album Detail Screen ------------------
 @Composable
-fun AlbumDetailScreen(albumName: String, navController: NavController) {
-    // Get different songs based on the artist name
-    val songs = remember(albumName) {
-        getSongsForArtist(albumName)
-    }
+fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
+    val songs = remember(albumName) { getSongsForArtist(albumName) }
+    val durations = remember(albumName) { getDurationsForArtist(albumName) }
 
-    val durations = remember(albumName) {
-        getDurationsForArtist(albumName)
-    }
-
-    Scaffold(
-        topBar = {
-            Row(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF2C3C72))
+    ) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF414C91))
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_arrow_back_24),
+                contentDescription = "Back",
+                tint = Color.White,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF414C91))
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_menu_24),
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .clickable { navController.popBackStack() }
-                        .size(24.dp)
-                )
-                Text(
-                    text = albumName,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        },
-        containerColor = Color(0xFF2C3C72)
-    ) { paddingValues ->
-        Column(
+                    .clickable { onBack() }
+                    .size(24.dp)
+            )
+            Text(
+                text = albumName,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Songs List
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFF2C3C72))
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Songs List
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(songs.size) { index ->
-                    AlbumSongItem(
-                        song = songs[index],
-                        duration = durations[index],
-                        onSongClick = { /* Navigate to song detail or play */ }
-                    )
-                }
+            items(songs.size) { index ->
+                LibraryAlbumSongItem(
+                    song = songs[index],
+                    duration = durations[index]
+                )
+            }
 
-                // Sign in promotional section
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SignInPromoCard()
-                }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                LibrarySignInPromoCard()
             }
         }
     }
 }
 
 @Composable
-fun AlbumSongItem(
-    song: Song,
-    duration: String,
-    onSongClick: () -> Unit
-) {
+fun LibraryAlbumSongItem(song: Song, duration: String) {
     var isFavorite by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onSongClick),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF3A4A7A)
-        ),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF3A4A7A)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -401,7 +297,6 @@ fun AlbumSongItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Album Art Thumbnail
             Image(
                 painter = painterResource(id = song.cover),
                 contentDescription = song.title,
@@ -411,7 +306,6 @@ fun AlbumSongItem(
                     .clip(RoundedCornerShape(8.dp))
             )
 
-            // Song Name and Duration in same line
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
@@ -430,11 +324,7 @@ fun AlbumSongItem(
                 )
             }
 
-            // Heart Icon
-            IconButton(
-                onClick = { isFavorite = !isFavorite },
-                modifier = Modifier.size(40.dp)
-            ) {
+            IconButton(onClick = { isFavorite = !isFavorite }, modifier = Modifier.size(40.dp)) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
@@ -443,11 +333,7 @@ fun AlbumSongItem(
                 )
             }
 
-            // Play/Pause Icon
-            IconButton(
-                onClick = { isPlaying = !isPlaying },
-                modifier = Modifier.size(40.dp)
-            ) {
+            IconButton(onClick = { isPlaying = !isPlaying }, modifier = Modifier.size(40.dp)) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = if (isPlaying) "Pause" else "Play",
@@ -456,11 +342,7 @@ fun AlbumSongItem(
                 )
             }
 
-            // More Options Icon
-            IconButton(
-                onClick = { /* Show menu */ },
-                modifier = Modifier.size(40.dp)
-            ) {
+            IconButton(onClick = { }, modifier = Modifier.size(40.dp)) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "More options",
@@ -473,12 +355,10 @@ fun AlbumSongItem(
 }
 
 @Composable
-fun SignInPromoCard() {
+fun LibrarySignInPromoCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2A3A6A)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A3A6A)),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -487,12 +367,9 @@ fun SignInPromoCard() {
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Sign in Button
             Button(
-                onClick = { /* Navigate to sign in */ },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
-                ),
+                onClick = { },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -515,9 +392,8 @@ fun SignInPromoCard() {
                 }
             }
 
-            // Promotional Text
             Text(
-                text = "Create more Playlist and Costumize your music",
+                text = "Create more Playlist and Customize your music",
                 color = Color.White,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
@@ -526,7 +402,22 @@ fun SignInPromoCard() {
     }
 }
 
-// ------------------ Helper Functions for Artist Details ------------------
+@Composable
+fun SimpleCategoryScreen(category: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "$category Screen - Coming Soon",
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+// Helper functions
 fun getSongsForArtist(artistName: String): List<Song> {
     return when (artistName) {
         "Luna Eclipse" -> listOf(
@@ -538,10 +429,10 @@ fun getSongsForArtist(artistName: String): List<Song> {
         )
         "Sunshine" -> listOf(
             Song(1, "Lily", "Artist", R.drawable.img_2, 0),
-            Song(2, "Bright ", "Artist", R.drawable.img_11, 0),
+            Song(2, "Bright", "Artist", R.drawable.img_11, 0),
             Song(3, "Golden", "Artist", R.drawable.img_12, 0),
-            Song(4, "Summe", "Artist", R.drawable.img14, 0),
-            Song(5, "Radian", "Artist", R.drawable.img15, 0)
+            Song(4, "Summer", "Artist", R.drawable.img14, 0),
+            Song(5, "Radiant", "Artist", R.drawable.img15, 0)
         )
         "Poster Girl" -> listOf(
             Song(1, "Casitia", "Artist", R.drawable.img_3, 0),
@@ -553,7 +444,7 @@ fun getSongsForArtist(artistName: String): List<Song> {
         "Disco Drive" -> listOf(
             Song(1, "Danielle", "Artist", R.drawable.img_4, 0),
             Song(2, "Risern", "Artist", R.drawable.img_5, 0),
-            Song(3, "Nigh", "Artist", R.drawable.img_6, 0),
+            Song(3, "Night", "Artist", R.drawable.img_6, 0),
             Song(4, "Dance", "Artist", R.drawable.img_7, 0),
             Song(5, "Groove", "Artist", R.drawable.img_10, 0)
         )
@@ -574,24 +465,5 @@ fun getDurationsForArtist(artistName: String): List<String> {
         "Poster Girl" -> listOf("3:54", "2:45", "3:30", "4:05", "3:15")
         "Disco Drive" -> listOf("2:45", "5:12", "4:30", "3:25", "4:50")
         else -> listOf("2:50", "3:05", "3:54", "2:45", "5:12")
-    }
-}
-
-// ------------------ Simple Placeholder Screen ------------------
-@Composable
-fun SimpleScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF2B3A6B)), contentAlignment = Alignment.Center) {
-        Text(title, color = Color.White, fontSize = 24.sp)
-    }
-}
-
-
-// ------------------ Preview ------------------
-@Preview(showBackground = true)
-@Composable
-fun MelodyPlayPreview() {
-    MelodyPlayTheme {
-        val navController = rememberNavController()
-        LibraryScreen(navController)
     }
 }

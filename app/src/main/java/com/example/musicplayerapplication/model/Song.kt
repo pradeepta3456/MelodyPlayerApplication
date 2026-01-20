@@ -5,8 +5,7 @@ data class Song(
     val artist: String,
     val cover: Int,
     val plays: Int = 0,
+    val coverResId: Int? = null,
     var isFavorite: Boolean = false,
     var isDownloaded: Boolean = false
 )
-
-
