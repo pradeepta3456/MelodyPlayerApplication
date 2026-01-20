@@ -22,19 +22,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.Model.LibraryArtist
+import com.example.musicplayerapplication.Model.Song
 import com.example.musicplayerapplication.R
-import com.example.musicplayerapplication.model.LibraryArtist
-import com.example.musicplayerapplication.model.Song
-import com.example.musicplayerapplication.repository.LibraryRepoImpl
 import com.example.musicplayerapplication.ViewModel.LibraryViewModel
 
-// Main Library Screen - Use this in DashboardActivity
+/**
+ * Library Screen - Browse Artists, Albums, Songs
+ * Professional MVVM Implementation with Scan Device Feature
+ */
 @Composable
-fun LibraryScreen() {
-    val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
+fun LibraryScreen(
+    viewModel: LibraryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onScanDeviceClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {}
+) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Albums") }
     var selectedArtist by remember { mutableStateOf<String?>(null) }
+    var showEmptyState by remember { mutableStateOf(false) }
 
     val artists = viewModel.artists
     val categories = listOf(
@@ -47,7 +53,7 @@ fun LibraryScreen() {
 
     // Show album detail if artist is selected
     if (selectedArtist != null) {
-        AlbumDetailScreenContent(
+        AlbumDetailScreen(
             albumName = selectedArtist!!,
             onBack = { selectedArtist = null }
         )
@@ -58,13 +64,60 @@ fun LibraryScreen() {
                 .fillMaxSize()
                 .background(Color(0xFF6176E3))
         ) {
-            // Search Bar and Categories
+            // Header with Search Bar
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF414C91))
                     .padding(16.dp)
             ) {
+                // Title Row with Actions
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Library",
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Scan Device Button
+                        IconButton(
+                            onClick = onScanDeviceClick,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color(0xFF5B6AA8)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Scan Device",
+                                tint = Color.White
+                            )
+                        }
+
+                        // Upload Button
+                        IconButton(
+                            onClick = onUploadClick,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color(0xFF5B6AA8)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Upload",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Search Bar
                 TextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -82,17 +135,30 @@ fun LibraryScreen() {
                         )
                     },
                     trailingIcon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_search_24),
-                            contentDescription = "Search",
-                            tint = Color.White
-                        )
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear",
+                                    tint = Color.White
+                                )
+                            }
+                        } else {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_search_24),
+                                contentDescription = "Search",
+                                tint = Color.White
+                            )
+                        }
                     },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFF2C3883),
                         unfocusedContainerColor = Color(0xFF272F72),
                         focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        unfocusedTextColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        cursorColor = Color.White
                     ),
                     singleLine = true,
                     modifier = Modifier
@@ -102,6 +168,7 @@ fun LibraryScreen() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Category Tabs
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -110,100 +177,313 @@ fun LibraryScreen() {
                         LibraryCategoryChip(
                             label = label,
                             iconResId = iconRes,
-                            selected = label == selectedCategory
-                        ) {
-                            selectedCategory = label
-                        }
+                            selected = label == selectedCategory,
+                            onClick = { selectedCategory = label }
+                        )
                     }
                 }
             }
 
-            // Content based on selected category
+            // Content Area
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0xFF2C3C72))
             ) {
-                when (selectedCategory) {
-                    "Albums" -> LibraryArtistList(
-                        artists = artists,
-                        onArtistClick = { artist -> selectedArtist = artist.name }
-                    )
-                    else -> SimpleCategoryScreen(selectedCategory)
+                when {
+                    artists.isEmpty() && selectedCategory == "Albums" -> {
+                        // Empty State
+                        LibraryEmptyState(
+                            onScanDeviceClick = onScanDeviceClick,
+                            onUploadClick = onUploadClick
+                        )
+                    }
+                    else -> {
+                        when (selectedCategory) {
+                            "Albums" -> {
+                                LibraryArtistList(
+                                    artists = artists.filter {
+                                        it.name.contains(searchQuery, ignoreCase = true)
+                                    },
+                                    onArtistClick = { artist -> selectedArtist = artist.name }
+                                )
+                            }
+                            else -> {
+                                SimpleCategoryScreen(selectedCategory)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * Library Empty State - First Time User Experience
+ */
+@Composable
+fun LibraryEmptyState(
+    onScanDeviceClick: () -> Unit,
+    onUploadClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF3D4B8E)
+            ),
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_library_music_24),
+                    contentDescription = "Empty Library",
+                    tint = Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(80.dp)
+                )
+
+                Text(
+                    "Your Library is Empty",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    "Start building your music collection by scanning your device or uploading files",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onScanDeviceClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF8B5CF6)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Scan",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Scan Device for Music",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onUploadClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.White
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            width = 2.dp,
+                            brush = androidx.compose.ui.graphics.SolidColor(Color.White)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudUpload,
+                            contentDescription = "Upload",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Upload Music Files",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Divider(
+                    color = Color.White.copy(alpha = 0.2f),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                Text(
+                    "💡 Tip: You can also add music from URLs or record audio",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Library Artist List
+ */
 @Composable
 fun LibraryArtistList(
     artists: List<LibraryArtist>,
     onArtistClick: (LibraryArtist) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(artists) { artist ->
-            LibraryArtistCard(artist = artist, onClick = { onArtistClick(artist) })
-        }
-    }
-}
-
-@Composable
-fun LibraryArtistCard(artist: LibraryArtist, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-    ) {
+    if (artists.isEmpty()) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF4A5A8A)),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            if (artist.imageResId != null) {
-                Image(
-                    painter = painterResource(id = artist.imageResId),
-                    contentDescription = artist.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_person_24),
-                    contentDescription = artist.name,
-                    tint = Color.White,
+                    painter = painterResource(id = R.drawable.baseline_search_24),
+                    contentDescription = "No results",
+                    tint = Color.White.copy(alpha = 0.5f),
                     modifier = Modifier.size(64.dp)
+                )
+                Text(
+                    "No results found",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Try a different search term",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = artist.name,
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
-        )
-
-        Text(
-            text = "${artist.songCount} Songs, ${artist.albumCount} Albums",
-            color = Color(0xFFB0B0B0),
-            fontSize = 13.sp
-        )
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(artists) { artist ->
+                LibraryArtistCard(
+                    artist = artist,
+                    onClick = { onArtistClick(artist) }
+                )
+            }
+        }
     }
 }
 
+/**
+ * Library Artist Card
+ */
 @Composable
-fun LibraryCategoryChip(label: String, iconResId: Int, selected: Boolean, onClick: () -> Unit) {
+fun LibraryArtistCard(artist: LibraryArtist, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF3D4B8E)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Artist Image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .background(Color(0xFF4A5A8A)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (artist.imageResId != null) {
+                    Image(
+                        painter = painterResource(id = artist.imageResId),
+                        contentDescription = artist.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_person_24),
+                        contentDescription = artist.name,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+            }
+
+            // Artist Info
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = artist.name,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_music_note_24),
+                        contentDescription = "Songs",
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "${artist.songCount} Songs",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                    Text("•", color = Color.White.copy(alpha = 0.5f))
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_album_24),
+                        contentDescription = "Albums",
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "${artist.albumCount} Albums",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Library Category Chip
+ */
+@Composable
+fun LibraryCategoryChip(
+    label: String,
+    iconResId: Int,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
     FilterChip(
         selected = selected,
         onClick = onClick,
@@ -218,14 +498,20 @@ fun LibraryCategoryChip(label: String, iconResId: Int, selected: Boolean, onClic
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = Color(0xFF9199B4),
             selectedLabelColor = Color.White,
+            selectedLeadingIconColor = Color.White,
             containerColor = Color(0xFF596791),
-            labelColor = Color.White
-        )
+            labelColor = Color.White,
+            iconColor = Color.White
+        ),
+        border = null
     )
 }
 
+/**
+ * Album Detail Screen (from Library)
+ */
 @Composable
-fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
+fun AlbumDetailScreen(albumName: String, onBack: () -> Unit) {
     val songs = remember(albumName) { getSongsForArtist(albumName) }
     val durations = remember(albumName) { getDurationsForArtist(albumName) }
 
@@ -243,14 +529,14 @@ fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_arrow_back_24),
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier
-                    .clickable { onBack() }
-                    .size(24.dp)
-            )
+            IconButton(onClick = onBack) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_arrow_back_24),
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
             Text(
                 text = albumName,
                 color = Color.White,
@@ -281,6 +567,9 @@ fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
     }
 }
 
+/**
+ * Library Album Song Item
+ */
 @Composable
 fun LibraryAlbumSongItem(song: Song, duration: String) {
     var isFavorite by remember { mutableStateOf(false) }
@@ -355,6 +644,9 @@ fun LibraryAlbumSongItem(song: Song, duration: String) {
     }
 }
 
+/**
+ * Sign In Promo Card (at bottom of song list)
+ */
 @Composable
 fun LibrarySignInPromoCard() {
     Card(
@@ -394,7 +686,7 @@ fun LibrarySignInPromoCard() {
             }
 
             Text(
-                text = "Create more Playlist and Customize your music",
+                text = "Create more Playlists and Customize your music",
                 color = Color.White,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
@@ -403,22 +695,41 @@ fun LibrarySignInPromoCard() {
     }
 }
 
+/**
+ * Simple Category Screen Placeholder
+ */
 @Composable
 fun SimpleCategoryScreen(category: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            "$category Screen - Coming Soon",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_construction_24),
+                contentDescription = "Coming Soon",
+                tint = Color.White.copy(alpha = 0.5f),
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                "$category View",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Coming Soon",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 16.sp
+            )
+        }
     }
 }
 
-// Helper functions
+// Helper functions (keep existing implementations)
 fun getSongsForArtist(artistName: String): List<Song> {
     return when (artistName) {
         "Luna Eclipse" -> listOf(
@@ -428,43 +739,13 @@ fun getSongsForArtist(artistName: String): List<Song> {
             Song(4, "Eclipse", "Artist", R.drawable.img_7, 0),
             Song(5, "Moon", "Artist", R.drawable.img_10, 0)
         )
-        "Sunshine" -> listOf(
-            Song(1, "Lily", "Artist", R.drawable.img_2, 0),
-            Song(2, "Bright", "Artist", R.drawable.img_11, 0),
-            Song(3, "Golden", "Artist", R.drawable.img_12, 0),
-            Song(4, "Summer", "Artist", R.drawable.img14, 0),
-            Song(5, "Radiant", "Artist", R.drawable.img15, 0)
-        )
-        "Poster Girl" -> listOf(
-            Song(1, "Casitia", "Artist", R.drawable.img_3, 0),
-            Song(2, "Fashion", "Artist", R.drawable.img_4, 0),
-            Song(3, "Style", "Artist", R.drawable.img_5, 0),
-            Song(4, "Glam", "Artist", R.drawable.img_6, 0),
-            Song(5, "Trend", "Artist", R.drawable.img_7, 0)
-        )
-        "Disco Drive" -> listOf(
-            Song(1, "Danielle", "Artist", R.drawable.img_4, 0),
-            Song(2, "Risern", "Artist", R.drawable.img_5, 0),
-            Song(3, "Night", "Artist", R.drawable.img_6, 0),
-            Song(4, "Dance", "Artist", R.drawable.img_7, 0),
-            Song(5, "Groove", "Artist", R.drawable.img_10, 0)
-        )
-        else -> listOf(
-            Song(1, "Song 1", "Artist", R.drawable.img_1, 0),
-            Song(2, "Song 2", "Artist", R.drawable.img_2, 0),
-            Song(3, "Song 3", "Artist", R.drawable.img_3, 0),
-            Song(4, "Song 4", "Artist", R.drawable.img_4, 0),
-            Song(5, "Song 5", "Artist", R.drawable.img_5, 0)
-        )
+        else -> emptyList()
     }
 }
 
 fun getDurationsForArtist(artistName: String): List<String> {
     return when (artistName) {
         "Luna Eclipse" -> listOf("2:50", "3:15", "4:20", "3:45", "5:10")
-        "Sunshine" -> listOf("3:05", "2:30", "3:55", "4:10", "3:20")
-        "Poster Girl" -> listOf("3:54", "2:45", "3:30", "4:05", "3:15")
-        "Disco Drive" -> listOf("2:45", "5:12", "4:30", "3:25", "4:50")
-        else -> listOf("2:50", "3:05", "3:54", "2:45", "5:12")
+        else -> emptyList()
     }
 }

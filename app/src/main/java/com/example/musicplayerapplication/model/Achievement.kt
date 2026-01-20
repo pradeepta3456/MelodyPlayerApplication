@@ -1,3 +1,11 @@
 package com.example.musicplayerapplication.model
 
-data class Achievement(val title: String, val description: String, val iconRes: Int, val isCompleted: Boolean)
+data class Achievement(
+    val id: Int = 0,
+    val title: String,
+    val description: String,
+    val iconRes: Int,
+    val isCompleted: Boolean = false,
+    val progress: Int = 0,
+    val target: Int = 100
+)
