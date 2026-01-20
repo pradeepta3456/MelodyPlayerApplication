@@ -1,8 +1,9 @@
 <resources>
-    <string name="app_name">MusicPlayerApplication</string>
+    <string name="app_name" translatable="false">MusicPlayerApplication</string>
     <string name="title_activity_sign_in">SignInActivity</string>
     <string name="title_activity_genre">GenreActivity</string>
     <string name="title_activity_library">LibraryActivity</string>
     <string name="title_activity_song">SongActivity</string>
-    <string name="default_web_client_id"><![CDATA[<string name=\"default_web_client_id\">YOUR_WEB_CLIENT_ID</string>]]></string>
+    <string name="default_web_client_id">813924484538-4mc038ae021b8b1ehat57jk5p7escs4c.apps.googleusercontent.com</string>
 </resources>
+
