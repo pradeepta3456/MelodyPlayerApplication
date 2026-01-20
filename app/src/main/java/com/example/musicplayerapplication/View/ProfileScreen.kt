@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 
 
@@ -27,12 +27,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.R
 
 import com.example.musicplayerapplication.model.Achievement
 import com.example.musicplayerapplication.model.Artist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
-import com.example.musicplayerapplication.view.ProfileViewModel
+import com.example.musicplayerapplication.ViewModel.ProfileViewModel
 
 
 

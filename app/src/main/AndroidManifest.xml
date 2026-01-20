@@ -16,7 +16,7 @@
 
         <!-- MAIN LAUNCHER ACTIVITY -->
         <activity
-            android:name=".DashboardActivity"
+            android:name=".View.DashboardActivity"
             android:exported="true"
             android:theme="@style/Theme.MusicPlayerApplication">
             <intent-filter>

@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,9 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
-import com.example.musicplayerapplication.view.HomeViewModel
-import com.example.musicplayerapplication.view.ProfileViewModel
+import com.example.musicplayerapplication.ViewModel.HomeViewModel
+import com.example.musicplayerapplication.ViewModel.ProfileViewModel
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,7 +76,7 @@ fun DashboardBody() {
                             showNotificationScreen = false
                         },
                         selected = selectedIndex == index,
-                        colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                        colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color.White,
                             selectedTextColor = Color.White,
                             unselectedIconColor = Color(0xFF9C27B0),

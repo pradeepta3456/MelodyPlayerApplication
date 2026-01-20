@@ -1,6 +1,7 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
 
 class ForgotPasswordActivity : ComponentActivity() {
@@ -46,7 +48,7 @@ fun ForgotPasswordBody() {
             email.isEmpty() -> {
                 Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
             }
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                 Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
             }
             else -> {

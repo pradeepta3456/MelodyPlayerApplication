@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.R
 
 
 class MainActivity : ComponentActivity() {
@@ -42,10 +43,10 @@ fun FinalMusicUIScreen() {
     var selectedTab by remember { mutableStateOf("Genres") }
 
     val list = listOf(
-        SongData("Katseye", "Black eye", com.example.musicplayerapplication.R.drawable.img_10, "2:50"),
-        SongData("No More", "LILLY", com.example.musicplayerapplication.R.drawable.img_11, "3:05"),
-        SongData("Ocean Eyes", "Billie eilish", com.example.musicplayerapplication.R.drawable.img_12, "3:54"),
-        SongData("Sunrise", "Heat Waves", com.example.musicplayerapplication.R.drawable.img_11, "2:45"),
+        SongData("Katseye", "Black eye", R.drawable.img_10, "2:50"),
+        SongData("No More", "LILLY", R.drawable.img_11, "3:05"),
+        SongData("Ocean Eyes", "Billie eilish", R.drawable.img_12, "3:54"),
+        SongData("Sunrise", "Heat Waves", R.drawable.img_11, "2:45"),
         SongData("Bite Me", "Risern", R.drawable.img_12, "5:12")
     )
 
@@ -121,7 +122,7 @@ fun SearchBar(
             .clip(RoundedCornerShape(20.dp)),
         leadingIcon = {
             Icon(
-                painter = painterResource(com.example.musicplayerapplication.R.drawable.baseline_menu_24),
+                painter = painterResource(R.drawable.baseline_menu_24),
                 contentDescription = null,
                 tint = Color.White.copy(alpha = 0.7f)
             )
@@ -137,7 +138,7 @@ fun SearchBar(
                 }
             } else {
                 Icon(
-                    painter = painterResource(com.example.musicplayerapplication.R.drawable.baseline_search_24),
+                    painter = painterResource(R.drawable.baseline_search_24),
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.7f)
                 )
@@ -170,31 +171,31 @@ fun TabsRow(
     ) {
         TabChipWithIcon(
             text = "Songs",
-            iconRes = com.example.musicplayerapplication.R.drawable.baseline_music_note_24,
+            iconRes = R.drawable.baseline_music_note_24,
             isSelected = selectedTab == "Songs",
             onClick = { onTabSelected("Songs") }
         )
         TabChipWithIcon(
             text = "Artists",
-            iconRes = com.example.musicplayerapplication.R.drawable.baseline_person_24,
+            iconRes = R.drawable.baseline_person_24,
             isSelected = selectedTab == "Artists",
             onClick = { onTabSelected("Artists") }
         )
         TabChipWithIcon(
             text = "Albums",
-            iconRes = com.example.musicplayerapplication.R.drawable.baseline_album_24,
+            iconRes = R.drawable.baseline_album_24,
             isSelected = selectedTab == "Albums",
             onClick = { onTabSelected("Albums") }
         )
         TabChipWithIcon(
             text = "Genres",
-            iconRes = com.example.musicplayerapplication.R.drawable.baseline_library_music_24,
+            iconRes = R.drawable.baseline_library_music_24,
             isSelected = selectedTab == "Genres",
             onClick = { onTabSelected("Genres") }
         )
         TabChipWithIcon(
             text = "Folders",
-            iconRes = com.example.musicplayerapplication.R.drawable.baseline_folder_24,
+            iconRes = R.drawable.baseline_folder_24,
             isSelected = selectedTab == "Folders",
             onClick = { onTabSelected("Folders") }
         )
@@ -293,7 +294,7 @@ fun SongCard(
         IconButton(onClick = { onMoreClick() }) {
         }
         Icon(
-            painter = painterResource(com.example.musicplayerapplication.R.drawable.baseline_more_horiz_24),
+            painter = painterResource(R.drawable.baseline_more_horiz_24),
             contentDescription = null,
             tint = Color.White
         )
