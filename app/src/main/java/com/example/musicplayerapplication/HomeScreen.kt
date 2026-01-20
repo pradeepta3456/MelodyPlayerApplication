@@ -1,6 +1,7 @@
 package com.example.musicplayerapplication
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,20 +13,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-
-
-import androidx.compose.material.icons.filled.TrendingUp
-
 import androidx.compose.material.icons.filled.Star
-
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,19 +34,21 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
-
-import com.example.musicplayerapplication.repository.HomeRepo
 import com.example.musicplayerapplication.repository.HomeRepoImpl
-
 import com.example.musicplayerapplication.ui.theme.*
-import com.example.musicplayerapplication.viewmodel.HomeViewModel
+import com.example.musicplayerapplication.view.HomeViewModel
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MelodyPlayTheme {
-                HomeScreen(viewModel = viewModel())
+            MusicPlayerTheme {
+                val viewModel: HomeViewModel = viewModel()
+                HomeScreen(
+                    viewModel = viewModel,
+                    onNotificationClick = {},
+                    onSearchClick = {}
+                )
             }
         }
     }
@@ -55,7 +57,14 @@ class HomeActivity : ComponentActivity() {
 
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onNotificationClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    var selectedSongId by remember { mutableStateOf<Int?>(null) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -66,18 +75,48 @@ fun HomeScreen(viewModel: HomeViewModel) {
     ) {
             // Welcome Header
             item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "Good evening",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        "Welcome Back",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Good evening",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            "Welcome Back",
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    // Search Icon
+                    IconButton(
+                        onClick = onSearchClick,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    // Notification Icon
+                    IconButton(
+                        onClick = onNotificationClick,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
 
@@ -109,25 +148,32 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
 
             // Recently Played Songs
-            items(viewModel.recentSongs) { song ->
-                RecentSongItem(song)
-            }
+        items(viewModel.recentSongs) { song ->
+            RecentSongItem(
+                song = song,
+                isSelected = song.id == selectedSongId,
+                onClick = {
+                    selectedSongId = song.id
+                    // Navigation removed for now
+                }
+            )
+        }
 
-        // Trending Header with Icon
+        // Trending Today Header
         item {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.TrendingUp,
-                    contentDescription = "Trending Up",
-                    tint = Color.Green,
+                    painter = painterResource(id = R.drawable.baseline_trending_up_24),
+                    contentDescription = null,
+                    tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    "Trending",
+                    "Trending Today",
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold
@@ -135,49 +181,18 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
 
-
-
-        // Trending Albums Horizontal
+        // Trending Albums - Two side by side
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(viewModel.trendingAlbums) { album ->
-                    TrendingAlbumCard(album)
-
-            // Trending Today Header
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.baseline_trending_up_24),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        "Trending Today",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            // Trending Albums - Two side by side
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    viewModel.trendingAlbums.take(2).forEach { album ->
-                        TrendingAlbumCard(album, modifier = Modifier.weight(1f))
-                    }
-
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                viewModel.trendingAlbums.take(2).forEach { album: Album ->
+                    TrendingAlbumCard(album = album, modifier = Modifier.weight(1f))
                 }
             }
         }
+    }
 }
 
 @Composable
@@ -285,12 +300,21 @@ fun FeaturedAlbumCard(title: String, artist: String, imageRes: Int) {
 }
 
 @Composable
-fun RecentSongItem(song: Song) {
+fun RecentSongItem(
+    song: Song,
+    onClick:   () -> Unit,  // Make sure there's NO @Composable here
+    isSelected: Boolean
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },  // This is how you use it
+        // ... rest of your code
+
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) CardBackground.copy(alpha = 0.9f) else CardBackground
+        ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -309,7 +333,7 @@ fun RecentSongItem(song: Song) {
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
             )
-            
+
             // Song Info
             Column(
                 modifier = Modifier.weight(1f),
@@ -327,15 +351,29 @@ fun RecentSongItem(song: Song) {
                     fontSize = 14.sp
                 )
             }
-            
-            // Play Icon
+
+            // Play Icon (shares same action as row click)
             IconButton(
-                onClick = { /* Play song */ },
+                onClick = onClick,
                 modifier = Modifier.size(40.dp)
             ) {
+                val highlightColor = Color(0xFFE91E63)
                 Icon(
                     painter = painterResource(id = R.drawable.baseline_play_arrow_24),
                     contentDescription = "Play",
+                    tint = if (isSelected) highlightColor else Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Vertical Menu Icon
+            IconButton(
+                onClick = { /* Vertical menu action */ },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
@@ -384,10 +422,15 @@ fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
 }
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomeScreenPreview() {
-    MelodyPlayTheme {
-        HomeScreen(viewModel = HomeViewModel(HomeRepoImpl()))
+    MusicPlayerTheme {
+        HomeScreen(
+            viewModel = HomeViewModel(HomeRepoImpl()),
+            onNotificationClick = {},
+            onSearchClick = {}
+        )
     }
 }
