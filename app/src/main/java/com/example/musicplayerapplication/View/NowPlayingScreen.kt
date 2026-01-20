@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.musicplayerapplication.model.Song
 import kotlin.math.roundToInt
 
@@ -89,8 +90,8 @@ fun NowPlayingScreen(
                 shape = RoundedCornerShape(24.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Image(
-                    painter = painterResource(id = it.cover),
+                AsyncImage(
+                    model = it.coverUrl,
                     contentDescription = it.title,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()

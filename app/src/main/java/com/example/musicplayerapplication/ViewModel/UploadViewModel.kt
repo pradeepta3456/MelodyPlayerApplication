@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapplication.model.UploadProgress
 import com.example.musicplayerapplication.model.UploadStatus
+import com.example.musicplayerapplication.repository.UploadRepoImpl
+import com.example.musicplayerapplication.repository.UploadRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

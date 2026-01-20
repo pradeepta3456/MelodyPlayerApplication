@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapplication.model.Achievement
-import com.example.musicplayerapplication.model.Artist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.model.UserStats
 import com.example.musicplayerapplication.repository.ProfileRepo

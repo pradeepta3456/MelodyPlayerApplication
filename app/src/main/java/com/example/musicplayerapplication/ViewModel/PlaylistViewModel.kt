@@ -4,10 +4,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.model.Playlist
 import com.example.musicplayerapplication.repository.PlaylistRepoImpl
 import com.example.musicplayerapplication.repository.PlaylistRepository
-import com.example.musicplayerapplication.viewmodel.PlaylistModel
 import kotlinx.coroutines.launch
 
 class PlaylistViewModel(
@@ -45,7 +44,7 @@ class PlaylistViewModel(
     fun createPlaylist(name: String, description: String) {
         viewModelScope.launch {
             try {
-                val newPlaylist = com.example.musicplayerapplication.model.Playlist(
+                val newPlaylist = Playlist(
                     id = (playlists.maxOfOrNull { it.id } ?: 0) + 1,
                     name = name,
                     description = description
@@ -85,9 +84,7 @@ class PlaylistViewModel(
         }
     }
 
-    /**
-     * Clear error message
-     */
+
     fun clearError() {
         errorMessage.value = null
     }

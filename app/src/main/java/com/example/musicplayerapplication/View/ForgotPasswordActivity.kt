@@ -9,6 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,12 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.musicplayerapplication.R
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.musicplayerapplication.ViewModel.AuthViewModel
 import com.example.musicplayerapplication.ui.theme.MusicPlayerApplicationTheme
 
 class ForgotPasswordActivity : ComponentActivity() {
@@ -38,9 +42,10 @@ class ForgotPasswordActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ForgotPasswordBody() {
+fun ForgotPasswordBody(viewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val isLoading by viewModel.isLoading
 
     // Function to send reset link
     fun sendResetLink() {
@@ -52,15 +57,20 @@ fun ForgotPasswordBody() {
                 Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
             }
             else -> {
-                // Simulate sending reset link
-                Toast.makeText(
-                    context,
-                    "Password reset link sent to $email",
-                    Toast.LENGTH_LONG
-                ).show()
-
-                // Navigate back after successful submission
-                (context as? ComponentActivity)?.finish()
+                viewModel.resetPassword(
+                    email = email,
+                    onSuccess = {
+                        Toast.makeText(
+                            context,
+                            "Password reset link sent to $email",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        (context as? ComponentActivity)?.finish()
+                    },
+                    onError = { error ->
+                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                    }
+                )
             }
         }
     }
@@ -95,7 +105,7 @@ fun ForgotPasswordBody() {
                     onClick = { (context as? ComponentActivity)?.finish() }
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.outline_arrow_back_24),
+                        imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
@@ -114,7 +124,7 @@ fun ForgotPasswordBody() {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.baseline_lock_24),
+                    imageVector = Icons.Default.Lock,
                     contentDescription = "Lock",
                     tint = Color.White,
                     modifier = Modifier.size(60.dp)
@@ -169,7 +179,7 @@ fun ForgotPasswordBody() {
                         placeholder = { Text("Your@gmail.com", color = Color.Gray) },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.baseline_email_24),
+                                imageVector = Icons.Default.Email,
                                 contentDescription = "Email",
                                 tint = Color.Gray
                             )
@@ -199,14 +209,22 @@ fun ForgotPasswordBody() {
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF8B5CF6)
-                        )
+                        ),
+                        enabled = !isLoading
                     ) {
-                        Text(
-                            text = "Send Reset Link",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "Send Reset Link",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }

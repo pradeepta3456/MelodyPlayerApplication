@@ -1,6 +1,5 @@
 package com.example.musicplayerapplication.View
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,28 +10,20 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Notification
 import com.example.musicplayerapplication.model.RecentActivity
-import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
 import com.example.musicplayerapplication.ViewModel.NotificationViewModel
-
 
 @Composable
 fun NotificationScreen(
@@ -45,7 +36,7 @@ fun NotificationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkPurpleBackground)
+            .background(Color(0xFF21133B))
             .padding(16.dp)
     ) {
         // Back button
@@ -113,7 +104,7 @@ fun RecentActivityCard(activity: RecentActivity) {
             .height(90.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2D1B4E) // Lighter purple for small cards
+            containerColor = Color(0xFF2D1B4E)
         )
     ) {
         Column(
@@ -123,14 +114,12 @@ fun RecentActivityCard(activity: RecentActivity) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Image placeholder
-            Image(
-                painter = painterResource(id = activity.imageRes),
+            // Use Material Icon instead of painterResource
+            Icon(
+                imageVector = Icons.Default.MusicNote,
                 contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
+                tint = Color.White,
+                modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -152,7 +141,7 @@ fun NotificationCard(notification: Notification) {
             .height(80.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF3A2A5C) // Even lighter purple for large cards
+            containerColor = Color(0xFF3A2A5C)
         )
     ) {
         Row(
@@ -162,13 +151,12 @@ fun NotificationCard(notification: Notification) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (notification.hasImage) {
-                Image(
-                    painter = painterResource(id = notification.imageRes),
+                // Use Material Icon instead of painterResource
+                Icon(
+                    imageVector = Icons.Default.Album,
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
+                    tint = Color.White,
+                    modifier = Modifier.size(50.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
             }
