@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 class RecentAwareShuffle(
     private val allSongs: List<String>,

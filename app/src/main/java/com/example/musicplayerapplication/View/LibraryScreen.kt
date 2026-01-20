@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,10 +22,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.R
 import com.example.musicplayerapplication.model.LibraryArtist
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.LibraryRepoImpl
-import com.example.musicplayerapplication.view.LibraryViewModel
+import com.example.musicplayerapplication.ViewModel.LibraryViewModel
 
 // Main Library Screen - Use this in DashboardActivity
 @Composable

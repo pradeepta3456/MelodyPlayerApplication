@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,7 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Notification
 import com.example.musicplayerapplication.model.RecentActivity
 import com.example.musicplayerapplication.ui.theme.DarkPurpleBackground
-import com.example.musicplayerapplication.view.NotificationViewModel
+import com.example.musicplayerapplication.ViewModel.NotificationViewModel
 
 
 @Composable

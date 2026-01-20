@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication
+package com.example.musicplayerapplication.View
 
 
 import android.os.Bundle
@@ -16,14 +16,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.musicplayerapplication.model.SearchSongs
-import com.example.musicplayerapplication.view.SearchViewModel
+import com.example.musicplayerapplication.ViewModel.SearchViewModel
 
 class SearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +38,7 @@ class SearchActivity : ComponentActivity() {
 
 @Composable
 fun SearchScreen(
-    viewModel: SearchViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: SearchViewModel = viewModel()
 ) {
     val query by viewModel.query.collectAsState()
     val songs by viewModel.songs.collectAsState()
