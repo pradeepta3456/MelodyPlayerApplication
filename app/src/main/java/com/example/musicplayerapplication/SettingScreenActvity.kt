@@ -300,5 +300,3 @@ fun CrossfadeSlider() {
 fun PreviewSettings() {
     SettingsScreen()
 }
-
-

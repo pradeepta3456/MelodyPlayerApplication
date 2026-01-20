@@ -29,7 +29,7 @@ class SearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MelodyPlayTheme {
+            MusicPlayerTheme {
                 SearchScreen()
             }
         }
