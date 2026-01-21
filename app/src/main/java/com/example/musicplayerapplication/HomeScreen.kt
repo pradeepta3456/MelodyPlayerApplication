@@ -1,7 +1,7 @@
 package com.example.musicplayerapplication
 
 import android.annotation.SuppressLint
-import android.content.Intent
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -153,7 +153,7 @@ fun HomeScreen(
                 song = song,
                 isSelected = song.id == selectedSongId,
                 onClick = {
-                    selectedSongId = song.id
+                    song.id
                     // Navigation removed for now
                 }
             )

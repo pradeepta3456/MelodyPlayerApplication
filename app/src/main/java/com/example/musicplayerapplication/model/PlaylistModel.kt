@@ -1,4 +1,4 @@
-package com.example.musicplayerapplication.viewmodel
+package com.example.musicplayerapplication.model
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.graphics.Brush

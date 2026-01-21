@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MusicPlayerApplication</string>
+    <string name="title_activity_player_screen">PlayerScreen</string>
+    <string name="title_activity_mini_player">MiniPlayer</string>
 </resources>
