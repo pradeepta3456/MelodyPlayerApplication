@@ -112,10 +112,10 @@ private fun BottomNavBar(
 ) {
     val items = listOf(
         BottomNavItem("Home", R.drawable.baseline_home_24),
-        BottomNavItem("Library", R.drawable.baseline_library),
-        BottomNavItem("Playlist", R.drawable.baseline_playlist),
-        BottomNavItem("Profile", R.drawable.baseline_profile_24),
-        BottomNavItem("Settings", R.drawable.outline_settings_24)
+        BottomNavItem("Library", R.drawable.baseline_library_music_24),
+        BottomNavItem("Playlist", R.drawable.baseline_playlist_add_24),
+        BottomNavItem("Profile", R.drawable.baseline_person_24),
+        BottomNavItem("Settings", R.drawable.baseline_settings_24)
     )
 
     Box(modifier = modifier.fillMaxWidth()) {
@@ -255,7 +255,7 @@ private fun AppearanceSection(
             AppearanceCard(
                 modifier = Modifier.weight(1f),
                 title = "Auto",
-                iconRes = R.drawable.outline_auto_mode_24,
+                iconRes = R.drawable.baseline_dark_mode_24,
                 selected = selectedIndex == 2,
                 onClick = { onSelectedChange(2) }
             )

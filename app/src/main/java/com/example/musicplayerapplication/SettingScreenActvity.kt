@@ -67,7 +67,7 @@ class SettingScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SettingsScreen()
+            LegacySettingsScreen()
         }
     }
 }
@@ -75,7 +75,7 @@ class SettingScreen : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
+fun LegacySettingsScreen() {
 
 
     val HomeViewModel: HomeViewModel = viewModel()
@@ -323,7 +323,7 @@ fun CrossfadeSlider() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewSettings() {
-    SettingsScreen()
+    LegacySettingsScreen()
 }
 
 
