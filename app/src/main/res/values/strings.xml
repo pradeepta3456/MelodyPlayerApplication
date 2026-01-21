@@ -6,4 +6,5 @@
     <string name="title_activity_get_started_acticity">GetStartedActicity</string>
     <string name="title_activity_permission_request_screen">PermissionRequestScreenActivity</string>
     <string name="title_activity_premium_audio_onboarding">PremiumAudioOnboardingActivity</string>
+    <string name="title_activity_settings">SettingsActivity</string>
 </resources>
