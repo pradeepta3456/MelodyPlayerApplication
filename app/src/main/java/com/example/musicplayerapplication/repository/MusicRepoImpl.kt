@@ -1,16 +1,16 @@
 package com.example.musicplayerapplication.repository
 
+import android.content.Context
 import android.net.Uri
+import com.example.musicplayerapplication.Utils.CloudinaryHelper
 import com.example.musicplayerapplication.model.Song
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
-class MusicRepoImpl : MusicRepository {
+class MusicRepoImpl(private val context: Context) : MusicRepository {
     private val database: DatabaseReference = FirebaseDatabase.getInstance().reference
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     private val songsRef = database.child("songs")
@@ -27,24 +27,41 @@ class MusicRepoImpl : MusicRepository {
             val songId = UUID.randomUUID().toString()
             val userId = auth.currentUser?.uid ?: return Result.failure(Exception("User not authenticated"))
 
-            // Upload audio file
-            val audioRef = storage.reference.child("music/$songId/${songDetails.title}.mp3")
-            val audioUploadTask = audioRef.putFile(audioUri)
+            // Validate Cloudinary initialization
+            if (!CloudinaryHelper.isInitialized()) {
+                return Result.failure(Exception("Cloudinary not initialized. Please configure Cloudinary in MainActivity."))
+            }
 
-            audioUploadTask.addOnProgressListener { taskSnapshot ->
-                val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toFloat()
-                onProgress(progress / 100f)
-            }.await()
-
-            val audioUrl = audioRef.downloadUrl.await().toString()
+            // Upload audio file to Cloudinary
+            onProgress(0.1f)
+            val audioFileName = "${songDetails.title}_${songId}".replace(" ", "_")
+            val audioUrl = CloudinaryHelper.uploadAudio(
+                context = context,
+                audioUri = audioUri,
+                fileName = audioFileName,
+                onProgress = { progress ->
+                    // Map progress to 0.1 to 0.7 range (audio takes most time)
+                    onProgress(0.1f + (progress * 0.6f))
+                }
+            )
 
             // Upload cover image if provided
             var coverUrl = songDetails.coverUrl
             if (coverUri != null) {
-                val coverRef = storage.reference.child("covers/$songId/${songDetails.title}_cover.jpg")
-                coverRef.putFile(coverUri).await()
-                coverUrl = coverRef.downloadUrl.await().toString()
+                onProgress(0.7f)
+                val coverFileName = "${songDetails.title}_cover_${songId}".replace(" ", "_")
+                coverUrl = CloudinaryHelper.uploadImage(
+                    context = context,
+                    imageUri = coverUri,
+                    fileName = coverFileName,
+                    onProgress = { progress ->
+                        // Map progress to 0.7 to 0.9 range
+                        onProgress(0.7f + (progress * 0.2f))
+                    }
+                )
             }
+
+            onProgress(0.9f)
 
             // Create song object with all details
             val newSong = songDetails.copy(
@@ -56,9 +73,10 @@ class MusicRepoImpl : MusicRepository {
                 modifiedDate = System.currentTimeMillis()
             )
 
-            // Save to database
+            // Save to Firebase Realtime Database
             songsRef.child(songId).setValue(newSong).await()
 
+            onProgress(1.0f)
             Result.success(newSong)
         } catch (e: Exception) {
             Result.failure(e)
@@ -246,15 +264,9 @@ class MusicRepoImpl : MusicRepository {
 
     override suspend fun deleteSong(songId: String): Result<Boolean> {
         return try {
-            // Delete audio file from storage
-            storage.reference.child("music/$songId").listAll().await().items.forEach {
-                it.delete().await()
-            }
-
-            // Delete cover image from storage
-            storage.reference.child("covers/$songId").listAll().await().items.forEach {
-                it.delete().await()
-            }
+            // Note: Cloudinary files can be deleted via API if needed
+            // For now, we only delete from database
+            // To delete from Cloudinary, you'd need to implement the Admin API
 
             // Delete from database
             songsRef.child(songId).removeValue().await()
@@ -278,6 +290,37 @@ class MusicRepoImpl : MusicRepository {
             }
 
             Result.success(filteredSongs)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun addToRecentlyPlayed(userId: String, song: Song): Result<Unit> {
+        return try {
+            val playData = mapOf(
+                "songId" to song.id,
+                "timestamp" to System.currentTimeMillis()
+            )
+            recentlyPlayedRef.child(userId).push().setValue(playData).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun addToFavorites(userId: String, song: Song): Result<Unit> {
+        return try {
+            userFavoritesRef.child(userId).child(song.id).setValue(true).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun removeFromFavorites(userId: String, songId: String): Result<Unit> {
+        return try {
+            userFavoritesRef.child(userId).child(songId).removeValue().await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

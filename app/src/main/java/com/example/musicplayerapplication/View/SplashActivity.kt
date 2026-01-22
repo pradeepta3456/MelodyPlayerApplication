@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.delay
 
 class SplashActivity : ComponentActivity() {
@@ -27,8 +29,16 @@ class SplashActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SplashScreen {
-                // Navigate to SignIn after splash
-                startActivity(Intent(this, SignInActivity::class.java))
+                // Check if user is already authenticated
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val intent = if (currentUser != null) {
+                    // User is logged in, go to Dashboard
+                    Intent(this, DashboardActivity::class.java)
+                } else {
+                    // User not logged in, go to SignIn
+                    Intent(this, SignInActivity::class.java)
+                }
+                startActivity(intent)
                 finish()
             }
         }

@@ -23,9 +23,9 @@ class SearchRepoImpl : SearchRepository {
 
     private fun searchSongs(query: String): List<Song> {
         val allSongs = listOf(
-            Song(1, "Ocean Eyes", "Billie Eilish", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Focean_eyes.jpg?alt=media", 0, "Don't Smile", "3:12"),
-            Song(2, "Sunrise", "Heat Waves", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fsunrise.jpg?alt=media", 0, "Morning", "3:45"),
-            Song(3, "Bite Me", "Risern", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fbite_me.jpg?alt=media", 0, "Dark Night", "4:20")
+            Song(id = "1", title = "Ocean Eyes", artist = "Billie Eilish", coverUrl = "", plays = 0, album = "Don't Smile", durationFormatted = "3:12"),
+            Song(id = "2", title = "Sunrise", artist = "Heat Waves", coverUrl = "", plays = 0, album = "Morning", durationFormatted = "3:45"),
+            Song(id = "3", title = "Bite Me", artist = "Risern", coverUrl = "", plays = 0, album = "Dark Night", durationFormatted = "4:20")
         )
         return allSongs.filter {
             it.title.contains(query, ignoreCase = true) ||
@@ -35,9 +35,9 @@ class SearchRepoImpl : SearchRepository {
 
     private fun searchArtists(query: String): List<Artist> {
         val allArtists = listOf(
-            Artist(1, "Billie Eilish", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Fbillie_eilish.jpg?alt=media", 0),
-            Artist(2, "Heat Waves", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Fheat_waves.jpg?alt=media", 0),
-            Artist(3, "Risern", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Frisern.jpg?alt=media", 0)
+            Artist(1, "Billie Eilish", "", 0),
+            Artist(2, "Heat Waves", "", 0),
+            Artist(3, "Risern", "", 0)
         )
         return allArtists.filter {
             it.name.contains(query, ignoreCase = true)
@@ -46,8 +46,8 @@ class SearchRepoImpl : SearchRepository {
 
     private fun searchAlbums(query: String): List<Album> {
         val allAlbums = listOf(
-            Album(1, "Don't Smile", "Billie Eilish", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/albums%2Fdont_smile.jpg?alt=media"),
-            Album(2, "Morning", "Heat Waves", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/albums%2Fmorning.jpg?alt=media")
+            Album(1, "Don't Smile", "Billie Eilish", ""),
+            Album(2, "Morning", "Heat Waves", "")
         )
         return allAlbums.filter {
             it.title.contains(query, ignoreCase = true)
@@ -75,9 +75,9 @@ class SearchRepoImpl : SearchRepository {
 
     override fun getTrendingSongs(): List<Song> {
         return listOf(
-            Song(1, "Ocean Eyes", "Billie Eilish", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Focean_eyes.jpg?alt=media", 1570000),
-            Song(2, "Sunrise", "Heat Waves", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fsunrise.jpg?alt=media", 3650000),
-            Song(3, "Bite Me", "Risern", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fbite_me.jpg?alt=media", 15000000)
+            Song(id = "1", title = "Ocean Eyes", artist = "Billie Eilish", coverUrl = "", plays = 1570000),
+            Song(id = "2", title = "Sunrise", artist = "Heat Waves", coverUrl = "", plays = 3650000),
+            Song(id = "3", title = "Bite Me", artist = "Risern", coverUrl = "", plays = 15000000)
         )
     }
 }

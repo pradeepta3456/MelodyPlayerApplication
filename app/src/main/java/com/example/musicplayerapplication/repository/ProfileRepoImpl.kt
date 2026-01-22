@@ -9,19 +9,19 @@ class ProfileRepoImpl : ProfileRepo {
 
     override fun getTopSongs(): List<Song> {
         return listOf(
-            Song(1, "Summertime Sadness", "Lana Del Rey", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fsummertime_sadness.jpg?alt=media", 271, "Paradise", "4:25"),
-            Song(2, "Rockstar", "Future", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Frockstar.jpg?alt=media", 130, "HNDRXX", "3:50"),
-            Song(3, "Peace of Mind", "Bianca", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fpeace_of_mind.jpg?alt=media", 60, "Silence", "3:15"),
-            Song(4, "Midnight Dreams", "Lightsbright", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/songs%2Fmidnight_dreams.jpg?alt=media", 100, "Night Sky", "4:10")
+            Song(id = "1", title = "Summertime Sadness", artist = "Lana Del Rey", coverUrl = "", plays = 271, album = "Paradise", durationFormatted = "4:25"),
+            Song(id = "2", title = "Rockstar", artist = "Future", coverUrl = "", plays = 130, album = "HNDRXX", durationFormatted = "3:50"),
+            Song(id = "3", title = "Peace of Mind", artist = "Bianca", coverUrl = "", plays = 60, album = "Silence", durationFormatted = "3:15"),
+            Song(id = "4", title = "Midnight Dreams", artist = "Lightsbright", coverUrl = "", plays = 100, album = "Night Sky", durationFormatted = "4:10")
         )
     }
 
     override fun getTopArtists(): List<Artist> {
         return listOf(
-            Artist(1, "Luna Eclipse", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Fluna_eclipse.jpg?alt=media", 250, 15, 2),
-            Artist(2, "Sunshine", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Fsunshine.jpg?alt=media", 180, 20, 3),
-            Artist(3, "Poster Girl", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Fposter_girl.jpg?alt=media", 90, 10, 1),
-            Artist(4, "Disco Drive", "https://firebasestorage.googleapis.com/v0/b/chillvibes-e80df.firebasestorage.app/o/artists%2Fdisco_drive.jpg?alt=media", 220, 30, 4)
+            Artist(1, "Luna Eclipse", "", 250, 15, 2),
+            Artist(2, "Sunshine", "", 180, 20, 3),
+            Artist(3, "Poster Girl", "", 90, 10, 1),
+            Artist(4, "Disco Drive", "", 220, 30, 4)
         )
     }
 

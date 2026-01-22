@@ -1,85 +1,55 @@
 package com.example.musicplayerapplication.ViewModel
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
+import com.example.musicplayerapplication.model.AudioQuality
+import com.example.musicplayerapplication.model.MusicSettings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class SettingsViewModel : ViewModel() {
 
-    var theme = mutableStateOf("Dark")
-    var audioQuality = mutableStateOf("High")
-    var downloadOverWifiOnly = mutableStateOf(true)
-    var notificationsEnabled = mutableStateOf(true)
-    var autoPlayEnabled = mutableStateOf(true)
+    private val _settings = MutableStateFlow(MusicSettings())
+    val settings: StateFlow<MusicSettings> = _settings.asStateFlow()
 
-    /**
-     * Update theme
-     */
-    fun updateTheme(newTheme: String) {
-        theme.value = newTheme
-        // Save to preferences
+    fun updateAudioQuality(quality: AudioQuality) {
+        _settings.value = _settings.value.copy(audioQuality = quality)
+        // TODO: Save to SharedPreferences
     }
 
-    /**
-     * Update audio quality
-     */
-    fun updateAudioQuality(quality: String) {
-        audioQuality.value = quality
-        // Save to preferences
+    fun updateDownloadQuality(quality: AudioQuality) {
+        _settings.value = _settings.value.copy(downloadQuality = quality)
+        // TODO: Save to SharedPreferences
     }
 
-    /**
-     * Toggle download over WiFi only
-     */
-    fun toggleDownloadOverWifiOnly() {
-        downloadOverWifiOnly.value = !downloadOverWifiOnly.value
-        // Save to preferences
+    fun updateStreamOnWifiOnly(enabled: Boolean) {
+        _settings.value = _settings.value.copy(streamOnWifiOnly = enabled)
+        // TODO: Save to SharedPreferences
     }
 
-    /**
-     * Toggle notifications
-     */
-    fun toggleNotifications() {
-        notificationsEnabled.value = !notificationsEnabled.value
-        // Save to preferences
+    fun updateEnableEqualizer(enabled: Boolean) {
+        _settings.value = _settings.value.copy(enableEqualizer = enabled)
+        // TODO: Save to SharedPreferences
     }
 
-    /**
-     * Toggle auto play
-     */
-    fun toggleAutoPlay() {
-        autoPlayEnabled.value = !autoPlayEnabled.value
-        // Save to preferences
+    fun updateGaplessPlayback(enabled: Boolean) {
+        _settings.value = _settings.value.copy(gaplessPlayback = enabled)
+        // TODO: Save to SharedPreferences
     }
 
-    /**
-     * Clear cache
-     */
-    fun clearCache() {
-        viewModelScope.launch {
-            try {
-                // Clear app cache
-                delay(1000)
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
+    fun updateShowLyrics(enabled: Boolean) {
+        _settings.value = _settings.value.copy(showLyrics = enabled)
+        // TODO: Save to SharedPreferences
     }
 
-    /**
-     * Sign out
-     */
-    fun signOut() {
-        viewModelScope.launch {
-            try {
-                // Sign out logic
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
+    fun updateCrossfadeDuration(duration: Int) {
+        _settings.value = _settings.value.copy(crossfadeDuration = duration)
+        // TODO: Save to SharedPreferences
+    }
+
+    fun updateSleepTimer(minutes: Int) {
+        _settings.value = _settings.value.copy(sleepTimerMinutes = minutes)
+        // TODO: Save to SharedPreferences
     }
 }
 

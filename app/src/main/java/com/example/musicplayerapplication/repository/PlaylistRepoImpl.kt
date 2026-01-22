@@ -69,7 +69,7 @@ class PlaylistRepoImpl : PlaylistRepository {
     }
 
     override fun removeSongFromPlaylist(playlistId: Int, songId: Int) {
-        playlistSongs[playlistId]?.removeIf { it.id == songId }
+        playlistSongs[playlistId]?.removeIf { it.id == songId.toString() }
     }
 
     override fun getPlaylistSongs(playlistId: Int): List<Song> {
