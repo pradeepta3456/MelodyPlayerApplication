@@ -28,6 +28,8 @@ import coil.compose.AsyncImage
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ViewModel.MusicViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
+import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModel
+import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModelFactory
 
 // Data classes (local to this file since they're specific to playlist feature)
 data class PlaylistSong(
@@ -118,10 +120,13 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
         }
     }
 
-    // Audio settings state
-    var bassLevel by remember { mutableStateOf(0f) }
-    var trebleLevel by remember { mutableStateOf(0f) }
-    var volumeLevel by remember { mutableStateOf(0.7f) }
+    // Audio effects ViewModel for actual audio control
+    val audioEffectsViewModel: AudioEffectsViewModel = viewModel(
+        factory = AudioEffectsViewModelFactory(context)
+    )
+    val bassLevel by audioEffectsViewModel.bassLevel.collectAsState()
+    val trebleLevel by audioEffectsViewModel.trebleLevel.collectAsState()
+    val volumeLevel by audioEffectsViewModel.volumeLevel.collectAsState()
 
     when (currentView) {
         is PlaylistView.List -> {
@@ -179,9 +184,9 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                 bassLevel = bassLevel,
                 trebleLevel = trebleLevel,
                 volumeLevel = volumeLevel,
-                onBassChange = { bassLevel = it },
-                onTrebleChange = { trebleLevel = it },
-                onVolumeChange = { volumeLevel = it },
+                onBassChange = { audioEffectsViewModel.updateBassLevel(it) },
+                onTrebleChange = { audioEffectsViewModel.updateTrebleLevel(it) },
+                onVolumeChange = { audioEffectsViewModel.updateVolumeLevel(it) },
                 onBack = { currentView = PlaylistView.NowPlaying }
             )
         }

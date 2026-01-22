@@ -164,7 +164,11 @@ fun DashboardBody() {
                                 currentSong?.let { musicViewModel.toggleFavorite(it) }
                             },
                             onToggleShuffle = { musicViewModel.toggleShuffle() },
-                            onToggleRepeat = { musicViewModel.toggleRepeatMode() }
+                            onToggleRepeat = { musicViewModel.toggleRepeatMode() },
+                            onAudioEffectsClick = {
+                                val intent = Intent(context, AudioEffectsScreen::class.java)
+                                context.startActivity(intent)
+                            }
                         )
                     } else {
                         if (showNotificationScreen) {

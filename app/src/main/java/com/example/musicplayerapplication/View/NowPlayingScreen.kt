@@ -37,6 +37,7 @@ fun NowPlayingScreen(
     onToggleFavorite: () -> Unit = {},
     onToggleShuffle: () -> Unit = {},
     onToggleRepeat: () -> Unit = {},
+    onAudioEffectsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -75,11 +76,11 @@ fun NowPlayingScreen(
                 fontWeight = FontWeight.SemiBold
             )
 
-            IconButton(onClick = { /* More options */ }) {
+            IconButton(onClick = onAudioEffectsClick) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More",
-                    tint = Color.White,
+                    imageVector = Icons.Default.GraphicEq,
+                    contentDescription = "Audio Effects",
+                    tint = Color(0xFF00D9FF),
                     modifier = Modifier.size(28.dp)
                 )
             }
