@@ -75,6 +75,7 @@ fun DashboardBody() {
         NavItem(label = "Home", icon = Icons.Default.Home),
         NavItem(label = "Library", icon = Icons.Default.LibraryMusic),
         NavItem(label = "Playlist", icon = Icons.Default.MusicNote),
+        NavItem(label = "Saved", icon = Icons.Default.Favorite),
         NavItem(label = "Profile", icon = Icons.Default.Person)
     )
 
@@ -191,6 +192,13 @@ fun DashboardBody() {
                                     PlaylistScreen(musicViewModel = musicViewModel)
                                 }
                                 3 -> {
+                                    // Saved Screen - Navigate to SavedScreen Activity
+                                    val intent = Intent(context, SavedScreen::class.java)
+                                    context.startActivity(intent)
+                                    // Reset selection to previous
+                                    selectedIndex = 0
+                                }
+                                4 -> {
                                     ProfileScreen(profileViewModel = viewModel<ProfileViewModel>())
                                 }
                             }

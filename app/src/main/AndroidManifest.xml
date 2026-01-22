@@ -112,6 +112,12 @@
             android:exported="false"
             android:theme="@style/Theme.MusicPlayerApplication" />
 
+        <!-- SAVED SCREEN -->
+        <activity
+            android:name=".View.SavedScreen"
+            android:exported="false"
+            android:theme="@style/Theme.MusicPlayerApplication" />
+
     </application>
 
 </manifest>

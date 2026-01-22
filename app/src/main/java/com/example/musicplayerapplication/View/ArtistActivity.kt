@@ -21,7 +21,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModel
+import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
+import com.example.musicplayerapplication.ViewModel.SavedViewModel
+import com.example.musicplayerapplication.ViewModel.SavedViewModelFactory
+import com.example.musicplayerapplication.View.components.StandardSongCard
 import com.example.musicplayerapplication.model.Song
 
 class ArtistActivity : ComponentActivity() {
@@ -41,8 +46,10 @@ fun ArtistScreen(
     artistName: String
 ) {
     val context = LocalContext.current
-    val musicViewModel = remember { MusicViewModel(context) }
+    val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModelFactory(context))
+    val savedViewModel: SavedViewModel = viewModel(factory = SavedViewModelFactory())
     val songsState by musicViewModel.allSongs.collectAsState()
+    val savedSongs by savedViewModel.savedSongs.collectAsState()
 
     // Filter songs for this artist; repository already exposes getSongsByArtist,
     // but we can also reuse the in-memory list for responsiveness.
@@ -84,12 +91,17 @@ fun ArtistScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(artistSongs) { song ->
-                    ArtistSongRow(song = song) {
-                        musicViewModel.playSong(song)
-                    }
+                    val isFavorite = savedSongs.any { it.id == song.id }
+                    StandardSongCard(
+                        song = song,
+                        isFavorite = isFavorite,
+                        onSongClick = { musicViewModel.playSong(song) },
+                        onPlayClick = { musicViewModel.playSong(song) },
+                        onSaveClick = { savedViewModel.toggleFavorite(song) }
+                    )
                 }
             }
         }

@@ -28,18 +28,23 @@ import com.example.musicplayerapplication.repository.LibraryRepoImpl
 import com.example.musicplayerapplication.ViewModel.LibraryViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
+import com.example.musicplayerapplication.ViewModel.SavedViewModel
+import com.example.musicplayerapplication.ViewModel.SavedViewModelFactory
+import com.example.musicplayerapplication.View.components.StandardSongCard
 
 // Main Library Screen
 @Composable
 fun LibraryScreen(musicViewModel: MusicViewModel) {
     val context = LocalContext.current
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
+    val savedViewModel: SavedViewModel = viewModel(factory = SavedViewModelFactory())
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Songs") }
     var selectedAlbum by remember { mutableStateOf<String?>(null) }
     var selectedGenre by remember { mutableStateOf<String?>(null) }
 
     val allSongs by musicViewModel.allSongs.collectAsState()
+    val savedSongs by savedViewModel.savedSongs.collectAsState()
     val artists = viewModel.artists
     val categories = listOf(
         "Songs" to Icons.Default.MusicNote,
@@ -55,6 +60,8 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
             albumName = selectedAlbum!!,
             songs = allSongs.filter { it.album.equals(selectedAlbum, ignoreCase = true) },
             musicViewModel = musicViewModel,
+            savedViewModel = savedViewModel,
+            savedSongs = savedSongs,
             onBack = { selectedAlbum = null }
         )
     } else if (selectedGenre != null) {
@@ -63,6 +70,8 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
             genreName = selectedGenre!!,
             songs = allSongs.filter { it.genre.equals(selectedGenre, ignoreCase = true) },
             musicViewModel = musicViewModel,
+            savedViewModel = savedViewModel,
+            savedSongs = savedSongs,
             onBack = { selectedGenre = null }
         )
     } else {
@@ -142,7 +151,9 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
                     "Songs" -> LibrarySongsList(
                         songs = allSongs,
                         searchQuery = searchQuery,
-                        onSongClick = { song -> musicViewModel.playSong(song) }
+                        musicViewModel = musicViewModel,
+                        savedViewModel = savedViewModel,
+                        savedSongs = savedSongs
                     )
                     "Albums" -> {
                         val albums = allSongs.groupBy { it.album }.map { (albumName, songs) ->
@@ -294,6 +305,8 @@ fun AlbumDetailScreenContent(
     albumName: String,
     songs: List<Song>,
     musicViewModel: MusicViewModel,
+    savedViewModel: SavedViewModel,
+    savedSongs: List<Song>,
     onBack: () -> Unit
 ) {
     Column(
@@ -341,10 +354,13 @@ fun AlbumDetailScreenContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(songs) { song ->
-                LibraryAlbumSongItem(
+                val isFavorite = savedSongs.any { it.id == song.id }
+                StandardSongCard(
                     song = song,
-                    musicViewModel = musicViewModel,
-                    onClick = { musicViewModel.playSong(song) }
+                    isFavorite = isFavorite,
+                    onSongClick = { musicViewModel.playSong(song) },
+                    onPlayClick = { musicViewModel.playSong(song) },
+                    onSaveClick = { savedViewModel.toggleFavorite(song) }
                 )
             }
         }
@@ -450,6 +466,8 @@ fun GenreDetailScreenContent(
     genreName: String,
     songs: List<Song>,
     musicViewModel: MusicViewModel,
+    savedViewModel: SavedViewModel,
+    savedSongs: List<Song>,
     onBack: () -> Unit
 ) {
     Column(
@@ -497,10 +515,13 @@ fun GenreDetailScreenContent(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(songs) { song ->
-                LibraryAlbumSongItem(
+                val isFavorite = savedSongs.any { it.id == song.id }
+                StandardSongCard(
                     song = song,
-                    musicViewModel = musicViewModel,
-                    onClick = { musicViewModel.playSong(song) }
+                    isFavorite = isFavorite,
+                    onSongClick = { musicViewModel.playSong(song) },
+                    onPlayClick = { musicViewModel.playSong(song) },
+                    onSaveClick = { savedViewModel.toggleFavorite(song) }
                 )
             }
         }
@@ -543,7 +564,9 @@ fun SimpleCategoryScreen(category: String) {
 fun LibrarySongsList(
     songs: List<Song>,
     searchQuery: String,
-    onSongClick: (Song) -> Unit
+    musicViewModel: MusicViewModel,
+    savedViewModel: SavedViewModel,
+    savedSongs: List<Song>
 ) {
     val filteredSongs = songs.filter {
         it.title.contains(searchQuery, ignoreCase = true) ||
@@ -557,7 +580,14 @@ fun LibrarySongsList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(filteredSongs) { song ->
-            LibrarySongCard(song = song, onClick = { onSongClick(song) })
+            val isFavorite = savedSongs.any { it.id == song.id }
+            StandardSongCard(
+                song = song,
+                isFavorite = isFavorite,
+                onSongClick = { musicViewModel.playSong(song) },
+                onPlayClick = { musicViewModel.playSong(song) },
+                onSaveClick = { savedViewModel.toggleFavorite(song) }
+            )
         }
     }
 }
