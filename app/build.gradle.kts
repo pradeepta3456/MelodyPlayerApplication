@@ -2,18 +2,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services") // Add this
+    id("com.google.gms.google-services")
     id("com.google.devtools.ksp") version "2.0.20-1.0.25" apply false
-    // For Room
 }
 
 android {
     namespace = "com.example.musicplayerapplication"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.musicplayerapplication"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -60,7 +59,7 @@ android {
 }
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
+    implementation(platform(libs.firebase.bom))
 
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
@@ -82,12 +81,22 @@ dependencies {
 
     // Navigation (optional, for future)
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.database)
-    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.database.ktx)
+    implementation(libs.firebase.storage.ktx)
+    // App Check to avoid placeholder tokens and recaptcha failures
+    implementation(libs.firebase.appcheck.playintegrity)
+    // Debug App Check provider for development/testing
+    debugImplementation(libs.firebase.appcheck.debug)
+
+    // Cloudinary for media upload
+    implementation("com.cloudinary:cloudinary-android:2.5.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation(libs.firebase.database)
+    implementation(libs.androidx.material3)
 
     // Testing
     testImplementation("junit:junit:4.13.2")

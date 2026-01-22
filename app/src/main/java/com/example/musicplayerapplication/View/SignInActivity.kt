@@ -8,7 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -41,6 +43,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val authState by viewModel.authState
@@ -55,9 +58,11 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                 context.startActivity(intent)
                 (context as? ComponentActivity)?.finish()
             }
+
             is AuthState.Error -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
             }
+
             else -> {}
         }
     }
@@ -67,15 +72,23 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
             email.isEmpty() -> {
                 Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
             }
+
             !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                 Toast.makeText(context, "Please enter a valid email", Toast.LENGTH_SHORT).show()
             }
+
             password.isEmpty() -> {
                 Toast.makeText(context, "Please enter your password", Toast.LENGTH_SHORT).show()
             }
+
             password.length < 6 -> {
-                Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Password must be at least 6 characters",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             else -> {
                 viewModel.signIn(email, password)
             }
@@ -98,6 +111,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -257,11 +271,10 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                val intent = Intent(context, ForgotPasswordActivity::class.java)
-                                context.startActivity(intent)
+                                showForgotPasswordDialog = true
                             }
-                            .padding(vertical = 8.dp))
-                    }
+                            .padding(vertical = 8.dp)
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -345,5 +358,87 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Forgot Password Dialog
+        if (showForgotPasswordDialog) {
+            ForgotPasswordDialog(
+                onDismiss = { showForgotPasswordDialog = false },
+                onConfirm = { resetEmail ->
+                    viewModel.resetPassword(
+                        email = resetEmail,
+                        onSuccess = {
+                            Toast.makeText(
+                                context,
+                                "Password reset email sent. Please check your inbox.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            showForgotPasswordDialog = false
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
+            )
         }
     }
+}
+
+@Composable
+fun ForgotPasswordDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var resetEmail by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Reset Password",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Enter your email address and we'll send you a link to reset your password.",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = resetEmail,
+                    onValueChange = { resetEmail = it },
+                    label = { Text("Email") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Email, contentDescription = "Email")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (resetEmail.isNotEmpty() &&
+                        android.util.Patterns.EMAIL_ADDRESS.matcher(resetEmail).matches()) {
+                        onConfirm(resetEmail)
+                    }
+                }
+            ) {
+                Text("Send Reset Link")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+

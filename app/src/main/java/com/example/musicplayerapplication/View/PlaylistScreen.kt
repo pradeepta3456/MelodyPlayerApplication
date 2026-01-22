@@ -1,5 +1,6 @@
 package com.example.musicplayerapplication.View
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,9 +18,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.ViewModel.MusicViewModel
+import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
 
 // Data classes (local to this file since they're specific to playlist feature)
 data class PlaylistSong(
@@ -41,11 +49,72 @@ data class Playlist(
 // Main Playlist Screen - Use this in DashboardActivity
 @Composable
 fun PlaylistScreen() {
+    val context = LocalContext.current
+    val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModelFactory(context.applicationContext as Context))
+    val allSongs by musicViewModel.allSongs.collectAsState()
+
     var currentView by remember { mutableStateOf<PlaylistView>(PlaylistView.List) }
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
-    var currentSong by remember { mutableStateOf<PlaylistSong?>(null) }
+    var currentSong by remember { mutableStateOf<Song?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
-    var playlists by remember { mutableStateOf(getPlaylistData()) }
+
+    // User-created playlists
+    var userPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+
+    // Convert Firebase songs to playlists
+    val playlists by remember {
+        derivedStateOf {
+            val firebasePlaylists = mutableListOf<Playlist>()
+
+            // Create playlists by genre
+            allSongs.groupBy { it.genre }.forEach { (genre, songs) ->
+                if (genre.isNotEmpty() && songs.isNotEmpty()) {
+                    firebasePlaylists.add(
+                        Playlist(
+                            id = firebasePlaylists.size + 1,
+                            name = genre,
+                            description = "Songs in $genre genre",
+                            songCount = songs.size,
+                            songs = songs.map { song ->
+                                PlaylistSong(
+                                    id = song.id.hashCode(),
+                                    title = song.title,
+                                    artist = song.artist,
+                                    duration = song.durationFormatted
+                                )
+                            },
+                            isAiGenerated = true
+                        )
+                    )
+                }
+            }
+
+            // Create playlists by artist
+            allSongs.groupBy { it.artist }.entries.take(2).forEach { (artist, songs) ->
+                if (artist.isNotEmpty() && songs.isNotEmpty()) {
+                    firebasePlaylists.add(
+                        Playlist(
+                            id = firebasePlaylists.size + 1,
+                            name = "$artist's Collection",
+                            description = "All songs by $artist",
+                            songCount = songs.size,
+                            songs = songs.map { song ->
+                                PlaylistSong(
+                                    id = song.id.hashCode(),
+                                    title = song.title,
+                                    artist = song.artist,
+                                    duration = song.durationFormatted
+                                )
+                            },
+                            isAiGenerated = false
+                        )
+                    )
+                }
+            }
+
+            firebasePlaylists + getPlaylistData() + userPlaylists
+        }
+    }
 
     // Audio settings state
     var bassLevel by remember { mutableStateOf(0f) }
@@ -62,7 +131,9 @@ fun PlaylistScreen() {
                 },
                 onQuickPlay = { playlist ->
                     selectedPlaylist = playlist
-                    currentSong = playlist.songs.firstOrNull()
+                    val firstSongTitle = playlist.songs.firstOrNull()?.title
+                    currentSong = allSongs.firstOrNull { it.title == firstSongTitle }
+                    currentSong?.let { musicViewModel.playSong(it) }
                     isPlaying = true
                     currentView = PlaylistView.NowPlaying
                 },
@@ -76,14 +147,14 @@ fun PlaylistScreen() {
                 onBack = { currentView = PlaylistView.List },
                 onCreate = { name, description ->
                     val newPlaylist = Playlist(
-                        id = playlists.size + 1,
+                        id = (playlists.maxOfOrNull { it.id } ?: 0) + 1,
                         name = name,
                         description = description,
                         songCount = 0,
                         songs = emptyList(),
                         isAiGenerated = false
                     )
-                    playlists = playlists + newPlaylist
+                    userPlaylists = userPlaylists + newPlaylist
                     currentView = PlaylistView.List
                 }
             )
@@ -103,14 +174,19 @@ fun PlaylistScreen() {
             selectedPlaylist?.let { playlist ->
                 PlaylistDetailContent(
                     playlist = playlist,
+                    allSongs = allSongs,
                     onBack = { currentView = PlaylistView.List },
-                    onSongClick = { song ->
+                    onSongClick = { playlistSong ->
+                        val song = allSongs.firstOrNull { it.title == playlistSong.title }
                         currentSong = song
+                        song?.let { musicViewModel.playSong(it) }
                         isPlaying = true
                         currentView = PlaylistView.NowPlaying
                     },
                     onPlayAll = {
-                        currentSong = playlist.songs.firstOrNull()
+                        val firstSongTitle = playlist.songs.firstOrNull()?.title
+                        currentSong = allSongs.firstOrNull { it.title == firstSongTitle }
+                        currentSong?.let { musicViewModel.playSong(it) }
                         isPlaying = true
                         currentView = PlaylistView.NowPlaying
                     }
@@ -119,27 +195,20 @@ fun PlaylistScreen() {
         }
         is PlaylistView.NowPlaying -> {
             currentSong?.let { song ->
-                NowPlayingContent(
+                NowPlayingContentFirebase(
                     song = song,
                     playlist = selectedPlaylist,
                     isPlaying = isPlaying,
-                    onPlayPauseClick = { isPlaying = !isPlaying },
+                    onPlayPauseClick = {
+                        isPlaying = !isPlaying
+                        if (isPlaying) musicViewModel.resume() else musicViewModel.pause()
+                    },
                     onBack = { currentView = PlaylistView.Detail },
                     onNext = {
-                        selectedPlaylist?.songs?.let { songs ->
-                            val currentIndex = songs.indexOf(song)
-                            if (currentIndex < songs.size - 1) {
-                                currentSong = songs[currentIndex + 1]
-                            }
-                        }
+                        musicViewModel.skipToNext()
                     },
                     onPrevious = {
-                        selectedPlaylist?.songs?.let { songs ->
-                            val currentIndex = songs.indexOf(song)
-                            if (currentIndex > 0) {
-                                currentSong = songs[currentIndex - 1]
-                            }
-                        }
+                        musicViewModel.skipToPrevious()
                     },
                     onOpenSettings = { currentView = PlaylistView.AudioSettings }
                 )
@@ -884,6 +953,7 @@ fun PresetButtonItem(
 @Composable
 fun PlaylistDetailContent(
     playlist: Playlist,
+    allSongs: List<Song>,
     onBack: () -> Unit,
     onSongClick: (PlaylistSong) -> Unit,
     onPlayAll: () -> Unit
@@ -919,6 +989,10 @@ fun PlaylistDetailContent(
 
         Spacer(Modifier.height(20.dp))
 
+        val firstSongInPlaylist = allSongs.firstOrNull { song ->
+            playlist.songs.any { it.title == song.title }
+        }
+
         Box(
             modifier = Modifier
                 .size(200.dp)
@@ -926,12 +1000,21 @@ fun PlaylistDetailContent(
                 .background(Color(0xFF7FC9BC)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Icons.Default.MusicNote,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(80.dp)
-            )
+            if (firstSongInPlaylist?.coverUrl?.isNotEmpty() == true) {
+                AsyncImage(
+                    model = firstSongInPlaylist.coverUrl,
+                    contentDescription = playlist.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(80.dp)
+                )
+            }
         }
 
         Spacer(Modifier.height(24.dp))
@@ -1206,6 +1289,214 @@ fun NowPlayingContent(
             ) {
                 Text("1:23", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                 Text(song.duration, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Shuffle,
+                    contentDescription = "Shuffle",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = onPrevious) {
+                Icon(
+                    Icons.Default.SkipPrevious,
+                    contentDescription = "Previous",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            FloatingActionButton(
+                onClick = onPlayPauseClick,
+                containerColor = Color(0xFFB040FF),
+                modifier = Modifier.size(72.dp)
+            ) {
+                Icon(
+                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = onNext) {
+                Icon(
+                    Icons.Default.SkipNext,
+                    contentDescription = "Next",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Repeat,
+                    contentDescription = "Repeat",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.FavoriteBorder,
+                    contentDescription = "Like",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NowPlayingContentFirebase(
+    song: Song,
+    playlist: Playlist?,
+    isPlaying: Boolean,
+    onPlayPauseClick: () -> Unit,
+    onBack: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            Text(
+                text = "Now Playing",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Audio Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFB040FF)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (song.coverUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = song.coverUrl,
+                    contentDescription = song.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(120.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Text(
+            text = song.title,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = song.artist,
+            fontSize = 18.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+
+        Spacer(Modifier.height(40.dp))
+
+        var progress by remember { mutableStateOf(0.3f) }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Slider(
+                value = progress,
+                onValueChange = { progress = it },
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color(0xFFB040FF),
+                    inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                )
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("0:00", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Text(song.durationFormatted, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
             }
         }
 

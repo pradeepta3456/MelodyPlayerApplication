@@ -1,5 +1,7 @@
 package com.example.musicplayerapplication.View
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -27,11 +29,37 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.musicplayerapplication.Utils.CloudinaryHelper
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check if user is authenticated
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            // User not logged in, redirect to SignIn
+            val intent = Intent(this, SignInActivity::class.java)
+            startActivity(intent)
+            finish()
+            return
+        }
+
+        // Initialize Cloudinary
+        try {
+            CloudinaryHelper.initialize(
+                context = applicationContext,
+                cloudName = "drfit5xud",  // Replace with your cloud name
+                apiKey = "649351633944394",        // Replace with your API key
+                apiSecret = "dOKyZ9LYkoLKpkgP1zGs0oitL_k"   // Replace with your API secret
+            )
+            Log.d("MainActivity", "Cloudinary initialized successfully")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to initialize Cloudinary", e)
+        }
+
         setContent {
             FinalMusicUIScreen()
         }
