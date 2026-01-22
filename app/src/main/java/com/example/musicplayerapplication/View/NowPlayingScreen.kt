@@ -25,11 +25,19 @@ import kotlin.math.roundToInt
 fun NowPlayingScreen(
     song: Song?,
     isPlaying: Boolean,
-    currentPosition: Int,
-    duration: Int,
+    currentPosition: Long,
+    duration: Long,
+    shuffleEnabled: Boolean = false,
+    repeatMode: com.example.musicplayerapplication.model.RepeatMode = com.example.musicplayerapplication.model.RepeatMode.OFF,
     onPlayPauseClick: () -> Unit,
-    onSeekTo: (Int) -> Unit,
+    onSeekTo: (Long) -> Unit,
     onBackClick: () -> Unit,
+    onSkipNext: () -> Unit = {},
+    onSkipPrevious: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
+    onToggleShuffle: () -> Unit = {},
+    onToggleRepeat: () -> Unit = {},
+    onAudioEffectsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -68,11 +76,11 @@ fun NowPlayingScreen(
                 fontWeight = FontWeight.SemiBold
             )
 
-            IconButton(onClick = { /* More options */ }) {
+            IconButton(onClick = onAudioEffectsClick) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More",
-                    tint = Color.White,
+                    imageVector = Icons.Default.GraphicEq,
+                    contentDescription = "Audio Effects",
+                    tint = Color(0xFF00D9FF),
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -130,32 +138,35 @@ fun NowPlayingScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* Toggle favorite */ }) {
+            IconButton(onClick = onToggleFavorite) {
                 Icon(
                     imageVector = if (song?.isFavorite == true)
                         Icons.Default.Favorite
                     else
                         Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
-                    tint = if (song?.isFavorite == true) Color.Red else Color.White,
+                    tint = if (song?.isFavorite == true) Color(0xFFE91E63) else Color.White,
                     modifier = Modifier.size(28.dp)
                 )
             }
 
-            IconButton(onClick = { /* Toggle shuffle */ }) {
+            IconButton(onClick = onToggleShuffle) {
                 Icon(
                     imageVector = Icons.Default.Shuffle,
                     contentDescription = "Shuffle",
-                    tint = Color.White.copy(alpha = 0.7f),
+                    tint = if (shuffleEnabled) Color(0xFFE91E63) else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(28.dp)
                 )
             }
 
-            IconButton(onClick = { /* Toggle repeat */ }) {
+            IconButton(onClick = onToggleRepeat) {
                 Icon(
                     imageVector = Icons.Default.Repeat,
                     contentDescription = "Repeat",
-                    tint = Color.White.copy(alpha = 0.7f),
+                    tint = when(repeatMode) {
+                        com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(alpha = 0.7f)
+                        else -> Color(0xFFE91E63)
+                    },
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -169,7 +180,7 @@ fun NowPlayingScreen(
         ) {
             Slider(
                 value = currentPosition.toFloat(),
-                onValueChange = { onSeekTo(it.roundToInt()) },
+                onValueChange = { onSeekTo(it.toLong()) },
                 valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFFE91E63),
@@ -206,7 +217,7 @@ fun NowPlayingScreen(
         ) {
             // Previous
             IconButton(
-                onClick = { /* Previous song */ },
+                onClick = onSkipPrevious,
                 modifier = Modifier.size(56.dp)
             ) {
                 Icon(
@@ -238,7 +249,7 @@ fun NowPlayingScreen(
 
             // Next
             IconButton(
-                onClick = { /* Next song */ },
+                onClick = onSkipNext,
                 modifier = Modifier.size(56.dp)
             ) {
                 Icon(
@@ -254,3 +265,9 @@ fun NowPlayingScreen(
     }
 }
 
+private fun formatTime(millis: Long): String {
+    val totalSeconds = millis / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
+}

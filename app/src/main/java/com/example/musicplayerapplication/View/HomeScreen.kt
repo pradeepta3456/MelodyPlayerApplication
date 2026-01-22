@@ -1,5 +1,7 @@
 package com.example.musicplayerapplication.View
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,14 +25,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.ViewModel.HomeViewModel
+import com.example.musicplayerapplication.ViewModel.HomeViewModelFactory
+import com.example.musicplayerapplication.ViewModel.MusicViewModel
+import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = viewModel(),
+    musicViewModel: MusicViewModel,
+    homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(musicViewModel)),
     onNotificationClick: () -> Unit = {},
     onSearchClick: () -> Unit = {}
 ) {
-    var selectedSongId by remember { mutableStateOf<Int?>(null) }
+    val context = LocalContext.current
+    var selectedSongId by remember { mutableStateOf<String?>(null) }
+
+    val recentSongs by homeViewModel.recentSongs.collectAsState()
+    val trendingAlbums by homeViewModel.trendingAlbums.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -61,7 +72,10 @@ fun HomeScreen(
                 }
                 // Search Icon
                 IconButton(
-                    onClick = onSearchClick,
+                    onClick = {
+                        val intent = Intent(context, SearchActivity::class.java)
+                        context.startActivity(intent)
+                    },
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
@@ -83,12 +97,32 @@ fun HomeScreen(
                         modifier = Modifier.size(28.dp)
                     )
                 }
+                // Settings Icon
+                IconButton(
+                    onClick = {
+                        val intent = Intent(context, SettingsActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
 
-        // Featured Album
-        item {
-            FeaturedAlbumCard("Luna Eclipse", "Sunsets")
+        // Featured Album - show first trending album if available
+        if (trendingAlbums.isNotEmpty()) {
+            item {
+                val featuredAlbum = trendingAlbums.first()
+                FeaturedAlbumCard(featuredAlbum.title, featuredAlbum.artistVibes) {
+                    homeViewModel.playAlbum(featuredAlbum)
+                }
+            }
         }
 
         // Recently Played Header
@@ -114,12 +148,13 @@ fun HomeScreen(
         }
 
         // Recently Played Songs
-        items(viewModel.recentSongs) { song ->
+        items(recentSongs) { song ->
             RecentSongItem(
                 song = song,
                 isSelected = song.id == selectedSongId,
                 onClick = {
                     selectedSongId = song.id
+                    musicViewModel.playSong(song)
                 }
             )
         }
@@ -152,8 +187,10 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                viewModel.trendingAlbums.take(2).forEach { album: Album ->
-                    TrendingAlbumCard(album = album, modifier = Modifier.weight(1f))
+                trendingAlbums.take(2).forEach { album: Album ->
+                    TrendingAlbumCard(album = album, modifier = Modifier.weight(1f)) {
+                        homeViewModel.playAlbum(album)
+                    }
                 }
             }
         }
@@ -161,7 +198,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun FeaturedAlbumCard(title: String, artist: String) {
+fun FeaturedAlbumCard(title: String, artist: String, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,7 +261,7 @@ fun FeaturedAlbumCard(title: String, artist: String) {
                     color = Color.White,
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .clickable(onClick = { })
+                        .clickable(onClick = onClick)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -273,7 +310,7 @@ fun RecentSongItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Album Art - Use Material Icon
+            // Album Art - Use Cloudinary image or fallback to icon
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -281,12 +318,21 @@ fun RecentSongItem(
                     .background(Color(0xFF6B4FA0)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Album,
-                    contentDescription = song.title,
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
+                if (song.coverUrl.isNotEmpty()) {
+                    coil.compose.AsyncImage(
+                        model = song.coverUrl,
+                        contentDescription = song.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Album,
+                        contentDescription = song.title,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
             // Song Info
@@ -323,7 +369,7 @@ fun RecentSongItem(
 
             // More Icon
             IconButton(
-                onClick = { },
+                onClick = { /* TODO: Implement more options */ },
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
@@ -338,14 +384,15 @@ fun RecentSongItem(
 }
 
 @Composable
-fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
+fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier, onClick: (Album) -> Unit = {}) {
     Card(
         modifier = modifier.aspectRatio(1f),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        onClick = { onClick(album) }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Album cover - Use Material Icon
+            // Album cover - Use Cloudinary image or fallback to icon
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -354,12 +401,21 @@ fun TrendingAlbumCard(album: Album, modifier: Modifier = Modifier) {
                     .background(Color(0xFF6B4FA0)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Album,
-                    contentDescription = album.title,
-                    tint = Color.White,
-                    modifier = Modifier.size(64.dp)
-                )
+                if (album.coverUrl.isNotEmpty()) {
+                    coil.compose.AsyncImage(
+                        model = album.coverUrl,
+                        contentDescription = album.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Album,
+                        contentDescription = album.title,
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
             }
             Column(
                 modifier = Modifier

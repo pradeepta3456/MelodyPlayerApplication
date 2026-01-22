@@ -1,5 +1,6 @@
 package com.example.musicplayerapplication.View
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,16 +18,26 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.musicplayerapplication.model.Song
+import com.example.musicplayerapplication.ViewModel.MusicViewModel
+import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
+import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModel
+import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModelFactory
 
 // Data classes (local to this file since they're specific to playlist feature)
 data class PlaylistSong(
     val id: Int,
     val title: String,
     val artist: String,
-    val duration: String
+    val duration: String,
+    val songId: String = ""  // Firebase song ID for accurate matching
 )
 
 data class Playlist(
@@ -40,17 +51,82 @@ data class Playlist(
 
 // Main Playlist Screen - Use this in DashboardActivity
 @Composable
-fun PlaylistScreen() {
+fun PlaylistScreen(musicViewModel: MusicViewModel) {
+    val context = LocalContext.current
+    val allSongs by musicViewModel.allSongs.collectAsState()
+
     var currentView by remember { mutableStateOf<PlaylistView>(PlaylistView.List) }
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
-    var currentSong by remember { mutableStateOf<PlaylistSong?>(null) }
+    var currentSong by remember { mutableStateOf<Song?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
-    var playlists by remember { mutableStateOf(getPlaylistData()) }
 
-    // Audio settings state
-    var bassLevel by remember { mutableStateOf(0f) }
-    var trebleLevel by remember { mutableStateOf(0f) }
-    var volumeLevel by remember { mutableStateOf(0.7f) }
+    // User-created playlists
+    var userPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+
+    // Convert Firebase songs to playlists
+    val playlists by remember {
+        derivedStateOf {
+            val firebasePlaylists = mutableListOf<Playlist>()
+
+            // Create playlists by genre
+            allSongs.groupBy { it.genre }.forEach { (genre, songs) ->
+                if (genre.isNotEmpty() && songs.isNotEmpty()) {
+                    firebasePlaylists.add(
+                        Playlist(
+                            id = firebasePlaylists.size + 1,
+                            name = genre,
+                            description = "Songs in $genre genre",
+                            songCount = songs.size,
+                            songs = songs.map { song ->
+                                PlaylistSong(
+                                    id = song.id.hashCode(),
+                                    title = song.title,
+                                    artist = song.artist,
+                                    duration = song.durationFormatted,
+                                    songId = song.id  // Store Firebase ID for accurate matching
+                                )
+                            },
+                            isAiGenerated = true
+                        )
+                    )
+                }
+            }
+
+            // Create playlists by artist
+            allSongs.groupBy { it.artist }.entries.take(2).forEach { (artist, songs) ->
+                if (artist.isNotEmpty() && songs.isNotEmpty()) {
+                    firebasePlaylists.add(
+                        Playlist(
+                            id = firebasePlaylists.size + 1,
+                            name = "$artist's Collection",
+                            description = "All songs by $artist",
+                            songCount = songs.size,
+                            songs = songs.map { song ->
+                                PlaylistSong(
+                                    id = song.id.hashCode(),
+                                    title = song.title,
+                                    artist = song.artist,
+                                    duration = song.durationFormatted,
+                                    songId = song.id  // Store Firebase ID for accurate matching
+                                )
+                            },
+                            isAiGenerated = false
+                        )
+                    )
+                }
+            }
+
+            firebasePlaylists + userPlaylists
+        }
+    }
+
+    // Audio effects ViewModel for actual audio control
+    val audioEffectsViewModel: AudioEffectsViewModel = viewModel(
+        factory = AudioEffectsViewModelFactory(context)
+    )
+    val bassLevel by audioEffectsViewModel.bassLevel.collectAsState()
+    val trebleLevel by audioEffectsViewModel.trebleLevel.collectAsState()
+    val volumeLevel by audioEffectsViewModel.volumeLevel.collectAsState()
 
     when (currentView) {
         is PlaylistView.List -> {
@@ -62,9 +138,24 @@ fun PlaylistScreen() {
                 },
                 onQuickPlay = { playlist ->
                     selectedPlaylist = playlist
-                    currentSong = playlist.songs.firstOrNull()
-                    isPlaying = true
-                    currentView = PlaylistView.NowPlaying
+                    // Get all songs in this playlist
+                    val playlistSongs = playlist.songs.mapNotNull { ps ->
+                        allSongs.firstOrNull { song ->
+                            if (ps.songId.isNotEmpty()) {
+                                song.id == ps.songId
+                            } else {
+                                song.title == ps.title && song.artist == ps.artist
+                            }
+                        }
+                    }
+
+                    if (playlistSongs.isNotEmpty()) {
+                        musicViewModel.setPlaylist(playlistSongs)
+                        currentSong = playlistSongs.first()
+                        musicViewModel.playSong(playlistSongs.first())
+                        isPlaying = true
+                        currentView = PlaylistView.NowPlaying
+                    }
                 },
                 onCreatePlaylist = {
                     currentView = PlaylistView.Create
@@ -76,14 +167,14 @@ fun PlaylistScreen() {
                 onBack = { currentView = PlaylistView.List },
                 onCreate = { name, description ->
                     val newPlaylist = Playlist(
-                        id = playlists.size + 1,
+                        id = (playlists.maxOfOrNull { it.id } ?: 0) + 1,
                         name = name,
                         description = description,
                         songCount = 0,
                         songs = emptyList(),
                         isAiGenerated = false
                     )
-                    playlists = playlists + newPlaylist
+                    userPlaylists = userPlaylists + newPlaylist
                     currentView = PlaylistView.List
                 }
             )
@@ -93,9 +184,9 @@ fun PlaylistScreen() {
                 bassLevel = bassLevel,
                 trebleLevel = trebleLevel,
                 volumeLevel = volumeLevel,
-                onBassChange = { bassLevel = it },
-                onTrebleChange = { trebleLevel = it },
-                onVolumeChange = { volumeLevel = it },
+                onBassChange = { audioEffectsViewModel.updateBassLevel(it) },
+                onTrebleChange = { audioEffectsViewModel.updateTrebleLevel(it) },
+                onVolumeChange = { audioEffectsViewModel.updateVolumeLevel(it) },
                 onBack = { currentView = PlaylistView.NowPlaying }
             )
         }
@@ -103,43 +194,94 @@ fun PlaylistScreen() {
             selectedPlaylist?.let { playlist ->
                 PlaylistDetailContent(
                     playlist = playlist,
+                    allSongs = allSongs,
                     onBack = { currentView = PlaylistView.List },
-                    onSongClick = { song ->
+                    onSongClick = { playlistSong ->
+                        // Get all songs in this playlist
+                        val playlistSongs = playlist.songs.mapNotNull { ps ->
+                            allSongs.firstOrNull { song ->
+                                if (ps.songId.isNotEmpty()) {
+                                    song.id == ps.songId
+                                } else {
+                                    song.title == ps.title && song.artist == ps.artist
+                                }
+                            }
+                        }
+                        val song = allSongs.firstOrNull { song ->
+                            if (playlistSong.songId.isNotEmpty()) {
+                                song.id == playlistSong.songId
+                            } else {
+                                song.title == playlistSong.title && song.artist == playlistSong.artist
+                            }
+                        }
                         currentSong = song
+
+                        // Set the playlist so next/previous works
+                        if (playlistSongs.isNotEmpty()) {
+                            musicViewModel.setPlaylist(playlistSongs)
+                        }
+
+                        song?.let { musicViewModel.playSong(it) }
                         isPlaying = true
                         currentView = PlaylistView.NowPlaying
                     },
                     onPlayAll = {
-                        currentSong = playlist.songs.firstOrNull()
-                        isPlaying = true
-                        currentView = PlaylistView.NowPlaying
+                        // Get all songs in this playlist
+                        val playlistSongs = playlist.songs.mapNotNull { ps ->
+                            allSongs.firstOrNull { song ->
+                                if (ps.songId.isNotEmpty()) {
+                                    song.id == ps.songId
+                                } else {
+                                    song.title == ps.title && song.artist == ps.artist
+                                }
+                            }
+                        }
+
+                        if (playlistSongs.isNotEmpty()) {
+                            musicViewModel.setPlaylist(playlistSongs)
+                            currentSong = playlistSongs.first()
+                            musicViewModel.playSong(playlistSongs.first())
+                            isPlaying = true
+                            currentView = PlaylistView.NowPlaying
+                        }
                     }
                 )
             }
         }
         is PlaylistView.NowPlaying -> {
             currentSong?.let { song ->
-                NowPlayingContent(
+                val playbackState by musicViewModel.playbackState.collectAsState()
+
+                NowPlayingContentFirebase(
                     song = song,
                     playlist = selectedPlaylist,
                     isPlaying = isPlaying,
-                    onPlayPauseClick = { isPlaying = !isPlaying },
+                    shuffleEnabled = playbackState.isShuffleEnabled,
+                    repeatMode = playbackState.repeatMode,
+                    currentPosition = playbackState.currentPosition,
+                    duration = song.duration,
+                    onPlayPauseClick = {
+                        isPlaying = !isPlaying
+                        if (isPlaying) musicViewModel.resume() else musicViewModel.pause()
+                    },
                     onBack = { currentView = PlaylistView.Detail },
                     onNext = {
-                        selectedPlaylist?.songs?.let { songs ->
-                            val currentIndex = songs.indexOf(song)
-                            if (currentIndex < songs.size - 1) {
-                                currentSong = songs[currentIndex + 1]
-                            }
-                        }
+                        musicViewModel.skipToNext()
                     },
                     onPrevious = {
-                        selectedPlaylist?.songs?.let { songs ->
-                            val currentIndex = songs.indexOf(song)
-                            if (currentIndex > 0) {
-                                currentSong = songs[currentIndex - 1]
-                            }
-                        }
+                        musicViewModel.skipToPrevious()
+                    },
+                    onToggleShuffle = {
+                        musicViewModel.toggleShuffle()
+                    },
+                    onToggleRepeat = {
+                        musicViewModel.toggleRepeatMode()
+                    },
+                    onToggleFavorite = {
+                        musicViewModel.toggleFavorite(song)
+                    },
+                    onSeekTo = { position ->
+                        musicViewModel.seekTo(position)
                     },
                     onOpenSettings = { currentView = PlaylistView.AudioSettings }
                 )
@@ -884,6 +1026,7 @@ fun PresetButtonItem(
 @Composable
 fun PlaylistDetailContent(
     playlist: Playlist,
+    allSongs: List<Song>,
     onBack: () -> Unit,
     onSongClick: (PlaylistSong) -> Unit,
     onPlayAll: () -> Unit
@@ -919,6 +1062,10 @@ fun PlaylistDetailContent(
 
         Spacer(Modifier.height(20.dp))
 
+        val firstSongInPlaylist = allSongs.firstOrNull { song ->
+            playlist.songs.any { it.title == song.title }
+        }
+
         Box(
             modifier = Modifier
                 .size(200.dp)
@@ -926,12 +1073,21 @@ fun PlaylistDetailContent(
                 .background(Color(0xFF7FC9BC)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Icons.Default.MusicNote,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(80.dp)
-            )
+            if (firstSongInPlaylist?.coverUrl?.isNotEmpty() == true) {
+                AsyncImage(
+                    model = firstSongInPlaylist.coverUrl,
+                    contentDescription = playlist.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(80.dp)
+                )
+            }
         }
 
         Spacer(Modifier.height(24.dp))
@@ -1293,58 +1449,227 @@ fun NowPlayingContent(
     }
 }
 
-// Sample data
-fun getPlaylistData(): List<Playlist> {
-    return listOf(
-        Playlist(
-            id = 1,
-            name = "Focus Flow",
-            description = "AI curated for productivity",
-            songCount = 32,
-            isAiGenerated = true,
-            songs = listOf(
-                PlaylistSong(1, "Deep Focus", "Ambient Collective", "4:32"),
-                PlaylistSong(2, "Concentration Mode", "Study Beats", "3:45"),
-                PlaylistSong(3, "Mind Flow", "Zen Masters", "5:12"),
-                PlaylistSong(4, "Brain Waves", "Focus Music", "4:20")
-            )
-        ),
-        Playlist(
-            id = 2,
-            name = "Evening Calm",
-            description = "Relaxing evening vibes",
-            songCount = 15,
-            isAiGenerated = true,
-            songs = listOf(
-                PlaylistSong(5, "Sunset Dreams", "Chill Artists", "3:28"),
-                PlaylistSong(6, "Evening Breeze", "Smooth Sounds", "4:15"),
-                PlaylistSong(7, "Twilight Hour", "Relaxation Zone", "5:03")
-            )
-        ),
-        Playlist(
-            id = 3,
-            name = "Chill Vibes",
-            description = "Relaxing tunes for any time",
-            songCount = 24,
-            isAiGenerated = false,
-            songs = listOf(
-                PlaylistSong(8, "kissme", "Red Love", "3:12"),
-                PlaylistSong(9, "radio", "Lana Del Rey", "4:28"),
-                PlaylistSong(10, "Face", "Larosea", "3:45"),
-                PlaylistSong(11, "Moonlight", "Indie Dreams", "4:02")
-            )
-        ),
-        Playlist(
-            id = 4,
-            name = "Workout Energy",
-            description = "High energy beats",
-            songCount = 18,
-            isAiGenerated = false,
-            songs = listOf(
-                PlaylistSong(12, "Power Up", "Gym Beats", "3:30"),
-                PlaylistSong(13, "Maximum Drive", "Workout Mix", "3:55"),
-                PlaylistSong(14, "Beast Mode", "Fitness Music", "4:10")
-            )
+@Composable
+fun NowPlayingContentFirebase(
+    song: Song,
+    playlist: Playlist?,
+    isPlaying: Boolean,
+    shuffleEnabled: Boolean = false,
+    repeatMode: com.example.musicplayerapplication.model.RepeatMode = com.example.musicplayerapplication.model.RepeatMode.OFF,
+    currentPosition: Long = 0L,
+    duration: Long = 0L,
+    onPlayPauseClick: () -> Unit,
+    onBack: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onToggleShuffle: () -> Unit = {},
+    onToggleRepeat: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
+    onSeekTo: (Long) -> Unit = {},
+    onOpenSettings: () -> Unit
+) {
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFF1A0B2E),
+            Color(0xFF2D1B4E),
+            Color(0xFF3D2766)
         )
     )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            Text(
+                text = "Now Playing",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Audio Settings",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFFB040FF)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (song.coverUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = song.coverUrl,
+                    contentDescription = song.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(120.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Text(
+            text = song.title,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = song.artist,
+            fontSize = 18.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+
+        Spacer(Modifier.height(40.dp))
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Slider(
+                value = currentPosition.toFloat(),
+                onValueChange = { onSeekTo(it.toLong()) },
+                valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color(0xFFB040FF),
+                    inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                )
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(formatTime(currentPosition), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Text(formatTime(duration), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onToggleShuffle) {
+                Icon(
+                    Icons.Default.Shuffle,
+                    contentDescription = "Shuffle",
+                    tint = if (shuffleEnabled) Color(0xFFB040FF) else Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = onPrevious) {
+                Icon(
+                    Icons.Default.SkipPrevious,
+                    contentDescription = "Previous",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            FloatingActionButton(
+                onClick = onPlayPauseClick,
+                containerColor = Color(0xFFB040FF),
+                modifier = Modifier.size(72.dp)
+            ) {
+                Icon(
+                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Play",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = onNext) {
+                Icon(
+                    Icons.Default.SkipNext,
+                    contentDescription = "Next",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = onToggleRepeat) {
+                Icon(
+                    Icons.Default.Repeat,
+                    contentDescription = "Repeat",
+                    tint = when(repeatMode) {
+                        com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(alpha = 0.7f)
+                        else -> Color(0xFFB040FF)
+                    },
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (song.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Like",
+                    tint = if (song.isFavorite) Color(0xFFE91E63) else Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            IconButton(onClick = {}) {
+                Icon(
+                    Icons.Default.Share,
+                    contentDescription = "Share",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun formatTime(millis: Long): String {
+    val totalSeconds = millis / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
 }

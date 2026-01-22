@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,16 +63,8 @@ fun DashboardScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(FilterTab.SONGS) }
 
-    // Sample song data
-    val songs = remember {
-        listOf(
-            Song("Song Name", "Artist Name", "3:45", ""),
-            Song("Song Name", "Artist Name", "4:42", ""),
-            Song("Song Name", "Artist Name", "5:12", ""),
-            Song("Song Name", "Artist Name", "2:25", ""),
-            Song("Song Name", "Artist Name", "3:32", "")
-        )
-    }
+    // All songs now come from Firebase
+    val songs = remember { emptyList<Song>() }
 
     Box(
         modifier = Modifier

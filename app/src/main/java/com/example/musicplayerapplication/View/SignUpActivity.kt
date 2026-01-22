@@ -51,6 +51,7 @@ fun SignUpScreen(viewModel: AuthViewModel = viewModel()) {
     val authState by viewModel.authState
     val isLoading by viewModel.isLoading
 
+
     // Handle auth state changes
     LaunchedEffect(authState) {
         when (val state = authState) {

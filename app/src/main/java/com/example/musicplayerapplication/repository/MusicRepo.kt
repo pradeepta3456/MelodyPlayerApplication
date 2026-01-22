@@ -28,6 +28,9 @@ interface MusicRepository {
     suspend fun incrementPlayCount(songId: String): Result<Boolean>
     suspend fun toggleFavorite(songId: String, userId: String, isFavorite: Boolean): Result<Boolean>
     suspend fun updateLikes(songId: String, increment: Boolean): Result<Boolean>
+    suspend fun addToRecentlyPlayed(userId: String, song: Song): Result<Unit>
+    suspend fun addToFavorites(userId: String, song: Song): Result<Unit>
+    suspend fun removeFromFavorites(userId: String, songId: String): Result<Unit>
 
     // Delete
     suspend fun deleteSong(songId: String): Result<Boolean>
