@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.ViewModel.SettingsViewModel
+import com.example.musicplayerapplication.ViewModel.SettingsViewModelFactory
 import com.example.musicplayerapplication.model.AudioQuality
 import com.google.firebase.auth.FirebaseAuth
 
@@ -38,14 +39,27 @@ class SettingsActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
+fun SettingsScreen() {
     val context = LocalContext.current
+    val viewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModelFactory(context)
+    )
     val settings by viewModel.settings.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     var showAudioQualityDialog by remember { mutableStateOf(false) }
     var showDownloadQualityDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
+    // Show error snackbar if there's an error
+    errorMessage?.let { error ->
+        LaunchedEffect(error) {
+            // You can show a snackbar or toast here
+            // For now, just clear the error after showing
+            viewModel.clearError()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -324,7 +338,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
         )
     }
 
-    // Logout Dialog
+    // Logout Dialog - Now using ViewModel (proper MVVM)
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -332,10 +346,17 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             text = { Text("Are you sure you want to logout?", color = Color.Gray) },
             confirmButton = {
                 TextButton(onClick = {
-                    FirebaseAuth.getInstance().signOut()
-                    val intent = Intent(context, SignInActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    context.startActivity(intent)
+                    viewModel.logout(
+                        onSuccess = {
+                            val intent = Intent(context, SignInActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(intent)
+                        },
+                        onError = { error ->
+                            // Handle error - could show a toast
+                            showLogoutDialog = false
+                        }
+                    )
                 }) {
                     Text("Logout", color = Color(0xFFDC2626))
                 }
@@ -349,7 +370,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
         )
     }
 
-    // Delete Account Dialog
+    // Delete Account Dialog - Now using ViewModel (proper MVVM)
     if (showDeleteAccountDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAccountDialog = false },
@@ -384,21 +405,17 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val auth = FirebaseAuth.getInstance()
-                        val user = auth.currentUser
-
-                        user?.delete()?.addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                // Account deleted successfully
+                        viewModel.deleteAccount(
+                            onSuccess = {
                                 val intent = Intent(context, SignInActivity::class.java)
                                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                 context.startActivity(intent)
-                            } else {
-                                // Failed to delete account
-                                // User might need to re-authenticate
+                            },
+                            onError = { error ->
+                                // Handle error - user might need to re-authenticate
                                 showDeleteAccountDialog = false
                             }
-                        }
+                        )
                     }
                 ) {
                     Text("Delete Forever", color = Color(0xFF991B1B), fontWeight = FontWeight.Bold)
