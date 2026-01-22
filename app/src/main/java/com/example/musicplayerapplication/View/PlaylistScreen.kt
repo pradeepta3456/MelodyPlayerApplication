@@ -130,11 +130,18 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                 },
                 onQuickPlay = { playlist ->
                     selectedPlaylist = playlist
-                    val firstSongTitle = playlist.songs.firstOrNull()?.title
-                    currentSong = allSongs.firstOrNull { it.title == firstSongTitle }
-                    currentSong?.let { musicViewModel.playSong(it) }
-                    isPlaying = true
-                    currentView = PlaylistView.NowPlaying
+                    // Get all songs in this playlist
+                    val playlistSongs = playlist.songs.mapNotNull { ps ->
+                        allSongs.firstOrNull { it.title == ps.title }
+                    }
+
+                    if (playlistSongs.isNotEmpty()) {
+                        musicViewModel.setPlaylist(playlistSongs)
+                        currentSong = playlistSongs.first()
+                        musicViewModel.playSong(playlistSongs.first())
+                        isPlaying = true
+                        currentView = PlaylistView.NowPlaying
+                    }
                 },
                 onCreatePlaylist = {
                     currentView = PlaylistView.Create
@@ -176,28 +183,51 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     allSongs = allSongs,
                     onBack = { currentView = PlaylistView.List },
                     onSongClick = { playlistSong ->
+                        // Get all songs in this playlist
+                        val playlistSongs = playlist.songs.mapNotNull { ps ->
+                            allSongs.firstOrNull { it.title == ps.title }
+                        }
                         val song = allSongs.firstOrNull { it.title == playlistSong.title }
                         currentSong = song
+
+                        // Set the playlist so next/previous works
+                        if (playlistSongs.isNotEmpty()) {
+                            musicViewModel.setPlaylist(playlistSongs)
+                        }
+
                         song?.let { musicViewModel.playSong(it) }
                         isPlaying = true
                         currentView = PlaylistView.NowPlaying
                     },
                     onPlayAll = {
-                        val firstSongTitle = playlist.songs.firstOrNull()?.title
-                        currentSong = allSongs.firstOrNull { it.title == firstSongTitle }
-                        currentSong?.let { musicViewModel.playSong(it) }
-                        isPlaying = true
-                        currentView = PlaylistView.NowPlaying
+                        // Get all songs in this playlist
+                        val playlistSongs = playlist.songs.mapNotNull { ps ->
+                            allSongs.firstOrNull { it.title == ps.title }
+                        }
+
+                        if (playlistSongs.isNotEmpty()) {
+                            musicViewModel.setPlaylist(playlistSongs)
+                            currentSong = playlistSongs.first()
+                            musicViewModel.playSong(playlistSongs.first())
+                            isPlaying = true
+                            currentView = PlaylistView.NowPlaying
+                        }
                     }
                 )
             }
         }
         is PlaylistView.NowPlaying -> {
             currentSong?.let { song ->
+                val playbackState by musicViewModel.playbackState.collectAsState()
+
                 NowPlayingContentFirebase(
                     song = song,
                     playlist = selectedPlaylist,
                     isPlaying = isPlaying,
+                    shuffleEnabled = playbackState.isShuffleEnabled,
+                    repeatMode = playbackState.repeatMode,
+                    currentPosition = playbackState.currentPosition,
+                    duration = song.duration,
                     onPlayPauseClick = {
                         isPlaying = !isPlaying
                         if (isPlaying) musicViewModel.resume() else musicViewModel.pause()
@@ -208,6 +238,18 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     },
                     onPrevious = {
                         musicViewModel.skipToPrevious()
+                    },
+                    onToggleShuffle = {
+                        musicViewModel.toggleShuffle()
+                    },
+                    onToggleRepeat = {
+                        musicViewModel.toggleRepeatMode()
+                    },
+                    onToggleFavorite = {
+                        musicViewModel.toggleFavorite(song)
+                    },
+                    onSeekTo = { position ->
+                        musicViewModel.seekTo(position)
                     },
                     onOpenSettings = { currentView = PlaylistView.AudioSettings }
                 )
@@ -1380,10 +1422,18 @@ fun NowPlayingContentFirebase(
     song: Song,
     playlist: Playlist?,
     isPlaying: Boolean,
+    shuffleEnabled: Boolean = false,
+    repeatMode: com.example.musicplayerapplication.model.RepeatMode = com.example.musicplayerapplication.model.RepeatMode.OFF,
+    currentPosition: Long = 0L,
+    duration: Long = 0L,
     onPlayPauseClick: () -> Unit,
     onBack: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onToggleShuffle: () -> Unit = {},
+    onToggleRepeat: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
+    onSeekTo: (Long) -> Unit = {},
     onOpenSettings: () -> Unit
 ) {
     val bg = Brush.verticalGradient(
@@ -1477,12 +1527,11 @@ fun NowPlayingContentFirebase(
 
         Spacer(Modifier.height(40.dp))
 
-        var progress by remember { mutableStateOf(0.3f) }
-
         Column(modifier = Modifier.fillMaxWidth()) {
             Slider(
-                value = progress,
-                onValueChange = { progress = it },
+                value = currentPosition.toFloat(),
+                onValueChange = { onSeekTo(it.toLong()) },
+                valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
                     activeTrackColor = Color(0xFFB040FF),
@@ -1494,8 +1543,8 @@ fun NowPlayingContentFirebase(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("0:00", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                Text(song.durationFormatted, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Text(formatTime(currentPosition), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Text(formatTime(duration), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
             }
         }
 
@@ -1506,11 +1555,11 @@ fun NowPlayingContentFirebase(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onToggleShuffle) {
                 Icon(
                     Icons.Default.Shuffle,
                     contentDescription = "Shuffle",
-                    tint = Color.White,
+                    tint = if (shuffleEnabled) Color(0xFFB040FF) else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -1546,11 +1595,14 @@ fun NowPlayingContentFirebase(
                 )
             }
 
-            IconButton(onClick = {}) {
+            IconButton(onClick = onToggleRepeat) {
                 Icon(
                     Icons.Default.Repeat,
                     contentDescription = "Repeat",
-                    tint = Color.White,
+                    tint = when(repeatMode) {
+                        com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(alpha = 0.7f)
+                        else -> Color(0xFFB040FF)
+                    },
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -1562,11 +1614,11 @@ fun NowPlayingContentFirebase(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onToggleFavorite) {
                 Icon(
-                    Icons.Default.FavoriteBorder,
+                    imageVector = if (song.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Like",
-                    tint = Color.White,
+                    tint = if (song.isFavorite) Color(0xFFE91E63) else Color.White,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -1581,4 +1633,11 @@ fun NowPlayingContentFirebase(
             }
         }
     }
+}
+
+private fun formatTime(millis: Long): String {
+    val totalSeconds = millis / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
 }
