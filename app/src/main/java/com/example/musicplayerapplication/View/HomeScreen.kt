@@ -31,7 +31,7 @@ import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
 
 @Composable
 fun HomeScreen(
-    musicViewModel: MusicViewModel = viewModel(factory = MusicViewModelFactory(LocalContext.current.applicationContext as Context)),
+    musicViewModel: MusicViewModel,
     homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(musicViewModel)),
     onNotificationClick: () -> Unit = {},
     onSearchClick: () -> Unit = {}
@@ -115,10 +115,13 @@ fun HomeScreen(
             }
         }
 
-        // Featured Album
-        item {
-            FeaturedAlbumCard("Luna Eclipse", "Sunsets") {
-                homeViewModel.playAlbum(Album(title = "Luna Eclipse", artistVibes = "Sunsets"))
+        // Featured Album - show first trending album if available
+        if (trendingAlbums.isNotEmpty()) {
+            item {
+                val featuredAlbum = trendingAlbums.first()
+                FeaturedAlbumCard(featuredAlbum.title, featuredAlbum.artistVibes) {
+                    homeViewModel.playAlbum(featuredAlbum)
+                }
             }
         }
 

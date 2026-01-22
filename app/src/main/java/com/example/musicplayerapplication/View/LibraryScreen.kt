@@ -31,9 +31,8 @@ import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
 
 // Main Library Screen
 @Composable
-fun LibraryScreen() {
+fun LibraryScreen(musicViewModel: MusicViewModel) {
     val context = LocalContext.current
-    val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModelFactory(context.applicationContext as Context))
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Songs") }

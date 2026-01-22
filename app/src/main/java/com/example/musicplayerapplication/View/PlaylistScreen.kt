@@ -48,9 +48,8 @@ data class Playlist(
 
 // Main Playlist Screen - Use this in DashboardActivity
 @Composable
-fun PlaylistScreen() {
+fun PlaylistScreen(musicViewModel: MusicViewModel) {
     val context = LocalContext.current
-    val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModelFactory(context.applicationContext as Context))
     val allSongs by musicViewModel.allSongs.collectAsState()
 
     var currentView by remember { mutableStateOf<PlaylistView>(PlaylistView.List) }
@@ -112,7 +111,7 @@ fun PlaylistScreen() {
                 }
             }
 
-            firebasePlaylists + getPlaylistData() + userPlaylists
+            firebasePlaylists + userPlaylists
         }
     }
 
@@ -1582,60 +1581,4 @@ fun NowPlayingContentFirebase(
             }
         }
     }
-}
-
-// Sample data
-fun getPlaylistData(): List<Playlist> {
-    return listOf(
-        Playlist(
-            id = 1,
-            name = "Focus Flow",
-            description = "AI curated for productivity",
-            songCount = 32,
-            isAiGenerated = true,
-            songs = listOf(
-                PlaylistSong(1, "Deep Focus", "Ambient Collective", "4:32"),
-                PlaylistSong(2, "Concentration Mode", "Study Beats", "3:45"),
-                PlaylistSong(3, "Mind Flow", "Zen Masters", "5:12"),
-                PlaylistSong(4, "Brain Waves", "Focus Music", "4:20")
-            )
-        ),
-        Playlist(
-            id = 2,
-            name = "Evening Calm",
-            description = "Relaxing evening vibes",
-            songCount = 15,
-            isAiGenerated = true,
-            songs = listOf(
-                PlaylistSong(5, "Sunset Dreams", "Chill Artists", "3:28"),
-                PlaylistSong(6, "Evening Breeze", "Smooth Sounds", "4:15"),
-                PlaylistSong(7, "Twilight Hour", "Relaxation Zone", "5:03")
-            )
-        ),
-        Playlist(
-            id = 3,
-            name = "Chill Vibes",
-            description = "Relaxing tunes for any time",
-            songCount = 24,
-            isAiGenerated = false,
-            songs = listOf(
-                PlaylistSong(8, "kissme", "Red Love", "3:12"),
-                PlaylistSong(9, "radio", "Lana Del Rey", "4:28"),
-                PlaylistSong(10, "Face", "Larosea", "3:45"),
-                PlaylistSong(11, "Moonlight", "Indie Dreams", "4:02")
-            )
-        ),
-        Playlist(
-            id = 4,
-            name = "Workout Energy",
-            description = "High energy beats",
-            songCount = 18,
-            isAiGenerated = false,
-            songs = listOf(
-                PlaylistSong(12, "Power Up", "Gym Beats", "3:30"),
-                PlaylistSong(13, "Maximum Drive", "Workout Mix", "3:55"),
-                PlaylistSong(14, "Beast Mode", "Fitness Music", "4:10")
-            )
-        )
-    )
 }
