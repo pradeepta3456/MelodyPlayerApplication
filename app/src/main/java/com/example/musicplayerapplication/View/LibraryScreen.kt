@@ -36,7 +36,8 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
     val viewModel = remember { LibraryViewModel(repository = LibraryRepoImpl()) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Songs") }
-    var selectedArtist by remember { mutableStateOf<String?>(null) }
+    var selectedAlbum by remember { mutableStateOf<String?>(null) }
+    var selectedGenre by remember { mutableStateOf<String?>(null) }
 
     val allSongs by musicViewModel.allSongs.collectAsState()
     val artists = viewModel.artists
@@ -48,11 +49,21 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
         "Folders" to Icons.Default.FolderOpen
     )
 
-    // Show album detail if artist is selected
-    if (selectedArtist != null) {
+    // Show album detail if album is selected
+    if (selectedAlbum != null) {
         AlbumDetailScreenContent(
-            albumName = selectedArtist!!,
-            onBack = { selectedArtist = null }
+            albumName = selectedAlbum!!,
+            songs = allSongs.filter { it.album.equals(selectedAlbum, ignoreCase = true) },
+            musicViewModel = musicViewModel,
+            onBack = { selectedAlbum = null }
+        )
+    } else if (selectedGenre != null) {
+        // Show genre detail if genre is selected
+        GenreDetailScreenContent(
+            genreName = selectedGenre!!,
+            songs = allSongs.filter { it.genre.equals(selectedGenre, ignoreCase = true) },
+            musicViewModel = musicViewModel,
+            onBack = { selectedGenre = null }
         )
     } else {
         // Main library view
@@ -146,7 +157,7 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
                             allSongs = allSongs,
                             searchQuery = searchQuery,
                             onAlbumClick = { albumName ->
-                                selectedArtist = albumName
+                                selectedAlbum = albumName
                             }
                         )
                     }
@@ -161,7 +172,12 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
                         LibraryArtistsList(
                             artists = artistsList,
                             searchQuery = searchQuery,
-                            onArtistClick = { artistName -> selectedArtist = artistName }
+                            onArtistClick = { artistName ->
+                                // Navigate to ArtistActivity
+                                val intent = android.content.Intent(context, ArtistActivity::class.java)
+                                intent.putExtra("ARTIST_NAME", artistName)
+                                context.startActivity(intent)
+                            }
                         )
                     }
                     "Genres" -> {
@@ -171,7 +187,9 @@ fun LibraryScreen(musicViewModel: MusicViewModel) {
                         LibraryGenresList(
                             genres = genres,
                             searchQuery = searchQuery,
-                            onGenreClick = { }
+                            onGenreClick = { genreName ->
+                                selectedGenre = genreName
+                            }
                         )
                     }
                     else -> SimpleCategoryScreen(selectedCategory)
@@ -272,16 +290,12 @@ fun LibraryCategoryChip(
 }
 
 @Composable
-fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
-    val songs = remember(albumName) {
-        listOf(
-            Triple("Song 1", "3:45", false),
-            Triple("Song 2", "4:20", true),
-            Triple("Song 3", "3:12", false),
-            Triple("Song 4", "5:30", false)
-        )
-    }
-
+fun AlbumDetailScreenContent(
+    albumName: String,
+    songs: List<Song>,
+    musicViewModel: MusicViewModel,
+    onBack: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -304,12 +318,19 @@ fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
                     .clickable { onBack() }
                     .size(24.dp)
             )
-            Text(
-                text = albumName,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = albumName,
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${songs.size} Songs",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+            }
         }
 
         // Songs List
@@ -319,11 +340,11 @@ fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(songs.size) { index ->
+            items(songs) { song ->
                 LibraryAlbumSongItem(
-                    title = songs[index].first,
-                    duration = songs[index].second,
-                    isFavorite = songs[index].third
+                    song = song,
+                    musicViewModel = musicViewModel,
+                    onClick = { musicViewModel.playSong(song) }
                 )
             }
         }
@@ -331,12 +352,15 @@ fun AlbumDetailScreenContent(albumName: String, onBack: () -> Unit) {
 }
 
 @Composable
-fun LibraryAlbumSongItem(title: String, duration: String, isFavorite: Boolean) {
-    var favorite by remember { mutableStateOf(isFavorite) }
-    var isPlaying by remember { mutableStateOf(false) }
-
+fun LibraryAlbumSongItem(
+    song: Song,
+    musicViewModel: MusicViewModel,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF3A4A7A)),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -347,54 +371,64 @@ fun LibraryAlbumSongItem(title: String, duration: String, isFavorite: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Album art - Use Material Icon
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF6B4FA0)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Album,
-                    contentDescription = title,
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
+            // Album art
+            if (song.coverUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = song.coverUrl,
+                    contentDescription = song.title,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF6B4FA0)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Album,
+                        contentDescription = song.title,
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
 
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = title,
+                    text = song.title,
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = duration,
-                    color = Color.White,
+                    text = song.artist,
+                    color = Color(0xFFB0B0B0),
                     fontSize = 14.sp
                 )
             }
 
-            IconButton(onClick = { favorite = !favorite }, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    imageVector = if (favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorite",
-                    tint = if (favorite) Color(0xFFEC4899) else Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Text(
+                text = song.durationFormatted,
+                color = Color(0xFFB0B0B0),
+                fontSize = 14.sp
+            )
 
-            IconButton(onClick = { isPlaying = !isPlaying }, modifier = Modifier.size(40.dp)) {
+            IconButton(
+                onClick = { musicViewModel.toggleFavorite(song) },
+                modifier = Modifier.size(40.dp)
+            ) {
                 Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = Color.White,
+                    imageVector = if (song.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = if (song.isFavorite) Color(0xFFEC4899) else Color.White,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -405,6 +439,68 @@ fun LibraryAlbumSongItem(title: String, duration: String, isFavorite: Boolean) {
                     contentDescription = "More options",
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GenreDetailScreenContent(
+    genreName: String,
+    songs: List<Song>,
+    musicViewModel: MusicViewModel,
+    onBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF2C3C72))
+    ) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF414C91))
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White,
+                modifier = Modifier
+                    .clickable { onBack() }
+                    .size(24.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = genreName,
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${songs.size} Songs",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        // Songs List
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(songs) { song ->
+                LibraryAlbumSongItem(
+                    song = song,
+                    musicViewModel = musicViewModel,
+                    onClick = { musicViewModel.playSong(song) }
                 )
             }
         }
