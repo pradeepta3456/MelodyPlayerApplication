@@ -100,6 +100,12 @@
             android:exported="false"
             android:theme="@style/Theme.MusicPlayerApplication" />
 
+        <!-- ARTIST ACTIVITY -->
+        <activity
+            android:name=".View.ArtistActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MusicPlayerApplication" />
+
     </application>
 
 </manifest>

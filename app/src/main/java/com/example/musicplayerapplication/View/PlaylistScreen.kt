@@ -34,7 +34,8 @@ data class PlaylistSong(
     val id: Int,
     val title: String,
     val artist: String,
-    val duration: String
+    val duration: String,
+    val songId: String = ""  // Firebase song ID for accurate matching
 )
 
 data class Playlist(
@@ -79,7 +80,8 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                                     id = song.id.hashCode(),
                                     title = song.title,
                                     artist = song.artist,
-                                    duration = song.durationFormatted
+                                    duration = song.durationFormatted,
+                                    songId = song.id  // Store Firebase ID for accurate matching
                                 )
                             },
                             isAiGenerated = true
@@ -102,7 +104,8 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                                     id = song.id.hashCode(),
                                     title = song.title,
                                     artist = song.artist,
-                                    duration = song.durationFormatted
+                                    duration = song.durationFormatted,
+                                    songId = song.id  // Store Firebase ID for accurate matching
                                 )
                             },
                             isAiGenerated = false
@@ -132,7 +135,13 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     selectedPlaylist = playlist
                     // Get all songs in this playlist
                     val playlistSongs = playlist.songs.mapNotNull { ps ->
-                        allSongs.firstOrNull { it.title == ps.title }
+                        allSongs.firstOrNull { song ->
+                            if (ps.songId.isNotEmpty()) {
+                                song.id == ps.songId
+                            } else {
+                                song.title == ps.title && song.artist == ps.artist
+                            }
+                        }
                     }
 
                     if (playlistSongs.isNotEmpty()) {
@@ -185,9 +194,21 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     onSongClick = { playlistSong ->
                         // Get all songs in this playlist
                         val playlistSongs = playlist.songs.mapNotNull { ps ->
-                            allSongs.firstOrNull { it.title == ps.title }
+                            allSongs.firstOrNull { song ->
+                                if (ps.songId.isNotEmpty()) {
+                                    song.id == ps.songId
+                                } else {
+                                    song.title == ps.title && song.artist == ps.artist
+                                }
+                            }
                         }
-                        val song = allSongs.firstOrNull { it.title == playlistSong.title }
+                        val song = allSongs.firstOrNull { song ->
+                            if (playlistSong.songId.isNotEmpty()) {
+                                song.id == playlistSong.songId
+                            } else {
+                                song.title == playlistSong.title && song.artist == playlistSong.artist
+                            }
+                        }
                         currentSong = song
 
                         // Set the playlist so next/previous works
@@ -202,7 +223,13 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     onPlayAll = {
                         // Get all songs in this playlist
                         val playlistSongs = playlist.songs.mapNotNull { ps ->
-                            allSongs.firstOrNull { it.title == ps.title }
+                            allSongs.firstOrNull { song ->
+                                if (ps.songId.isNotEmpty()) {
+                                    song.id == ps.songId
+                                } else {
+                                    song.title == ps.title && song.artist == ps.artist
+                                }
+                            }
                         }
 
                         if (playlistSongs.isNotEmpty()) {
