@@ -22,6 +22,7 @@ class AudioPlayer private constructor(private val context: Context) {
     }
 
     private var mediaPlayer: MediaPlayer? = null
+    private var audioEffects: AudioEffects? = null
     private var currentSong: Song? = null
     private var playlist: List<Song> = emptyList()
     private var currentIndex: Int = 0
@@ -46,6 +47,9 @@ class AudioPlayer private constructor(private val context: Context) {
 
     private var onCompletionListener: (() -> Unit)? = null
 
+    // Audio effects exposed through AudioPlayer
+    fun getAudioEffects(): AudioEffects? = audioEffects
+
     fun playSong(song: Song) {
         try {
             release()
@@ -68,6 +72,10 @@ class AudioPlayer private constructor(private val context: Context) {
                     start()
                     _isPlaying.value = true
                     _duration.value = it.duration.toLong()
+
+                    // Initialize audio effects after MediaPlayer is prepared
+                    initializeAudioEffects()
+
                     updateProgress()
                 }
 
@@ -219,8 +227,45 @@ class AudioPlayer private constructor(private val context: Context) {
         onCompletionListener?.invoke()
     }
 
+    /**
+     * Initialize audio effects when MediaPlayer is ready
+     */
+    private fun initializeAudioEffects() {
+        try {
+            mediaPlayer?.let { player ->
+                // Release old effects if any
+                audioEffects?.release()
+
+                // Create new audio effects instance
+                audioEffects = AudioEffects(player)
+
+                // Load saved audio effects settings from PreferencesManager
+                val prefs = PreferencesManager.getInstance(context)
+                audioEffects?.apply {
+                    setBassLevel(prefs.getBassLevel())
+                    setTrebleLevel(prefs.getTrebleLevel())
+                    setReverbEnabled(prefs.getReverbEnabled())
+                    if (prefs.getReverbEnabled()) {
+                        setReverbLevel(prefs.getReverbLevel())
+                    }
+
+                    // Apply saved equalizer bands
+                    val savedBands = prefs.getEqualizerBands()
+                    savedBands.forEachIndexed { index, level ->
+                        setEqualizerBand(index, level)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     fun release() {
         try {
+            audioEffects?.release()
+            audioEffects = null
+
             mediaPlayer?.apply {
                 if (isPlaying) stop()
                 release()

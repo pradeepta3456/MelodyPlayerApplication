@@ -30,18 +30,39 @@ class MusicViewModel(
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    init {
-        // Initialize AudioPlayer here since the context is now available through the factory.
-        audioPlayer = AudioPlayer.getInstance(context)
-        loadAllSongs()
-    }
-
-    // Playback state
+    // Playback state - must be initialized before init block
     private val _playbackState = MutableStateFlow(PlaybackState())
     val playbackState: StateFlow<PlaybackState> = _playbackState
 
     private val _currentPlaylist = MutableStateFlow<List<Song>>(emptyList())
     val currentPlaylist: StateFlow<List<Song>> = _currentPlaylist
+
+    init {
+        // Initialize AudioPlayer here since the context is now available through the factory.
+        audioPlayer = AudioPlayer.getInstance(context)
+        loadAllSongs()
+
+        // Observe AudioPlayer state and update playback state
+        viewModelScope.launch {
+            audioPlayer.isPlaying.collect { playing ->
+                _playbackState.update { it.copy(isPlaying = playing) }
+            }
+        }
+
+        viewModelScope.launch {
+            audioPlayer.currentPosition.collect { position ->
+                _playbackState.update { it.copy(currentPosition = position) }
+            }
+        }
+
+        viewModelScope.launch {
+            audioPlayer.currentSongFlow.collect { song ->
+                song?.let {
+                    _playbackState.update { state -> state.copy(currentSong = song) }
+                }
+            }
+        }
+    }
 
     // Upload state
     private val _uploadProgress = mutableStateOf(0f)
@@ -96,15 +117,34 @@ class MusicViewModel(
                 // Find the song index in the current playlist
                 val index = _currentPlaylist.value.indexOfFirst { it.id == song.id }
                 if (index == -1) {
-                    // Song not in playlist, add it
-                    _currentPlaylist.value = listOf(song)
-                    _playbackState.update {
-                        it.copy(
-                            currentSong = song,
-                            queue = listOf(song),
-                            currentIndex = 0,
-                            isPlaying = true
-                        )
+                    // Song not in playlist, use all songs as playlist
+                    val allSongsList = _allSongsInternal.value
+                    val songIndex = allSongsList.indexOfFirst { it.id == song.id }
+
+                    if (songIndex != -1) {
+                        _currentPlaylist.value = allSongsList
+                        _playbackState.update {
+                            it.copy(
+                                currentSong = song,
+                                queue = allSongsList,
+                                currentIndex = songIndex,
+                                isPlaying = true
+                            )
+                        }
+                        // Set playlist in AudioPlayer
+                        audioPlayer.setPlaylist(allSongsList, songIndex)
+                    } else {
+                        // Song not found, just play it alone
+                        _currentPlaylist.value = listOf(song)
+                        _playbackState.update {
+                            it.copy(
+                                currentSong = song,
+                                queue = listOf(song),
+                                currentIndex = 0,
+                                isPlaying = true
+                            )
+                        }
+                        audioPlayer.playSong(song)
                     }
                 } else {
                     _playbackState.update {
@@ -114,10 +154,9 @@ class MusicViewModel(
                             isPlaying = true
                         )
                     }
+                    // Set playlist in AudioPlayer
+                    audioPlayer.setPlaylist(_currentPlaylist.value, index)
                 }
-
-                // Play audio using AudioPlayer
-                audioPlayer.playSong(song)
 
                 // Save to recently played
                 auth.currentUser?.uid?.let { userId ->
@@ -158,11 +197,22 @@ class MusicViewModel(
 
     // Skip to previous song
     fun skipToPrevious() {
-        val currentIndex = _playbackState.value.currentIndex
-        val queue = _playbackState.value.queue
-        if (queue.isNotEmpty() && currentIndex > 0) {
-            playSong(queue[currentIndex - 1])
-        }
+        audioPlayer.skipToPrevious()
+    }
+
+    // Seek to position
+    fun seekTo(position: Long) {
+        audioPlayer.seekTo(position)
+    }
+
+    // Toggle shuffle
+    fun toggleShuffle() {
+        audioPlayer.toggleShuffle()
+    }
+
+    // Toggle repeat mode
+    fun toggleRepeatMode() {
+        audioPlayer.toggleRepeatMode()
     }
 
     // Toggle favorite

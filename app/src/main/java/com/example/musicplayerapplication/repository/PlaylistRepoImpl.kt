@@ -5,37 +5,8 @@ import com.example.musicplayerapplication.model.Song
 
 class PlaylistRepoImpl : PlaylistRepository {
 
-    private val playlists = mutableListOf(
-        Playlist(
-            id = 1,
-            name = "Focus Flow",
-            description = "AI curated for productivity",
-            songCount = 32,
-            isAiGenerated = true
-        ),
-        Playlist(
-            id = 2,
-            name = "Evening Calm",
-            description = "Relaxing evening vibes",
-            songCount = 15,
-            isAiGenerated = true
-        ),
-        Playlist(
-            id = 3,
-            name = "Chill Vibes",
-            description = "Relaxing tunes for any time",
-            songCount = 24,
-            isAiGenerated = false
-        ),
-        Playlist(
-            id = 4,
-            name = "Workout Energy",
-            description = "High energy beats",
-            songCount = 18,
-            isAiGenerated = false
-        )
-    )
-
+    // All playlists now generated from Firebase songs in PlaylistScreen
+    private val playlists = mutableListOf<Playlist>()
     private val playlistSongs = mutableMapOf<Int, MutableList<Song>>()
 
     override fun getAllPlaylists(): List<Playlist> = playlists

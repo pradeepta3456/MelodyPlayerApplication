@@ -63,16 +63,8 @@ fun DashboardScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(FilterTab.SONGS) }
 
-    // Sample song data
-    val songs = remember {
-        listOf(
-            Song("Song Name", "Artist Name", "3:45", ""),
-            Song("Song Name", "Artist Name", "4:42", ""),
-            Song("Song Name", "Artist Name", "5:12", ""),
-            Song("Song Name", "Artist Name", "2:25", ""),
-            Song("Song Name", "Artist Name", "3:32", "")
-        )
-    }
+    // All songs now come from Firebase
+    val songs = remember { emptyList<Song>() }
 
     Box(
         modifier = Modifier
