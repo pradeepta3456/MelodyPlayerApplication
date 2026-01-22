@@ -13,6 +13,8 @@ import com.example.musicplayerapplication.model.RepeatMode
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.MusicRepoImpl
 import com.example.musicplayerapplication.repository.MusicRepository
+import com.example.musicplayerapplication.repository.ProfileRepository
+import com.example.musicplayerapplication.repository.ProfileRepositoryImpl
 import com.example.musicplayerapplication.repository.UserRepository
 import com.example.musicplayerapplication.repository.UserRepositoryImpl
 import com.google.firebase.auth.FirebaseAuth
@@ -23,12 +25,14 @@ import kotlin.collections.emptyList
 class MusicViewModel(
     private val context: Context,
     private val repository: MusicRepository = MusicRepoImpl(context),
-    private val userRepository: UserRepository = UserRepositoryImpl()
+    private val userRepository: UserRepository = UserRepositoryImpl(),
+    private val profileRepository: ProfileRepository = ProfileRepositoryImpl()
 ) : ViewModel() {
 
     private lateinit var audioPlayer: AudioPlayer
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private var songStartTime: Long = 0
 
     // Playback state - must be initialized before init block
     private val _playbackState = MutableStateFlow(PlaybackState())
@@ -162,8 +166,36 @@ class MusicViewModel(
                 auth.currentUser?.uid?.let { userId ->
                     repository.addToRecentlyPlayed(userId, song)
                 }
+
+                // Track song start time for statistics
+                songStartTime = System.currentTimeMillis()
             } catch (e: Exception) {
                 Log.e("MusicViewModel", "Error playing song", e)
+            }
+        }
+    }
+
+    /**
+     * Track song play completion for profile statistics
+     */
+    private fun trackSongCompletion(song: Song) {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                val durationPlayed = System.currentTimeMillis() - songStartTime
+
+                // Only track if song was played for at least 30 seconds
+                if (durationPlayed >= 30000) {
+                    profileRepository.trackSongPlay(
+                        userId = userId,
+                        songId = song.id,
+                        songTitle = song.title,
+                        artist = song.artist,
+                        durationPlayed = durationPlayed
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("MusicViewModel", "Error tracking song play", e)
             }
         }
     }
@@ -188,6 +220,11 @@ class MusicViewModel(
 
     // Skip to next song
     fun skipToNext() {
+        // Track current song before skipping
+        _playbackState.value.currentSong?.let { song ->
+            trackSongCompletion(song)
+        }
+
         val currentIndex = _playbackState.value.currentIndex
         val queue = _playbackState.value.queue
         if (queue.isNotEmpty() && currentIndex < queue.size - 1) {
@@ -197,6 +234,11 @@ class MusicViewModel(
 
     // Skip to previous song
     fun skipToPrevious() {
+        // Track current song before skipping
+        _playbackState.value.currentSong?.let { song ->
+            trackSongCompletion(song)
+        }
+
         audioPlayer.skipToPrevious()
     }
 

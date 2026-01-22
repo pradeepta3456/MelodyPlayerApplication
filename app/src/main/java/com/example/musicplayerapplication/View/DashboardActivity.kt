@@ -81,21 +81,6 @@ fun DashboardBody() {
 
     Scaffold(
         containerColor = Color(0xFF21133B),
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val intent = Intent(context, AddMusicActivity::class.java)
-                    context.startActivity(intent)
-                },
-                containerColor = Color(0xFF8B5CF6)
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Add Music",
-                    tint = Color.White
-                )
-            }
-        },
         bottomBar = {
             NavigationBar(
                 containerColor = Color(0xFF6B21A8)
@@ -199,7 +184,7 @@ fun DashboardBody() {
                                     selectedIndex = 0
                                 }
                                 4 -> {
-                                    ProfileScreen(profileViewModel = viewModel<ProfileViewModel>())
+                                    ProfileScreen()
                                 }
                             }
                         }
