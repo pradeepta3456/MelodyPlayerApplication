@@ -262,8 +262,20 @@ class MusicRepoImpl(private val context: Context) : MusicRepository {
         }
     }
 
-    override suspend fun deleteSong(songId: String): Result<Boolean> {
+    override suspend fun deleteSong(songId: String, userId: String): Result<Boolean> {
         return try {
+            // First verify the song exists and user has permission to delete
+            val songSnapshot = songsRef.child(songId).get().await()
+            val song = songSnapshot.getValue(Song::class.java)
+
+            if (song == null) {
+                return Result.failure(Exception("Song not found"))
+            }
+
+            if (song.uploadedBy != userId) {
+                return Result.failure(Exception("You don't have permission to delete this song"))
+            }
+
             // Note: Cloudinary files can be deleted via API if needed
             // For now, we only delete from database
             // To delete from Cloudinary, you'd need to implement the Admin API

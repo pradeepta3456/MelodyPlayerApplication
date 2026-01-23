@@ -1,8 +1,11 @@
 package com.example.musicplayerapplication.ViewModel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapplication.model.*
+import com.example.musicplayerapplication.repository.MusicRepository
+import com.example.musicplayerapplication.repository.MusicRepoImpl
 import com.example.musicplayerapplication.repository.ProfileRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +19,11 @@ import kotlinx.coroutines.launch
  */
 class ProfileViewModel(
     private val repository: ProfileRepository,
+    private val context: Context,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ViewModel() {
+
+    private val musicRepository: MusicRepository
 
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
@@ -43,7 +49,14 @@ class ProfileViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _uploadedSongs = MutableStateFlow<List<Song>>(emptyList())
+    val uploadedSongs: StateFlow<List<Song>> = _uploadedSongs.asStateFlow()
+
+    private val _isDeletingSong = MutableStateFlow(false)
+    val isDeletingSong: StateFlow<Boolean> = _isDeletingSong.asStateFlow()
+
     init {
+        musicRepository = MusicRepoImpl(context)
         loadProfileData()
     }
 
@@ -204,5 +217,55 @@ class ProfileViewModel(
      */
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    /**
+     * Load songs uploaded by the current user
+     */
+    fun loadUploadedSongs() {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                val result = musicRepository.getUserUploadedSongs(userId)
+                result.onSuccess { songs ->
+                    _uploadedSongs.value = songs
+                }.onFailure { error ->
+                    _errorMessage.value = "Failed to load uploaded songs: ${error.message}"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error loading uploaded songs: ${e.message}"
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Delete a song (only allowed for songs uploaded by current user)
+     */
+    fun deleteSong(songId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                _isDeletingSong.value = true
+                val userId = auth.currentUser?.uid ?: return@launch
+
+                val result = musicRepository.deleteSong(songId, userId)
+                result.onSuccess {
+                    // Remove from local list
+                    _uploadedSongs.value = _uploadedSongs.value.filter { it.id != songId }
+                    onSuccess()
+                }.onFailure { error ->
+                    val errorMsg = error.message ?: "Failed to delete song"
+                    _errorMessage.value = errorMsg
+                    onError(errorMsg)
+                }
+            } catch (e: Exception) {
+                val errorMsg = "Error deleting song: ${e.message}"
+                _errorMessage.value = errorMsg
+                onError(errorMsg)
+                e.printStackTrace()
+            } finally {
+                _isDeletingSong.value = false
+            }
+        }
     }
 }

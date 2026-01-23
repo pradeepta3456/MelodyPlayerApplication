@@ -33,7 +33,7 @@ interface MusicRepository {
     suspend fun removeFromFavorites(userId: String, songId: String): Result<Unit>
 
     // Delete
-    suspend fun deleteSong(songId: String): Result<Boolean>
+    suspend fun deleteSong(songId: String, userId: String): Result<Boolean>
 
     // Search
     suspend fun searchSongs(query: String): Result<List<Song>>
