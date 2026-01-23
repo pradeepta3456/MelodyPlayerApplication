@@ -28,6 +28,9 @@ import com.example.musicplayerapplication.ViewModel.HomeViewModel
 import com.example.musicplayerapplication.ViewModel.HomeViewModelFactory
 import com.example.musicplayerapplication.ViewModel.MusicViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
+import com.example.musicplayerapplication.ViewModel.SavedViewModel
+import com.example.musicplayerapplication.ViewModel.SavedViewModelFactory
+import com.example.musicplayerapplication.View.components.StandardSongCard
 
 @Composable
 fun HomeScreen(
@@ -37,10 +40,12 @@ fun HomeScreen(
     onSearchClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val savedViewModel: SavedViewModel = viewModel(factory = SavedViewModelFactory())
     var selectedSongId by remember { mutableStateOf<String?>(null) }
 
     val recentSongs by homeViewModel.recentSongs.collectAsState()
     val trendingAlbums by homeViewModel.trendingAlbums.collectAsState()
+    val savedSongs by savedViewModel.savedSongs.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -149,12 +154,20 @@ fun HomeScreen(
 
         // Recently Played Songs
         items(recentSongs) { song ->
-            RecentSongItem(
+            val isFavorite = savedSongs.any { it.id == song.id }
+            StandardSongCard(
                 song = song,
-                isSelected = song.id == selectedSongId,
-                onClick = {
+                isFavorite = isFavorite,
+                onSongClick = {
                     selectedSongId = song.id
                     musicViewModel.playSong(song)
+                },
+                onPlayClick = {
+                    selectedSongId = song.id
+                    musicViewModel.playSong(song)
+                },
+                onSaveClick = {
+                    savedViewModel.toggleFavorite(song)
                 }
             )
         }

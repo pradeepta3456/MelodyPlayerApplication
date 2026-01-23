@@ -30,6 +30,8 @@ import com.example.musicplayerapplication.ViewModel.MusicViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
 import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModel
 import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModelFactory
+import com.example.musicplayerapplication.ViewModel.SavedViewModel
+import com.example.musicplayerapplication.ViewModel.SavedViewModelFactory
 
 // Data classes (local to this file since they're specific to playlist feature)
 data class PlaylistSong(
@@ -63,10 +65,36 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
     // User-created playlists
     var userPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
 
+    // Saved ViewModel for favorites playlist
+    val savedViewModel: SavedViewModel = viewModel(factory = SavedViewModelFactory())
+    val savedSongs by savedViewModel.savedSongs.collectAsState()
+
     // Convert Firebase songs to playlists
-    val playlists by remember {
+    val playlists by remember(allSongs, savedSongs) {
         derivedStateOf {
             val firebasePlaylists = mutableListOf<Playlist>()
+
+            // Create Favorites playlist FIRST (appears at top)
+            if (savedSongs.isNotEmpty()) {
+                firebasePlaylists.add(
+                    Playlist(
+                        id = 0, // Special ID for favorites
+                        name = "❤️ My Favorites",
+                        description = "${savedSongs.size} favorite ${if (savedSongs.size == 1) "song" else "songs"}",
+                        songCount = savedSongs.size,
+                        songs = savedSongs.map { song ->
+                            PlaylistSong(
+                                id = song.id.hashCode(),
+                                title = song.title,
+                                artist = song.artist,
+                                duration = song.durationFormatted,
+                                songId = song.id
+                            )
+                        },
+                        isAiGenerated = false
+                    )
+                )
+            }
 
             // Create playlists by genre
             allSongs.groupBy { it.genre }.forEach { (genre, songs) ->
