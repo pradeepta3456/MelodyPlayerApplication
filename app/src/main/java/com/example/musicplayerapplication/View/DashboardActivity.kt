@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.musicplayerapplication.Utils.CloudinaryHelper
+import kotlinx.coroutines.launch
 import com.example.musicplayerapplication.ViewModel.HomeViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModel
 import com.example.musicplayerapplication.ViewModel.MusicViewModelFactory
@@ -58,6 +59,7 @@ class DashboardActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardBody() {
     val context = LocalContext.current
@@ -65,10 +67,15 @@ fun DashboardBody() {
 
     var selectedIndex by remember { mutableStateOf(0) }
     var showNotificationScreen by remember { mutableStateOf(false) }
-    var showNowPlaying by remember { mutableStateOf(false) }
 
     val playbackState by musicViewModel.playbackState.collectAsState()
     val currentSong = playbackState.currentSong
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
+    val scope = rememberCoroutineScope()
+    val showNowPlaying = currentSong != null
 
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
     val listItem = listOf(
@@ -127,72 +134,41 @@ fun DashboardBody() {
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    if (showNowPlaying && currentSong != null) {
-                        NowPlayingScreen(
-                            song = currentSong,
-                            isPlaying = playbackState.isPlaying,
-                            currentPosition = playbackState.currentPosition,
-                            duration = currentSong.duration,
-                            onPlayPauseClick = {
-                                if (playbackState.isPlaying) {
-                                    musicViewModel.pause()
-                                } else {
-                                    musicViewModel.resume()
-                                }
-                            },
-                            onSeekTo = { position ->
-                                musicViewModel.seekTo(position)
-                            },
-                            onBackClick = { showNowPlaying = false },
-                            onSkipNext = { musicViewModel.skipToNext() },
-                            onSkipPrevious = { musicViewModel.skipToPrevious() },
-                            onToggleFavorite = {
-                                currentSong?.let { musicViewModel.toggleFavorite(it) }
-                            },
-                            onToggleShuffle = { musicViewModel.toggleShuffle() },
-                            onToggleRepeat = { musicViewModel.toggleRepeatMode() },
-                            onAudioEffectsClick = {
-                                val intent = Intent(context, AudioEffectsScreen::class.java)
-                                context.startActivity(intent)
-                            }
+                    if (showNotificationScreen) {
+                        NotificationScreen(
+                            onBackClick = { showNotificationScreen = false }
                         )
                     } else {
-                        if (showNotificationScreen) {
-                            NotificationScreen(
-                                onBackClick = { showNotificationScreen = false }
-                            )
-                        } else {
-                            when (selectedIndex) {
-                                0 -> {
-                                    HomeScreen(
-                                        musicViewModel = musicViewModel,
-                                        onNotificationClick = { showNotificationScreen = true },
-                                        onSearchClick = { }
-                                    )
-                                }
-                                1 -> {
-                                    LibraryScreen(musicViewModel = musicViewModel)
-                                }
-                                2 -> {
-                                    PlaylistScreen(musicViewModel = musicViewModel)
-                                }
-                                3 -> {
-                                    // Saved Screen - Navigate to SavedScreen Activity
-                                    val intent = Intent(context, SavedScreen::class.java)
-                                    context.startActivity(intent)
-                                    // Reset selection to previous
-                                    selectedIndex = 0
-                                }
-                                4 -> {
-                                    ProfileScreen()
-                                }
+                        when (selectedIndex) {
+                            0 -> {
+                                HomeScreen(
+                                    musicViewModel = musicViewModel,
+                                    onNotificationClick = { showNotificationScreen = true },
+                                    onSearchClick = { }
+                                )
+                            }
+                            1 -> {
+                                LibraryScreen(musicViewModel = musicViewModel)
+                            }
+                            2 -> {
+                                PlaylistScreen(musicViewModel = musicViewModel)
+                            }
+                            3 -> {
+                                // Saved Screen - Navigate to SavedScreen Activity
+                                val intent = Intent(context, SavedScreen::class.java)
+                                context.startActivity(intent)
+                                // Reset selection to previous
+                                selectedIndex = 0
+                            }
+                            4 -> {
+                                ProfileScreen()
                             }
                         }
                     }
                 }
 
                 // Mini Player
-                if (currentSong != null && !showNowPlaying) {
+                if (currentSong != null) {
                     MiniPlayer(
                         song = currentSong,
                         isPlaying = playbackState.isPlaying,
@@ -203,7 +179,52 @@ fun DashboardBody() {
                                 musicViewModel.resume()
                             }
                         },
-                        onClick = { showNowPlaying = true }
+                        onClick = { /* Bottom sheet will show automatically */ }
+                    )
+                }
+            }
+
+            // Modal Bottom Sheet for Now Playing
+            if (showNowPlaying && currentSong != null) {
+                ModalBottomSheet(
+                    onDismissRequest = { /* Keep playing, just minimize */ },
+                    sheetState = sheetState,
+                    containerColor = Color.Transparent,
+                    dragHandle = null
+                ) {
+                    NowPlayingScreen(
+                        song = currentSong,
+                        isPlaying = playbackState.isPlaying,
+                        currentPosition = playbackState.currentPosition,
+                        duration = currentSong.duration,
+                        shuffleEnabled = playbackState.isShuffleEnabled,
+                        repeatMode = playbackState.repeatMode,
+                        onPlayPauseClick = {
+                            if (playbackState.isPlaying) {
+                                musicViewModel.pause()
+                            } else {
+                                musicViewModel.resume()
+                            }
+                        },
+                        onSeekTo = { position ->
+                            musicViewModel.seekTo(position)
+                        },
+                        onBackClick = {
+                            scope.launch {
+                                sheetState.hide()
+                            }
+                        },
+                        onSkipNext = { musicViewModel.skipToNext() },
+                        onSkipPrevious = { musicViewModel.skipToPrevious() },
+                        onToggleFavorite = {
+                            currentSong.let { musicViewModel.toggleFavorite(it) }
+                        },
+                        onToggleShuffle = { musicViewModel.toggleShuffle() },
+                        onToggleRepeat = { musicViewModel.toggleRepeatMode() },
+                        onAudioEffectsClick = {
+                            val intent = Intent(context, AudioEffectsScreen::class.java)
+                            context.startActivity(intent)
+                        }
                     )
                 }
             }

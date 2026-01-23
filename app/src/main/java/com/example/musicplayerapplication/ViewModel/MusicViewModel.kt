@@ -66,6 +66,18 @@ class MusicViewModel(
                 }
             }
         }
+
+        viewModelScope.launch {
+            audioPlayer.shuffleEnabled.collect { shuffle ->
+                _playbackState.update { it.copy(isShuffleEnabled = shuffle) }
+            }
+        }
+
+        viewModelScope.launch {
+            audioPlayer.repeatMode.collect { mode ->
+                _playbackState.update { it.copy(repeatMode = mode) }
+            }
+        }
     }
 
     // Upload state
