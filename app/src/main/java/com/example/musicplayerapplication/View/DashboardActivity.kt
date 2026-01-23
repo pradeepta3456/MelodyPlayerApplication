@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,10 +73,18 @@ fun DashboardBody() {
     val currentSong = playbackState.currentSong
 
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
+        skipPartiallyExpanded = true
     )
     val scope = rememberCoroutineScope()
-    val showNowPlaying = currentSong != null
+    var showNowPlaying by remember { mutableStateOf(false) }
+
+    // Auto-show bottom sheet when song starts playing
+    LaunchedEffect(currentSong) {
+        if (currentSong != null && !showNowPlaying) {
+            showNowPlaying = true
+            sheetState.expand()
+        }
+    }
 
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
     val listItem = listOf(
@@ -168,7 +177,7 @@ fun DashboardBody() {
                 }
 
                 // Mini Player
-                if (currentSong != null) {
+                if (currentSong != null && !showNowPlaying) {
                     MiniPlayer(
                         song = currentSong,
                         isPlaying = playbackState.isPlaying,
@@ -179,7 +188,12 @@ fun DashboardBody() {
                                 musicViewModel.resume()
                             }
                         },
-                        onClick = { /* Bottom sheet will show automatically */ }
+                        onClick = {
+                            showNowPlaying = true
+                            scope.launch {
+                                sheetState.expand()
+                            }
+                        }
                     )
                 }
             }
@@ -187,7 +201,9 @@ fun DashboardBody() {
             // Modal Bottom Sheet for Now Playing
             if (showNowPlaying && currentSong != null) {
                 ModalBottomSheet(
-                    onDismissRequest = { /* Keep playing, just minimize */ },
+                    onDismissRequest = {
+                        showNowPlaying = false
+                    },
                     sheetState = sheetState,
                     containerColor = Color.Transparent,
                     dragHandle = null
@@ -212,6 +228,7 @@ fun DashboardBody() {
                         onBackClick = {
                             scope.launch {
                                 sheetState.hide()
+                                showNowPlaying = false
                             }
                         },
                         onSkipNext = { musicViewModel.skipToNext() },

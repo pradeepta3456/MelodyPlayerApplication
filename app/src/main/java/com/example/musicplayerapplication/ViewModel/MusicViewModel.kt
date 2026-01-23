@@ -46,6 +46,13 @@ class MusicViewModel(
         audioPlayer = AudioPlayer.getInstance(context)
         loadAllSongs()
 
+        // Set completion listener to track song plays
+        audioPlayer.setOnCompletionListener {
+            _playbackState.value.currentSong?.let { song ->
+                trackSongPlay(song)
+            }
+        }
+
         // Observe AudioPlayer state and update playback state
         viewModelScope.launch {
             audioPlayer.isPlaying.collect { playing ->
@@ -130,6 +137,13 @@ class MusicViewModel(
     fun playSong(song: Song) {
         viewModelScope.launch {
             try {
+                // Track the previous song if there was one playing
+                _playbackState.value.currentSong?.let { previousSong ->
+                    if (previousSong.id != song.id) {
+                        trackSongPlay(previousSong)
+                    }
+                }
+
                 // Find the song index in the current playlist
                 val index = _currentPlaylist.value.indexOfFirst { it.id == song.id }
                 if (index == -1) {
@@ -188,9 +202,10 @@ class MusicViewModel(
     }
 
     /**
-     * Track song play completion for profile statistics
+     * Track song play for profile statistics
+     * Called when: song completes, user skips, or user switches songs
      */
-    private fun trackSongCompletion(song: Song) {
+    private fun trackSongPlay(song: Song) {
         viewModelScope.launch {
             try {
                 val userId = auth.currentUser?.uid ?: return@launch
@@ -198,6 +213,7 @@ class MusicViewModel(
 
                 // Only track if song was played for at least 30 seconds
                 if (durationPlayed >= 30000) {
+                    Log.d("MusicViewModel", "Tracking song play: ${song.title}, duration: ${durationPlayed}ms")
                     profileRepository.trackSongPlay(
                         userId = userId,
                         songId = song.id,
@@ -234,7 +250,7 @@ class MusicViewModel(
     fun skipToNext() {
         // Track current song before skipping
         _playbackState.value.currentSong?.let { song ->
-            trackSongCompletion(song)
+            trackSongPlay(song)
         }
 
         val currentIndex = _playbackState.value.currentIndex
@@ -248,7 +264,7 @@ class MusicViewModel(
     fun skipToPrevious() {
         // Track current song before skipping
         _playbackState.value.currentSong?.let { song ->
-            trackSongCompletion(song)
+            trackSongPlay(song)
         }
 
         audioPlayer.skipToPrevious()
