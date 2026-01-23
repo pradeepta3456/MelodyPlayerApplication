@@ -82,26 +82,25 @@ fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = Profi
             }
 
             // MY SONGS SECTION (for artists who have uploaded songs)
-            if (uploadedSongs.isNotEmpty()) {
-                item {
-                    MySongsSection(
-                        uploadedSongs = uploadedSongs,
-                        isDeletingSong = isDeletingSong,
-                        onDeleteSong = { song ->
-                            profileViewModel.deleteSong(
-                                songId = song.id,
-                                onSuccess = {
-                                    // Optionally show a snackbar or toast
-                                },
-                                onError = { error ->
-                                    // Handle error - could show a snackbar
-                                }
-                            )
-                        },
-                        cardColor = cardColor,
-                        highlightColor = highlightColor
-                    )
-                }
+            // Always show the section, even if empty, to make it visible
+            item {
+                MySongsSection(
+                    uploadedSongs = uploadedSongs,
+                    isDeletingSong = isDeletingSong,
+                    onDeleteSong = { song ->
+                        profileViewModel.deleteSong(
+                            songId = song.id,
+                            onSuccess = {
+                                // Optionally show a snackbar or toast
+                            },
+                            onError = { error ->
+                                // Handle error - could show a snackbar
+                            }
+                        )
+                    },
+                    cardColor = cardColor,
+                    highlightColor = highlightColor
+                )
             }
 
             // TOP SONGS
@@ -691,15 +690,52 @@ fun MySongsSection(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Songs List
-        uploadedSongs.forEach { song ->
-            UploadedSongCard(
-                song = song,
-                onDeleteClick = { onDeleteSong(song) },
-                isDeleting = isDeletingSong,
-                cardColor = cardColor,
-                highlightColor = highlightColor
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+        if (uploadedSongs.isEmpty()) {
+            // Show empty state message
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "No songs",
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No uploaded songs yet",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Upload your first song to see it here",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        } else {
+            uploadedSongs.forEach { song ->
+                UploadedSongCard(
+                    song = song,
+                    onDeleteClick = { onDeleteSong(song) },
+                    isDeleting = isDeletingSong,
+                    cardColor = cardColor,
+                    highlightColor = highlightColor
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
     }
 }

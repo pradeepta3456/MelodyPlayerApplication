@@ -226,13 +226,17 @@ class ProfileViewModel(
         viewModelScope.launch {
             try {
                 val userId = auth.currentUser?.uid ?: return@launch
+                android.util.Log.d("ProfileViewModel", "Loading uploaded songs for userId: $userId")
                 val result = musicRepository.getUserUploadedSongs(userId)
                 result.onSuccess { songs ->
+                    android.util.Log.d("ProfileViewModel", "Loaded ${songs.size} uploaded songs")
                     _uploadedSongs.value = songs
                 }.onFailure { error ->
+                    android.util.Log.e("ProfileViewModel", "Failed to load uploaded songs: ${error.message}")
                     _errorMessage.value = "Failed to load uploaded songs: ${error.message}"
                 }
             } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Error loading uploaded songs", e)
                 _errorMessage.value = "Error loading uploaded songs: ${e.message}"
                 e.printStackTrace()
             }

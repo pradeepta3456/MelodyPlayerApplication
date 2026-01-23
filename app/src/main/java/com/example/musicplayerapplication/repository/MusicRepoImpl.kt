@@ -139,10 +139,16 @@ class MusicRepoImpl(private val context: Context) : MusicRepository {
 
     override suspend fun getUserUploadedSongs(userId: String): Result<List<Song>> {
         return try {
+            android.util.Log.d("MusicRepoImpl", "Querying songs with uploadedBy: $userId")
             val snapshot = songsRef.orderByChild("uploadedBy").equalTo(userId).get().await()
             val songs = snapshot.children.mapNotNull { it.getValue(Song::class.java) }
+            android.util.Log.d("MusicRepoImpl", "Found ${songs.size} songs uploaded by user")
+            songs.forEach { song ->
+                android.util.Log.d("MusicRepoImpl", "Song: ${song.title}, uploadedBy: ${song.uploadedBy}")
+            }
             Result.success(songs)
         } catch (e: Exception) {
+            android.util.Log.e("MusicRepoImpl", "Error querying uploaded songs", e)
             Result.failure(e)
         }
     }
