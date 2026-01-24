@@ -268,6 +268,7 @@ class ProfileRepositoryImpl : ProfileRepository {
     ): Boolean {
         return try {
             val timestamp = System.currentTimeMillis()
+            android.util.Log.d("ProfileRepo", "Tracking song play: $songTitle by $artist, duration: ${durationPlayed/1000}s")
 
             // Add to listening history
             val historyEntry = ListeningHistoryEntry(
@@ -282,14 +283,19 @@ class ProfileRepositoryImpl : ProfileRepository {
                 .child(timestamp.toString())
                 .setValue(historyEntry)
                 .await()
+            android.util.Log.d("ProfileRepo", "Saved to listening history at /users/$userId/listeningHistory/$timestamp")
 
             // Update stats
             val stats = getUserStats(userId) ?: UserStats()
+            val oldListeningTime = stats.totalListeningTime
             val updatedStats = stats.copy(
                 totalListeningTime = stats.totalListeningTime + durationPlayed,
                 songsPlayed = stats.songsPlayed + 1,
                 lastActiveDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             )
+
+            android.util.Log.d("ProfileRepo", "Updated listening time: ${oldListeningTime/60000}m -> ${updatedStats.totalListeningTime/60000}m")
+            android.util.Log.d("ProfileRepo", "Total songs played: ${stats.songsPlayed} -> ${updatedStats.songsPlayed}")
 
             // Update day streak
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -304,8 +310,10 @@ class ProfileRepositoryImpl : ProfileRepository {
             }
 
             updateUserStats(userId, updatedStats.copy(dayStreak = newDayStreak))
+            android.util.Log.d("ProfileRepo", "Successfully tracked song play")
             true
         } catch (e: Exception) {
+            android.util.Log.e("ProfileRepo", "Error tracking song play", e)
             e.printStackTrace()
             false
         }

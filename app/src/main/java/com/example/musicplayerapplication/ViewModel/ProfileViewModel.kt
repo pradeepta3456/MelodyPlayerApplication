@@ -199,9 +199,18 @@ class ProfileViewModel(
      * Format listening time for display
      */
     fun getFormattedListeningTime(): String {
-        val stats = _userStats.value ?: return "0h"
-        val hours = stats.totalListeningTime / 3600000
-        return if (hours > 0) "${hours}h" else "0h"
+        val stats = _userStats.value ?: return "0m"
+        val totalMinutes = stats.totalListeningTime / 60000
+
+        return when {
+            totalMinutes >= 60 -> {
+                val hours = totalMinutes / 60
+                val minutes = totalMinutes % 60
+                if (minutes > 0) "${hours}h ${minutes}m" else "${hours}h"
+            }
+            totalMinutes > 0 -> "${totalMinutes}m"
+            else -> "0m"
+        }
     }
 
     /**

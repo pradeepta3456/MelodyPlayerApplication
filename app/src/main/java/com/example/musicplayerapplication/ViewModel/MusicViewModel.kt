@@ -33,6 +33,7 @@ class MusicViewModel(
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private var songStartTime: Long = 0
+    private var songStartPosition: Long = 0 // Track starting position for accurate playback time
 
     // Playback state - must be initialized before init block
     private val _playbackState = MutableStateFlow(PlaybackState())
@@ -193,8 +194,9 @@ class MusicViewModel(
                     repository.addToRecentlyPlayed(userId, song)
                 }
 
-                // Track song start time for statistics
+                // Track song start time and position for statistics
                 songStartTime = System.currentTimeMillis()
+                songStartPosition = 0 // Starting from beginning
             } catch (e: Exception) {
                 Log.e("MusicViewModel", "Error playing song", e)
             }
@@ -209,18 +211,24 @@ class MusicViewModel(
         viewModelScope.launch {
             try {
                 val userId = auth.currentUser?.uid ?: return@launch
-                val durationPlayed = System.currentTimeMillis() - songStartTime
+
+                // Calculate actual playback duration based on current position
+                val currentPosition = _playbackState.value.currentPosition
+                val durationPlayed = currentPosition - songStartPosition
 
                 // Only track if song was played for at least 30 seconds
                 if (durationPlayed >= 30000) {
-                    Log.d("MusicViewModel", "Tracking song play: ${song.title}, duration: ${durationPlayed}ms")
-                    profileRepository.trackSongPlay(
+                    Log.d("MusicViewModel", "Tracking song play: ${song.title}, duration: ${durationPlayed}ms (${durationPlayed/1000}s)")
+                    val success = profileRepository.trackSongPlay(
                         userId = userId,
                         songId = song.id,
                         songTitle = song.title,
                         artist = song.artist,
                         durationPlayed = durationPlayed
                     )
+                    Log.d("MusicViewModel", "Track song play result: $success")
+                } else {
+                    Log.d("MusicViewModel", "Song not tracked (played for ${durationPlayed/1000}s, need 30s minimum)")
                 }
             } catch (e: Exception) {
                 Log.e("MusicViewModel", "Error tracking song play", e)
