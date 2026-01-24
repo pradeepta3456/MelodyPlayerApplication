@@ -249,49 +249,8 @@ fun DashboardBody() {
     }
 }
 
-@Composable
-fun NotificationScreen(onBackClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF21133B))
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                "Notifications",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                "No notifications yet",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 16.sp
-            )
-        }
-    }
-}
+// NotificationScreen is now imported from NotificationScreen.kt
+// Removed duplicate implementation
 
 @Composable
 fun MiniPlayer(

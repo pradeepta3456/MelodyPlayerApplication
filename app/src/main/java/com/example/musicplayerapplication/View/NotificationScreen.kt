@@ -36,6 +36,7 @@ import java.util.*
  */
 @Composable
 fun NotificationScreen(
+    onBackClick: (() -> Unit)? = null,
     notificationViewModel: NotificationViewModel = viewModel(
         factory = NotificationViewModelFactory(LocalContext.current)
     )
@@ -62,6 +63,7 @@ fun NotificationScreen(
             unreadCount = unreadCount,
             onMarkAllRead = { notificationViewModel.markAllAsRead() },
             onClearAll = { notificationViewModel.clearAllNotifications() },
+            onBackClick = onBackClick,
             highlightColor = highlightColor
         )
 
@@ -108,6 +110,7 @@ fun NotificationHeader(
     unreadCount: Int,
     onMarkAllRead: () -> Unit,
     onClearAll: () -> Unit,
+    onBackClick: (() -> Unit)?,
     highlightColor: Color
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -122,8 +125,19 @@ fun NotificationHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Title with badge
+            // Title with badge (and back button if provided)
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Back button (if provided)
+                if (onBackClick != null) {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
