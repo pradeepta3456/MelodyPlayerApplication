@@ -832,45 +832,59 @@ fun LibraryGenresList(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(filteredGenres.size) { index ->
             val genre = filteredGenres[index]
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onGenreClick(genre.first) },
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF3A4A7A)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LibraryMusic,
-                        contentDescription = genre.first,
-                        tint = Color(0xFF8B5CF6),
-                        modifier = Modifier.size(40.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = genre.first,
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "${genre.second} Songs",
-                            color = Color(0xFFB0B0B0),
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            }
+            LibraryGenreCard(
+                genreName = genre.first,
+                songCount = genre.second,
+                onClick = { onGenreClick(genre.first) }
+            )
         }
+    }
+}
+
+@Composable
+fun LibraryGenreCard(
+    genreName: String,
+    songCount: Int,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFF4A5A8A)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.LibraryMusic,
+                contentDescription = genreName,
+                tint = Color.White,
+                modifier = Modifier.size(64.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = genreName,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+
+        Text(
+            text = "$songCount Songs",
+            color = Color(0xFFB0B0B0),
+            fontSize = 13.sp
+        )
     }
 }

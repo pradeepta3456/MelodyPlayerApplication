@@ -62,6 +62,8 @@ class ProfileRepositoryImpl : ProfileRepository {
 
     override suspend fun getTopSongs(userId: String, limit: Int): List<TopSong> {
         return try {
+            android.util.Log.d("ProfileRepo", "=== Getting Top Songs for user: $userId ===")
+
             // Get listening history
             val historySnapshot = usersRef.child(userId).child("listeningHistory")
                 .orderByChild("timestamp")
@@ -69,13 +71,28 @@ class ProfileRepositoryImpl : ProfileRepository {
                 .get()
                 .await()
 
+            val historyCount = historySnapshot.childrenCount
+            android.util.Log.d("ProfileRepo", "Found $historyCount listening history entries")
+
+            if (historyCount == 0L) {
+                android.util.Log.w("ProfileRepo", "No listening history found at /users/$userId/listeningHistory")
+                return emptyList()
+            }
+
             // Count plays per song
             val songPlayCounts = mutableMapOf<String, MutableMap<String, Any>>()
 
             historySnapshot.children.forEach { entry ->
-                val songId = entry.child("songId").value as? String ?: return@forEach
+                val songId = entry.child("songId").value as? String
                 val title = entry.child("songTitle").value as? String ?: ""
                 val artist = entry.child("artist").value as? String ?: ""
+
+                android.util.Log.d("ProfileRepo", "History entry: songId=$songId, title=$title, artist=$artist")
+
+                if (songId == null || songId.isEmpty()) {
+                    android.util.Log.w("ProfileRepo", "Skipping entry with null/empty songId")
+                    return@forEach
+                }
 
                 if (songPlayCounts.containsKey(songId)) {
                     val songData = songPlayCounts[songId]!!
@@ -89,11 +106,13 @@ class ProfileRepositoryImpl : ProfileRepository {
                 }
             }
 
+            android.util.Log.d("ProfileRepo", "Processed ${songPlayCounts.size} unique songs")
+
             // Get song details from songs database
             val songsSnapshot = database.getReference("songs").get().await()
 
             // Convert to TopSong list and sort by play count
-            songPlayCounts.entries
+            val topSongs = songPlayCounts.entries
                 .sortedByDescending { (it.value["count"] as Int) }
                 .take(limit)
                 .mapNotNull { (songId, data) ->
@@ -107,7 +126,15 @@ class ProfileRepositoryImpl : ProfileRepository {
                         playCount = data["count"] as? Int ?: 0
                     )
                 }
+
+            android.util.Log.d("ProfileRepo", "Returning ${topSongs.size} top songs")
+            topSongs.forEach { song ->
+                android.util.Log.d("ProfileRepo", "  - ${song.title} by ${song.artist}: ${song.playCount} plays")
+            }
+
+            topSongs
         } catch (e: Exception) {
+            android.util.Log.e("ProfileRepo", "Error getting top songs", e)
             e.printStackTrace()
             emptyList()
         }
@@ -268,6 +295,7 @@ class ProfileRepositoryImpl : ProfileRepository {
     ): Boolean {
         return try {
             val timestamp = System.currentTimeMillis()
+            android.util.Log.d("ProfileRepo", "Tracking song play: $songTitle by $artist, duration: ${durationPlayed/1000}s")
 
             // Add to listening history
             val historyEntry = ListeningHistoryEntry(
@@ -282,14 +310,19 @@ class ProfileRepositoryImpl : ProfileRepository {
                 .child(timestamp.toString())
                 .setValue(historyEntry)
                 .await()
+            android.util.Log.d("ProfileRepo", "Saved to listening history at /users/$userId/listeningHistory/$timestamp")
 
             // Update stats
             val stats = getUserStats(userId) ?: UserStats()
+            val oldListeningTime = stats.totalListeningTime
             val updatedStats = stats.copy(
                 totalListeningTime = stats.totalListeningTime + durationPlayed,
                 songsPlayed = stats.songsPlayed + 1,
                 lastActiveDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             )
+
+            android.util.Log.d("ProfileRepo", "Updated listening time: ${oldListeningTime/60000}m -> ${updatedStats.totalListeningTime/60000}m")
+            android.util.Log.d("ProfileRepo", "Total songs played: ${stats.songsPlayed} -> ${updatedStats.songsPlayed}")
 
             // Update day streak
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -304,8 +337,10 @@ class ProfileRepositoryImpl : ProfileRepository {
             }
 
             updateUserStats(userId, updatedStats.copy(dayStreak = newDayStreak))
+            android.util.Log.d("ProfileRepo", "Successfully tracked song play")
             true
         } catch (e: Exception) {
+            android.util.Log.e("ProfileRepo", "Error tracking song play", e)
             e.printStackTrace()
             false
         }

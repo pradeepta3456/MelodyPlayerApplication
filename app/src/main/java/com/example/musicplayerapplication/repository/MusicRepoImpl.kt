@@ -139,10 +139,27 @@ class MusicRepoImpl(private val context: Context) : MusicRepository {
 
     override suspend fun getUserUploadedSongs(userId: String): Result<List<Song>> {
         return try {
-            val snapshot = songsRef.orderByChild("uploadedBy").equalTo(userId).get().await()
-            val songs = snapshot.children.mapNotNull { it.getValue(Song::class.java) }
+            android.util.Log.d("MusicRepoImpl", "Querying songs with uploadedBy: $userId")
+
+            // Try indexed query first, if it fails, fall back to filtering all songs
+            val songs = try {
+                val snapshot = songsRef.orderByChild("uploadedBy").equalTo(userId).get().await()
+                snapshot.children.mapNotNull { it.getValue(Song::class.java) }
+            } catch (indexError: Exception) {
+                android.util.Log.w("MusicRepoImpl", "Index query failed, falling back to filter all songs: ${indexError.message}")
+                // Fallback: Get all songs and filter locally
+                val allSnapshot = songsRef.get().await()
+                allSnapshot.children.mapNotNull { it.getValue(Song::class.java) }
+                    .filter { it.uploadedBy == userId }
+            }
+
+            android.util.Log.d("MusicRepoImpl", "Found ${songs.size} songs uploaded by user")
+            songs.forEach { song ->
+                android.util.Log.d("MusicRepoImpl", "Song: ${song.title}, uploadedBy: '${song.uploadedBy}'")
+            }
             Result.success(songs)
         } catch (e: Exception) {
+            android.util.Log.e("MusicRepoImpl", "Error querying uploaded songs", e)
             Result.failure(e)
         }
     }
@@ -262,8 +279,20 @@ class MusicRepoImpl(private val context: Context) : MusicRepository {
         }
     }
 
-    override suspend fun deleteSong(songId: String): Result<Boolean> {
+    override suspend fun deleteSong(songId: String, userId: String): Result<Boolean> {
         return try {
+            // First verify the song exists and user has permission to delete
+            val songSnapshot = songsRef.child(songId).get().await()
+            val song = songSnapshot.getValue(Song::class.java)
+
+            if (song == null) {
+                return Result.failure(Exception("Song not found"))
+            }
+
+            if (song.uploadedBy != userId) {
+                return Result.failure(Exception("You don't have permission to delete this song"))
+            }
+
             // Note: Cloudinary files can be deleted via API if needed
             // For now, we only delete from database
             // To delete from Cloudinary, you'd need to implement the Admin API

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -24,7 +26,7 @@ import com.example.musicplayerapplication.ViewModel.ProfileViewModelFactory
 import com.example.musicplayerapplication.ViewModel.ProfileViewModel
 
 @Composable
-fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory())) {
+fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(androidx.compose.ui.platform.LocalContext.current))) {
     val userProfile by profileViewModel.userProfile.collectAsState()
     val userStats by profileViewModel.userStats.collectAsState()
     val topSongs by profileViewModel.topSongs.collectAsState()
@@ -32,15 +34,29 @@ fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = Profi
     val achievements by profileViewModel.achievements.collectAsState()
     val weeklyPattern by profileViewModel.weeklyPattern.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
+    val uploadedSongs by profileViewModel.uploadedSongs.collectAsState()
+    val isDeletingSong by profileViewModel.isDeletingSong.collectAsState()
 
-    val cardColor = Color(0xFF2D1B4E)
-    val highlightColor = Color(0xFFE91E63)
+    LaunchedEffect(Unit) {
+        profileViewModel.loadUploadedSongs()
+    }
+
+    val cardColor = Color(0xFF1E293B)
+    val highlightColor = Color(0xFF818CF8)
 
     if (isLoading) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF21133B)),
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0A0E27),
+                            Color(0xFF1A1F3A),
+                            Color(0xFF0F172A)
+                        )
+                    )
+                ),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = highlightColor)
@@ -49,9 +65,18 @@ fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = Profi
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF21133B))
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(top = 32.dp, bottom = 16.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0A0E27),
+                            Color(0xFF1A1F3A),
+                            Color(0xFF0F172A)
+                        )
+                    )
+                )
+                .padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(top = 32.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Profile Header
             item {
@@ -73,6 +98,28 @@ fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = Profi
             // ARTIST MODE SECTION
             item {
                 ArtistModeCard(cardColor = cardColor, highlightColor = highlightColor)
+            }
+
+            // MY SONGS SECTION (for artists who have uploaded songs)
+            // Always show the section, even if empty, to make it visible
+            item {
+                MySongsSection(
+                    uploadedSongs = uploadedSongs,
+                    isDeletingSong = isDeletingSong,
+                    onDeleteSong = { song ->
+                        profileViewModel.deleteSong(
+                            songId = song.id,
+                            onSuccess = {
+                                // Optionally show a snackbar or toast
+                            },
+                            onError = { error ->
+                                // Handle error - could show a snackbar
+                            }
+                        )
+                    },
+                    cardColor = cardColor,
+                    highlightColor = highlightColor
+                )
             }
 
             // TOP SONGS
@@ -616,4 +663,256 @@ fun EmptyStateCard(title: String, message: String) {
             )
         }
     }
+}
+
+@Composable
+fun MySongsSection(
+    uploadedSongs: List<com.example.musicplayerapplication.model.Song>,
+    isDeletingSong: Boolean,
+    onDeleteSong: (com.example.musicplayerapplication.model.Song) -> Unit,
+    cardColor: Color,
+    highlightColor: Color
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
+    ) {
+        // Section Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = "My Songs",
+                    tint = highlightColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "MY SONGS",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Text(
+                text = "${uploadedSongs.size} ${if (uploadedSongs.size == 1) "song" else "songs"}",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 14.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Songs List
+        if (uploadedSongs.isEmpty()) {
+            // Show empty state message
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = "No songs",
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No uploaded songs yet",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Upload your first song to see it here",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        } else {
+            uploadedSongs.forEach { song ->
+                UploadedSongCard(
+                    song = song,
+                    onDeleteClick = { onDeleteSong(song) },
+                    isDeleting = isDeletingSong,
+                    cardColor = cardColor,
+                    highlightColor = highlightColor
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun UploadedSongCard(
+    song: com.example.musicplayerapplication.model.Song,
+    onDeleteClick: () -> Unit,
+    isDeleting: Boolean,
+    cardColor: Color,
+    highlightColor: Color
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Album Cover
+            Box(
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF3D2766)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (song.coverUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = song.coverUrl,
+                        contentDescription = song.title,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = null,
+                        tint = highlightColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Song Info
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = song.title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+                Text(
+                    text = song.artist,
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp,
+                    maxLines = 1
+                )
+                Text(
+                    text = song.genre.ifEmpty { "Unknown Genre" },
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontSize = 12.sp,
+                    maxLines = 1
+                )
+            }
+
+            // Delete Button
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                enabled = !isDeleting
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete Song",
+                    tint = if (isDeleting) Color.Gray else Color(0xFFEF4444)
+                )
+            }
+        }
+    }
+
+    // Delete Confirmation Dialog
+    if (showDeleteDialog) {
+        DeleteSongConfirmationDialog(
+            songTitle = song.title,
+            onConfirm = {
+                showDeleteDialog = false
+                onDeleteClick()
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
+    }
+}
+
+@Composable
+fun DeleteSongConfirmationDialog(
+    songTitle: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Warning",
+                tint = Color(0xFFEF4444),
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Delete Song?",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Are you sure you want to delete \"$songTitle\"?",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "This action cannot be undone. The song will be removed from all playlists.",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Text("Cancel")
+            }
+        },
+        containerColor = Color(0xFF2D1B4E)
+    )
 }
