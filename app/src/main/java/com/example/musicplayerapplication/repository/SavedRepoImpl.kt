@@ -14,7 +14,7 @@ import kotlinx.coroutines.tasks.await
 class SavedRepoImpl : SavedRepository {
 
     private val database = FirebaseDatabase.getInstance()
-    private val favoritesRef = database.getReference("favorites")
+    private val favoritesRef = database.getReference("user_favorites")
     private val songsRef = database.getReference("songs")
 
     override fun getSavedSongsFlow(): Flow<List<Song>> = callbackFlow {
@@ -58,14 +58,8 @@ class SavedRepoImpl : SavedRepository {
 
     override suspend fun addToFavorites(userId: String, song: Song): Boolean {
         return try {
-            // Store song ID in user's favorites with timestamp
-            val favoriteData = mapOf(
-                "addedAt" to System.currentTimeMillis(),
-                "songId" to song.id,
-                "title" to song.title,
-                "artist" to song.artist
-            )
-            favoritesRef.child(userId).child(song.id).setValue(favoriteData).await()
+            // Store song ID in user's favorites (consistent with MusicRepoImpl)
+            favoritesRef.child(userId).child(song.id).setValue(true).await()
             true
         } catch (e: Exception) {
             e.printStackTrace()

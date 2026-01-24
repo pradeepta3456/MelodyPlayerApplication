@@ -1,0 +1,45 @@
+{
+  "rules": {
+    "users": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $userId",
+        "listeningHistory": {
+          ".indexOn": ["timestamp"]
+        },
+        "profile": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $userId"
+        }
+      }
+    },
+    "songs": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["uploadedBy", "timestamp"]
+    },
+    "user_favorites": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "notifications": {
+      "$notificationId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "userNotifications": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null",
+        ".indexOn": ["receivedAt", "isRead"]
+      }
+    },
+    "playlists": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
