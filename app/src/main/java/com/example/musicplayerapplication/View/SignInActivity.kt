@@ -9,8 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -101,8 +103,9 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF8B5CF6),
-                        Color(0xFF7C3AED)
+                        Color(0xFF667EEA),
+                        Color(0xFF764BA2),
+                        Color(0xFFF093FB)
                     )
                 )
             ),
@@ -112,93 +115,142 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 28.dp)
+                .padding(vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Music Icon
-            Icon(
-                imageVector = Icons.Default.MusicNote,
-                contentDescription = "Music Note",
-                tint = Color.White,
-                modifier = Modifier.size(80.dp)
-            )
+            // Music Icon with elegant design
+            Box(
+                modifier = Modifier
+                    .size(110.dp)
+                    .shadow(
+                        elevation = 20.dp,
+                        shape = CircleShape,
+                        spotColor = Color(0xFF764BA2).copy(alpha = 0.5f)
+                    )
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFFFFFFF),
+                                Color(0xFFF3E7F9)
+                            )
+                        ),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = "Music Note",
+                    tint = Color(0xFF764BA2),
+                    modifier = Modifier.size(55.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "Melody Play",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
+                text = "Welcome Back!",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White,
+                letterSpacing = 0.5.sp
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Login Card
+            Text(
+                text = "Sign in to continue your journey",
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.9f),
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Login Card with glassmorphism
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 30.dp,
+                        shape = RoundedCornerShape(30.dp),
+                        spotColor = Color(0xFF764BA2).copy(alpha = 0.3f)
+                    ),
+                shape = RoundedCornerShape(30.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF1E293B)
+                    containerColor = Color.White.copy(alpha = 0.95f)
                 )
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(28.dp)
                 ) {
                     // Email Field
                     Text(
-                        text = "E-mail",
-                        color = Color.White,
+                        text = "Email Address",
+                        color = Color(0xFF2D3748),
                         fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 10.dp)
                     )
 
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        placeholder = { Text("your@email.com", color = Color.Gray) },
+                        placeholder = {
+                            Text(
+                                "your.email@example.com",
+                                color = Color(0xFFA0AEC0)
+                            )
+                        },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = "Email",
-                                tint = Color.Gray
+                                tint = Color(0xFF764BA2)
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF334155),
-                            unfocusedContainerColor = Color(0xFF334155),
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.White
+                            focusedContainerColor = Color(0xFFF7FAFC),
+                            unfocusedContainerColor = Color(0xFFF7FAFC),
+                            focusedBorderColor = Color(0xFF667EEA),
+                            unfocusedBorderColor = Color(0xFFE2E8F0),
+                            focusedTextColor = Color(0xFF2D3748),
+                            unfocusedTextColor = Color(0xFF2D3748),
+                            cursorColor = Color(0xFF764BA2)
                         ),
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
                     // Password Field
                     Text(
                         text = "Password",
-                        color = Color.White,
+                        color = Color(0xFF2D3748),
                         fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 10.dp)
                     )
 
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        placeholder = { Text("••••••••", color = Color.Gray) },
+                        placeholder = {
+                            Text(
+                                "Enter your password",
+                                color = Color(0xFFA0AEC0)
+                            )
+                        },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Lock",
-                                tint = Color.Gray
+                                tint = Color(0xFF764BA2)
                             )
                         },
                         visualTransformation = if (passwordVisible)
@@ -213,153 +265,130 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                                     else
                                         Icons.Default.Visibility,
                                     contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                    tint = Color.Gray
+                                    tint = Color(0xFFA0AEC0)
                                 )
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF334155),
-                            unfocusedContainerColor = Color(0xFF334155),
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.White
+                            focusedContainerColor = Color(0xFFF7FAFC),
+                            unfocusedContainerColor = Color(0xFFF7FAFC),
+                            focusedBorderColor = Color(0xFF667EEA),
+                            unfocusedBorderColor = Color(0xFFE2E8F0),
+                            focusedTextColor = Color(0xFF2D3748),
+                            unfocusedTextColor = Color(0xFF2D3748),
+                            cursorColor = Color(0xFF764BA2)
                         ),
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
-                    // Sign In Button
+                    // Forgot Password
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Text(
+                            text = "Forgot Password?",
+                            color = Color(0xFF667EEA),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable {
+                                showForgotPasswordDialog = true
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // Sign In Button with vibrant gradient
                     Button(
                         onClick = { validateAndSignIn() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
+                            .height(58.dp)
+                            .shadow(
+                                elevation = 12.dp,
+                                shape = RoundedCornerShape(16.dp),
+                                spotColor = Color(0xFF764BA2).copy(alpha = 0.4f)
+                            ),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5CF6)
+                            containerColor = Color.Transparent,
+                            disabledContainerColor = Color(0xFFCBD5E0)
                         ),
                         enabled = !isLoading
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color.White
-                            )
-                        } else {
-                            Text(
-                                text = "Sign in",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White
-                            )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    if (!isLoading) {
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFF667EEA),
+                                                Color(0xFF764BA2)
+                                            )
+                                        )
+                                    } else {
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFFCBD5E0),
+                                                Color(0xFFCBD5E0)
+                                            )
+                                        )
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(26.dp),
+                                    color = Color.White,
+                                    strokeWidth = 3.dp
+                                )
+                            } else {
+                                Text(
+                                    text = "Sign In",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White,
+                                    letterSpacing = 1.sp
+                                )
+                            }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Forgot Password
-                    Text(
-                        text = "Forgot Password?",
-                        color = Color(0xFF8B5CF6),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showForgotPasswordDialog = true
-                            }
-                            .padding(vertical = 8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Divider
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Divider(
-                            modifier = Modifier.weight(1f),
-                            color = Color.Gray.copy(alpha = 0.3f)
-                        )
-                        Text(
-                            text = "or",
-                            color = Color.Gray,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                        Divider(
-                            modifier = Modifier.weight(1f),
-                            color = Color.Gray.copy(alpha = 0.3f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Google Sign In Button
-                    OutlinedButton(
-                        onClick = {
-                            // Navigate to dashboard with demo account
-                            val intent = Intent(context, DashboardActivity::class.java)
-                            context.startActivity(intent)
-                            (context as? ComponentActivity)?.finish()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Google",
-                            tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Continue with Google",
-                            color = Color.Black,
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Don't have an account
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Don't have an account? ",
-                            color = Color.White.copy(alpha = 0.9f),
-                            fontSize = 15.sp
-                        )
-                        Text(
-                            "Sign Up",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable {
-                                val intent = Intent(context, SignUpActivity::class.java)
-                                context.startActivity(intent)
-                                (context as? ComponentActivity)?.finish()
-                            }
-                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Don't have an account
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Don't have an account? ",
+                    color = Color.White.copy(alpha = 0.95f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    "Sign Up",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.clickable {
+                        val intent = Intent(context, SignUpActivity::class.java)
+                        context.startActivity(intent)
+                        (context as? ComponentActivity)?.finish()
+                    }
+                )
+            }
         }
 
         // Forgot Password Dialog
