@@ -13,6 +13,8 @@ import com.example.musicplayerapplication.model.RepeatMode
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.MusicRepoImpl
 import com.example.musicplayerapplication.repository.MusicRepository
+import com.example.musicplayerapplication.repository.NotificationRepository
+import com.example.musicplayerapplication.repository.NotificationRepositoryImpl
 import com.example.musicplayerapplication.repository.ProfileRepository
 import com.example.musicplayerapplication.repository.ProfileRepositoryImpl
 import com.example.musicplayerapplication.repository.UserRepository
@@ -26,7 +28,8 @@ class MusicViewModel(
     private val context: Context,
     private val repository: MusicRepository = MusicRepoImpl(context),
     private val userRepository: UserRepository = UserRepositoryImpl(),
-    private val profileRepository: ProfileRepository = ProfileRepositoryImpl()
+    private val profileRepository: ProfileRepository = ProfileRepositoryImpl(),
+    private val notificationRepository: NotificationRepository = NotificationRepositoryImpl()
 ) : ViewModel() {
 
     private lateinit var audioPlayer: AudioPlayer
@@ -333,9 +336,13 @@ class MusicViewModel(
                     }
                 )
 
-                result.onSuccess {
+                result.onSuccess { uploadedSong ->
                     _uploadProgress.value = 1f
                     _isUploading.value = false
+
+                    // Create notification for all users
+                    createSongUploadNotification(uploadedSong)
+
                     // Reload songs to include the new upload
                     loadAllSongs()
                 }.onFailure { error ->
@@ -349,6 +356,45 @@ class MusicViewModel(
                 _isUploading.value = false
                 _uploadProgress.value = 0f
                 Log.e("MusicViewModel", "Upload exception", e)
+            }
+        }
+    }
+
+    /**
+     * Create notification when a song is uploaded
+     * Sends notification to all users except the uploader
+     */
+    private fun createSongUploadNotification(song: Song) {
+        viewModelScope.launch {
+            try {
+                val user = auth.currentUser
+                if (user == null) {
+                    Log.w("MusicViewModel", "Cannot create notification: user not authenticated")
+                    return@launch
+                }
+
+                val userId = user.uid
+                val userName = user.displayName
+                    ?: user.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+                    ?: "A user"
+                val userEmail = user.email ?: ""
+
+                Log.d("MusicViewModel", "Creating notification for song upload: ${song.title}")
+
+                notificationRepository.createSongAddedNotification(
+                    senderId = userId,
+                    senderName = userName,
+                    senderEmail = userEmail,
+                    songId = song.id,
+                    songTitle = song.title,
+                    songArtist = song.artist,
+                    songCoverUrl = song.coverUrl
+                )
+
+                Log.d("MusicViewModel", "Notification created successfully")
+            } catch (e: Exception) {
+                Log.e("MusicViewModel", "Failed to create notification", e)
+                // Don't fail the upload if notification fails
             }
         }
     }
