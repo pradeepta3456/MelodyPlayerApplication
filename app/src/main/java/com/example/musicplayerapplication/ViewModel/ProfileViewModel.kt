@@ -115,9 +115,12 @@ class ProfileViewModel(
 
     private suspend fun loadTopSongs(userId: String) {
         try {
+            android.util.Log.d("ProfileViewModel", "Loading top songs for user: $userId")
             val songs = repository.getTopSongs(userId, 10)
+            android.util.Log.d("ProfileViewModel", "Loaded ${songs.size} top songs")
             _topSongs.value = songs
         } catch (e: Exception) {
+            android.util.Log.e("ProfileViewModel", "Error loading top songs", e)
             e.printStackTrace()
         }
     }
