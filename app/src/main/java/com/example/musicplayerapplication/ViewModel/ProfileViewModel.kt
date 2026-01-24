@@ -95,7 +95,9 @@ class ProfileViewModel(
             _userProfile.value = profile ?: UserProfile(
                 userId = userId,
                 email = auth.currentUser?.email ?: "",
-                displayName = "Music Lover"
+                displayName = auth.currentUser?.displayName
+                    ?: auth.currentUser?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+                    ?: "Music Lover"
             )
         } catch (e: Exception) {
             e.printStackTrace()

@@ -140,11 +140,22 @@ class MusicRepoImpl(private val context: Context) : MusicRepository {
     override suspend fun getUserUploadedSongs(userId: String): Result<List<Song>> {
         return try {
             android.util.Log.d("MusicRepoImpl", "Querying songs with uploadedBy: $userId")
-            val snapshot = songsRef.orderByChild("uploadedBy").equalTo(userId).get().await()
-            val songs = snapshot.children.mapNotNull { it.getValue(Song::class.java) }
+
+            // Try indexed query first, if it fails, fall back to filtering all songs
+            val songs = try {
+                val snapshot = songsRef.orderByChild("uploadedBy").equalTo(userId).get().await()
+                snapshot.children.mapNotNull { it.getValue(Song::class.java) }
+            } catch (indexError: Exception) {
+                android.util.Log.w("MusicRepoImpl", "Index query failed, falling back to filter all songs: ${indexError.message}")
+                // Fallback: Get all songs and filter locally
+                val allSnapshot = songsRef.get().await()
+                allSnapshot.children.mapNotNull { it.getValue(Song::class.java) }
+                    .filter { it.uploadedBy == userId }
+            }
+
             android.util.Log.d("MusicRepoImpl", "Found ${songs.size} songs uploaded by user")
             songs.forEach { song ->
-                android.util.Log.d("MusicRepoImpl", "Song: ${song.title}, uploadedBy: ${song.uploadedBy}")
+                android.util.Log.d("MusicRepoImpl", "Song: ${song.title}, uploadedBy: '${song.uploadedBy}'")
             }
             Result.success(songs)
         } catch (e: Exception) {

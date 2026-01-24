@@ -314,23 +314,22 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
             currentSong?.let { song ->
                 val playbackState by musicViewModel.playbackState.collectAsState()
 
-                NowPlayingContentFirebase(
+                NowPlayingScreen(
                     song = song,
-                    playlist = selectedPlaylist,
                     isPlaying = isPlaying,
-                    shuffleEnabled = playbackState.isShuffleEnabled,
-                    repeatMode = playbackState.repeatMode,
                     currentPosition = playbackState.currentPosition,
                     duration = song.duration,
+                    shuffleEnabled = playbackState.isShuffleEnabled,
+                    repeatMode = playbackState.repeatMode,
                     onPlayPauseClick = {
                         isPlaying = !isPlaying
                         if (isPlaying) musicViewModel.resume() else musicViewModel.pause()
                     },
-                    onBack = { currentView = PlaylistView.Detail },
-                    onNext = {
+                    onBackClick = { currentView = PlaylistView.Detail },
+                    onSkipNext = {
                         musicViewModel.skipToNext()
                     },
-                    onPrevious = {
+                    onSkipPrevious = {
                         musicViewModel.skipToPrevious()
                     },
                     onToggleShuffle = {
@@ -345,7 +344,7 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     onSeekTo = { position ->
                         musicViewModel.seekTo(position)
                     },
-                    onOpenSettings = { currentView = PlaylistView.AudioSettings }
+                    onAudioEffectsClick = { currentView = PlaylistView.AudioSettings }
                 )
             }
         }
