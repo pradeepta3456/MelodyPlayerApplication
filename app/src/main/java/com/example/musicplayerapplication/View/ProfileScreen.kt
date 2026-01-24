@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -39,14 +41,22 @@ fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = Profi
         profileViewModel.loadUploadedSongs()
     }
 
-    val cardColor = Color(0xFF2D1B4E)
-    val highlightColor = Color(0xFFE91E63)
+    val cardColor = Color(0xFF1E293B)
+    val highlightColor = Color(0xFF818CF8)
 
     if (isLoading) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF21133B)),
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0A0E27),
+                            Color(0xFF1A1F3A),
+                            Color(0xFF0F172A)
+                        )
+                    )
+                ),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = highlightColor)
@@ -55,9 +65,18 @@ fun ProfileScreen(profileViewModel: ProfileViewModel = viewModel(factory = Profi
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF21133B))
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(top = 32.dp, bottom = 16.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0A0E27),
+                            Color(0xFF1A1F3A),
+                            Color(0xFF0F172A)
+                        )
+                    )
+                )
+                .padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(top = 32.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Profile Header
             item {

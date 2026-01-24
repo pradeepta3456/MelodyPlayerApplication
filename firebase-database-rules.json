@@ -18,6 +18,12 @@
       ".write": "auth != null",
       ".indexOn": ["uploadedBy", "timestamp"]
     },
+    "user_favorites": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
     "notifications": {
       "$notificationId": {
         ".read": "auth != null",

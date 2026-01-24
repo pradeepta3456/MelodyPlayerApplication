@@ -383,9 +383,9 @@ fun PlaylistListContent(
 
     val bg = Brush.verticalGradient(
         listOf(
-            Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
-            Color(0xFF3D2766)
+            Color(0xFF0A0E27),
+            Color(0xFF1E293B),
+            Color(0xFF334155)
         )
     )
 
@@ -395,8 +395,9 @@ fun PlaylistListContent(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF21133B),
-                        Color(0xFF2D1B4E)
+                        Color(0xFF0A0E27),
+                        Color(0xFF1A1F3A),
+                        Color(0xFF0F172A)
                     )
                 )
             )
@@ -424,7 +425,7 @@ fun PlaylistListContent(
             }
             FloatingActionButton(
                 onClick = { onShowCreatePlaylistDialogChange(true) },
-                containerColor = Color(0xFFB040FF),
+                containerColor = Color(0xFF818CF8),
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, "Create Playlist")
@@ -583,7 +584,7 @@ fun AiPlaylistCardItem(
         Button(
             onClick = { onPlayClick() },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB040FF)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF818CF8)),
             shape = RoundedCornerShape(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
@@ -603,7 +604,7 @@ fun UserPlaylistRowItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF2D1B4E))
+            .background(Color(0xFF1E293B))
             .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -612,7 +613,7 @@ fun UserPlaylistRowItem(
             modifier = Modifier
                 .size(60.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -703,7 +704,7 @@ fun CreatePlaylistContent(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -746,7 +747,7 @@ fun CreatePlaylistContent(
                 .size(200.dp)
                 .align(Alignment.CenterHorizontally)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -776,9 +777,9 @@ fun CreatePlaylistContent(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFFB040FF),
+                focusedBorderColor = Color(0xFF818CF8),
                 unfocusedBorderColor = Color.White.copy(0.3f),
-                cursorColor = Color(0xFFB040FF)
+                cursorColor = Color(0xFF818CF8)
             ),
             shape = RoundedCornerShape(12.dp)
         )
@@ -804,9 +805,9 @@ fun CreatePlaylistContent(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFFB040FF),
+                focusedBorderColor = Color(0xFF818CF8),
                 unfocusedBorderColor = Color.White.copy(0.3f),
-                cursorColor = Color(0xFFB040FF)
+                cursorColor = Color(0xFF818CF8)
             ),
             shape = RoundedCornerShape(12.dp),
             maxLines = 4
@@ -824,8 +825,8 @@ fun CreatePlaylistContent(
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFB040FF),
-                disabledContainerColor = Color(0xFFB040FF).copy(0.5f)
+                containerColor = Color(0xFF818CF8),
+                disabledContainerColor = Color(0xFF818CF8).copy(0.5f)
             ),
             shape = RoundedCornerShape(16.dp),
             enabled = playlistName.isNotBlank()
@@ -847,7 +848,7 @@ fun CreatePlaylistContent(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
@@ -889,7 +890,7 @@ fun AudioSettingsContent(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -932,13 +933,13 @@ fun AudioSettingsContent(
                 .size(120.dp)
                 .align(Alignment.CenterHorizontally)
                 .clip(CircleShape)
-                .background(Color(0xFFB040FF).copy(alpha = 0.2f)),
+                .background(Color(0xFF818CF8).copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.GraphicEq,
                 contentDescription = null,
-                tint = Color(0xFFB040FF),
+                tint = Color(0xFF818CF8),
                 modifier = Modifier.size(60.dp)
             )
         }
@@ -1048,7 +1049,7 @@ fun AudioControlCardItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
@@ -1063,7 +1064,7 @@ fun AudioControlCardItem(
                     Icon(
                         icon,
                         contentDescription = null,
-                        tint = Color(0xFFB040FF),
+                        tint = Color(0xFF818CF8),
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(Modifier.width(12.dp))
@@ -1079,7 +1080,7 @@ fun AudioControlCardItem(
                     text = valueText,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFB040FF)
+                    color = Color(0xFF818CF8)
                 )
             }
 
@@ -1090,8 +1091,8 @@ fun AudioControlCardItem(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFFB040FF),
-                    activeTrackColor = Color(0xFFB040FF),
+                    thumbColor = Color(0xFF818CF8),
+                    activeTrackColor = Color(0xFF818CF8),
                     inactiveTrackColor = Color.White.copy(alpha = 0.2f)
                 )
             )
@@ -1126,7 +1127,7 @@ fun PresetButtonItem(
     Button(
         onClick = onClick,
         modifier = modifier.height(48.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D1B4E)),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Text(
@@ -1379,7 +1380,7 @@ fun NowPlayingContent(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -1428,7 +1429,7 @@ fun NowPlayingContent(
             modifier = Modifier
                 .size(300.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -1466,7 +1467,7 @@ fun NowPlayingContent(
                 onValueChange = { progress = it },
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
-                    activeTrackColor = Color(0xFFB040FF),
+                    activeTrackColor = Color(0xFF818CF8),
                     inactiveTrackColor = Color.White.copy(alpha = 0.3f)
                 )
             )
@@ -1507,7 +1508,7 @@ fun NowPlayingContent(
 
             FloatingActionButton(
                 onClick = onPlayPauseClick,
-                containerColor = Color(0xFFB040FF),
+                containerColor = Color(0xFF818CF8),
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
@@ -1586,7 +1587,7 @@ fun NowPlayingContentFirebase(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -1635,7 +1636,7 @@ fun NowPlayingContentFirebase(
             modifier = Modifier
                 .size(300.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             if (song.coverUrl.isNotEmpty()) {
@@ -1681,7 +1682,7 @@ fun NowPlayingContentFirebase(
                 valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
-                    activeTrackColor = Color(0xFFB040FF),
+                    activeTrackColor = Color(0xFF818CF8),
                     inactiveTrackColor = Color.White.copy(alpha = 0.3f)
                 )
             )
@@ -1706,7 +1707,7 @@ fun NowPlayingContentFirebase(
                 Icon(
                     Icons.Default.Shuffle,
                     contentDescription = "Shuffle",
-                    tint = if (shuffleEnabled) Color(0xFFB040FF) else Color.White.copy(alpha = 0.7f),
+                    tint = if (shuffleEnabled) Color(0xFF818CF8) else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -1722,7 +1723,7 @@ fun NowPlayingContentFirebase(
 
             FloatingActionButton(
                 onClick = onPlayPauseClick,
-                containerColor = Color(0xFFB040FF),
+                containerColor = Color(0xFF818CF8),
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
@@ -1748,7 +1749,7 @@ fun NowPlayingContentFirebase(
                     contentDescription = "Repeat",
                     tint = when(repeatMode) {
                         com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(alpha = 0.7f)
-                        else -> Color(0xFFB040FF)
+                        else -> Color(0xFF818CF8)
                     },
                     modifier = Modifier.size(28.dp)
                 )
@@ -1798,7 +1799,7 @@ fun PlaylistCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -1853,7 +1854,7 @@ fun UserPlaylistCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -1866,7 +1867,7 @@ fun UserPlaylistCard(
                 modifier = Modifier
                     .size(60.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFB040FF)),
+                    .background(Color(0xFF818CF8)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -1924,7 +1925,7 @@ fun UserPlaylistCard(
                     Text("Cancel", color = Color.White)
                 }
             },
-            containerColor = Color(0xFF2D1B4E)
+            containerColor = Color(0xFF1E293B)
         )
     }
 }
@@ -1952,7 +1953,7 @@ fun CreatePlaylistDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF2D1B4E),
+            color = Color(0xFF1E293B),
             modifier = Modifier.fillMaxSize()
         ) {
             Column(
@@ -1976,9 +1977,9 @@ fun CreatePlaylistDialog(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color(0xFFB040FF),
+                        focusedBorderColor = Color(0xFF818CF8),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                        focusedLabelColor = Color(0xFFB040FF),
+                        focusedLabelColor = Color(0xFF818CF8),
                         unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
                         cursorColor = Color.White
                     ),
@@ -1994,9 +1995,9 @@ fun CreatePlaylistDialog(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color(0xFFB040FF),
+                        focusedBorderColor = Color(0xFF818CF8),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                        focusedLabelColor = Color(0xFFB040FF),
+                        focusedLabelColor = Color(0xFF818CF8),
                         unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
                         cursorColor = Color.White
                     ),
@@ -2024,7 +2025,7 @@ fun CreatePlaylistDialog(
                         unfocusedTextColor = Color.White,
                         focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
                         unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
-                        focusedBorderColor = Color(0xFFB040FF),
+                        focusedBorderColor = Color(0xFF818CF8),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
                         cursorColor = Color.White
                     ),
@@ -2066,7 +2067,7 @@ fun CreatePlaylistDialog(
                                     }
                                 },
                                 colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFFB040FF),
+                                    checkedColor = Color(0xFF818CF8),
                                     uncheckedColor = Color.White.copy(alpha = 0.5f)
                                 )
                             )
@@ -2111,7 +2112,7 @@ fun CreatePlaylistDialog(
                             }
                         },
                         enabled = playlistName.isNotBlank(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB040FF)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF818CF8)),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Create")
@@ -2146,7 +2147,7 @@ fun ManagePlaylistSongsDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF2D1B4E),
+            color = Color(0xFF1E293B),
             modifier = Modifier.fillMaxSize()
         ) {
             Column(
@@ -2233,7 +2234,7 @@ fun ManagePlaylistSongsDialog(
                         unfocusedTextColor = Color.White,
                         focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
                         unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
-                        focusedBorderColor = Color(0xFFB040FF),
+                        focusedBorderColor = Color(0xFF818CF8),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
                         cursorColor = Color.White
                     ),
@@ -2276,7 +2277,7 @@ fun ManagePlaylistSongsDialog(
                             Icon(
                                 Icons.Default.Add,
                                 "Add",
-                                tint = Color(0xFFB040FF)
+                                tint = Color(0xFF818CF8)
                             )
                         }
                     }
