@@ -13,6 +13,8 @@ import com.example.musicplayerapplication.model.RepeatMode
 import com.example.musicplayerapplication.model.Song
 import com.example.musicplayerapplication.repository.MusicRepoImpl
 import com.example.musicplayerapplication.repository.MusicRepository
+import com.example.musicplayerapplication.repository.NotificationRepository
+import com.example.musicplayerapplication.repository.NotificationRepositoryImpl
 import com.example.musicplayerapplication.repository.ProfileRepository
 import com.example.musicplayerapplication.repository.ProfileRepositoryImpl
 import com.example.musicplayerapplication.repository.UserRepository
@@ -26,13 +28,15 @@ class MusicViewModel(
     private val context: Context,
     private val repository: MusicRepository = MusicRepoImpl(context),
     private val userRepository: UserRepository = UserRepositoryImpl(),
-    private val profileRepository: ProfileRepository = ProfileRepositoryImpl()
+    private val profileRepository: ProfileRepository = ProfileRepositoryImpl(),
+    private val notificationRepository: NotificationRepository = NotificationRepositoryImpl()
 ) : ViewModel() {
 
     private lateinit var audioPlayer: AudioPlayer
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private var songStartTime: Long = 0
+    private var songStartPosition: Long = 0 // Track starting position for accurate playback time
 
     // Playback state - must be initialized before init block
     private val _playbackState = MutableStateFlow(PlaybackState())
@@ -193,8 +197,9 @@ class MusicViewModel(
                     repository.addToRecentlyPlayed(userId, song)
                 }
 
-                // Track song start time for statistics
+                // Track song start time and position for statistics
                 songStartTime = System.currentTimeMillis()
+                songStartPosition = 0 // Starting from beginning
             } catch (e: Exception) {
                 Log.e("MusicViewModel", "Error playing song", e)
             }
@@ -209,18 +214,24 @@ class MusicViewModel(
         viewModelScope.launch {
             try {
                 val userId = auth.currentUser?.uid ?: return@launch
-                val durationPlayed = System.currentTimeMillis() - songStartTime
+
+                // Calculate actual playback duration based on current position
+                val currentPosition = _playbackState.value.currentPosition
+                val durationPlayed = currentPosition - songStartPosition
 
                 // Only track if song was played for at least 30 seconds
                 if (durationPlayed >= 30000) {
-                    Log.d("MusicViewModel", "Tracking song play: ${song.title}, duration: ${durationPlayed}ms")
-                    profileRepository.trackSongPlay(
+                    Log.d("MusicViewModel", "Tracking song play: ${song.title}, duration: ${durationPlayed}ms (${durationPlayed/1000}s)")
+                    val success = profileRepository.trackSongPlay(
                         userId = userId,
                         songId = song.id,
                         songTitle = song.title,
                         artist = song.artist,
                         durationPlayed = durationPlayed
                     )
+                    Log.d("MusicViewModel", "Track song play result: $success")
+                } else {
+                    Log.d("MusicViewModel", "Song not tracked (played for ${durationPlayed/1000}s, need 30s minimum)")
                 }
             } catch (e: Exception) {
                 Log.e("MusicViewModel", "Error tracking song play", e)
@@ -325,9 +336,13 @@ class MusicViewModel(
                     }
                 )
 
-                result.onSuccess {
+                result.onSuccess { uploadedSong ->
                     _uploadProgress.value = 1f
                     _isUploading.value = false
+
+                    // Create notification for all users
+                    createSongUploadNotification(uploadedSong)
+
                     // Reload songs to include the new upload
                     loadAllSongs()
                 }.onFailure { error ->
@@ -341,6 +356,45 @@ class MusicViewModel(
                 _isUploading.value = false
                 _uploadProgress.value = 0f
                 Log.e("MusicViewModel", "Upload exception", e)
+            }
+        }
+    }
+
+    /**
+     * Create notification when a song is uploaded
+     * Sends notification to all users except the uploader
+     */
+    private fun createSongUploadNotification(song: Song) {
+        viewModelScope.launch {
+            try {
+                val user = auth.currentUser
+                if (user == null) {
+                    Log.w("MusicViewModel", "Cannot create notification: user not authenticated")
+                    return@launch
+                }
+
+                val userId = user.uid
+                val userName = user.displayName
+                    ?: user.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+                    ?: "A user"
+                val userEmail = user.email ?: ""
+
+                Log.d("MusicViewModel", "Creating notification for song upload: ${song.title}")
+
+                notificationRepository.createSongAddedNotification(
+                    senderId = userId,
+                    senderName = userName,
+                    senderEmail = userEmail,
+                    songId = song.id,
+                    songTitle = song.title,
+                    songArtist = song.artist,
+                    songCoverUrl = song.coverUrl
+                )
+
+                Log.d("MusicViewModel", "Notification created successfully")
+            } catch (e: Exception) {
+                Log.e("MusicViewModel", "Failed to create notification", e)
+                // Don't fail the upload if notification fails
             }
         }
     }

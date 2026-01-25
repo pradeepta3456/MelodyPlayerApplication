@@ -32,6 +32,11 @@ import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModel
 import com.example.musicplayerapplication.ViewModel.AudioEffectsViewModelFactory
 import com.example.musicplayerapplication.ViewModel.SavedViewModel
 import com.example.musicplayerapplication.ViewModel.SavedViewModelFactory
+import com.example.musicplayerapplication.repository.PlaylistRepoImpl
+import com.example.musicplayerapplication.model.UserPlaylist
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.foundation.lazy.LazyColumn
+import kotlinx.coroutines.launch
 
 // Data classes (local to this file since they're specific to playlist feature)
 data class PlaylistSong(
@@ -64,6 +69,23 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
 
     // User-created playlists
     var userPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+
+    // Firebase user playlists
+    val playlistRepo = remember { PlaylistRepoImpl() }
+    val auth = FirebaseAuth.getInstance()
+    var firebaseUserPlaylists by remember { mutableStateOf<List<UserPlaylist>>(emptyList()) }
+    var showCreatePlaylistDialog by remember { mutableStateOf(false) }
+    var selectedPlaylistForSongs by remember { mutableStateOf<UserPlaylist?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Load user playlists from Firebase
+    LaunchedEffect(Unit) {
+        auth.currentUser?.uid?.let { userId ->
+            playlistRepo.getUserPlaylists(userId).onSuccess { playlists ->
+                firebaseUserPlaylists = playlists
+            }
+        }
+    }
 
     // Saved ViewModel for favorites playlist
     val savedViewModel: SavedViewModel = viewModel(factory = SavedViewModelFactory())
@@ -160,6 +182,18 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
         is PlaylistView.List -> {
             PlaylistListContent(
                 playlists = playlists,
+                firebaseUserPlaylists = firebaseUserPlaylists,
+                allSongs = allSongs,
+                showCreatePlaylistDialog = showCreatePlaylistDialog,
+                selectedPlaylistForSongs = selectedPlaylistForSongs,
+                auth = auth,
+                playlistRepo = playlistRepo,
+                coroutineScope = coroutineScope,
+                onShowCreatePlaylistDialogChange = { showCreatePlaylistDialog = it },
+                onSelectedPlaylistForSongsChange = { selectedPlaylistForSongs = it },
+                onFirebaseUserPlaylistsChange = { firebaseUserPlaylists = it },
+                onSelectedPlaylistChange = { selectedPlaylist = it },
+                onCurrentViewChange = { currentView = it },
                 onPlaylistClick = { playlist ->
                     selectedPlaylist = playlist
                     currentView = PlaylistView.Detail
@@ -280,23 +314,22 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
             currentSong?.let { song ->
                 val playbackState by musicViewModel.playbackState.collectAsState()
 
-                NowPlayingContentFirebase(
+                NowPlayingScreen(
                     song = song,
-                    playlist = selectedPlaylist,
                     isPlaying = isPlaying,
-                    shuffleEnabled = playbackState.isShuffleEnabled,
-                    repeatMode = playbackState.repeatMode,
                     currentPosition = playbackState.currentPosition,
                     duration = song.duration,
+                    shuffleEnabled = playbackState.isShuffleEnabled,
+                    repeatMode = playbackState.repeatMode,
                     onPlayPauseClick = {
                         isPlaying = !isPlaying
                         if (isPlaying) musicViewModel.resume() else musicViewModel.pause()
                     },
-                    onBack = { currentView = PlaylistView.Detail },
-                    onNext = {
+                    onBackClick = { currentView = PlaylistView.Detail },
+                    onSkipNext = {
                         musicViewModel.skipToNext()
                     },
-                    onPrevious = {
+                    onSkipPrevious = {
                         musicViewModel.skipToPrevious()
                     },
                     onToggleShuffle = {
@@ -311,7 +344,7 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                     onSeekTo = { position ->
                         musicViewModel.seekTo(position)
                     },
-                    onOpenSettings = { currentView = PlaylistView.AudioSettings }
+                    onAudioEffectsClick = { currentView = PlaylistView.AudioSettings }
                 )
             }
         }
@@ -329,6 +362,18 @@ sealed class PlaylistView {
 @Composable
 fun PlaylistListContent(
     playlists: List<Playlist>,
+    firebaseUserPlaylists: List<UserPlaylist>,
+    allSongs: List<Song>,
+    showCreatePlaylistDialog: Boolean,
+    selectedPlaylistForSongs: UserPlaylist?,
+    auth: FirebaseAuth,
+    playlistRepo: PlaylistRepoImpl,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    onShowCreatePlaylistDialogChange: (Boolean) -> Unit,
+    onSelectedPlaylistForSongsChange: (UserPlaylist?) -> Unit,
+    onFirebaseUserPlaylistsChange: (List<UserPlaylist>) -> Unit,
+    onSelectedPlaylistChange: (Playlist?) -> Unit,
+    onCurrentViewChange: (PlaylistView) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onQuickPlay: (Playlist) -> Unit,
     onCreatePlaylist: () -> Unit
@@ -338,118 +383,161 @@ fun PlaylistListContent(
 
     val bg = Brush.verticalGradient(
         listOf(
-            Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
-            Color(0xFF3D2766)
+            Color(0xFF0A0E27),
+            Color(0xFF1E293B),
+            Color(0xFF334155)
         )
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(bg)
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0A0E27),
+                        Color(0xFF1A1F3A),
+                        Color(0xFF0F172A)
+                    )
+                )
+            )
     ) {
+        // Header with Create Button
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Playlists",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-
-            Button(
-                onClick = onCreatePlaylist,
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB040FF)),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+            Column {
+                Text(
+                    "Your Library",
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "${firebaseUserPlaylists.size + playlists.size} playlists",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 16.sp
+                )
+            }
+            FloatingActionButton(
+                onClick = { onShowCreatePlaylistDialogChange(true) },
+                containerColor = Color(0xFF818CF8),
+                contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Create", fontSize = 14.sp)
+                Icon(Icons.Default.Add, "Create Playlist")
             }
         }
 
-        Spacer(Modifier.height(28.dp))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 0.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // User Created Playlists
+            if (firebaseUserPlaylists.isNotEmpty()) {
+                item {
+                    Text(
+                        "MY PLAYLISTS",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                items(firebaseUserPlaylists.size) { index ->
+                    val userPlaylist = firebaseUserPlaylists[index]
+                    UserPlaylistCard(
+                        playlist = userPlaylist,
+                        onClick = { onSelectedPlaylistForSongsChange(userPlaylist) },
+                        onDelete = {
+                            coroutineScope.launch {
+                                auth.currentUser?.uid?.let { userId ->
+                                    playlistRepo.deleteUserPlaylist(userId, userPlaylist.id).onSuccess {
+                                        onFirebaseUserPlaylistsChange(firebaseUserPlaylists.filter { it.id != userPlaylist.id })
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
+            }
 
-        Text(
-            text = "✨ AI Smart Playlists",
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            aiPlaylists.forEach { playlist ->
-                AiPlaylistCardItem(
-                    playlist = playlist,
-                    onClick = { onPlaylistClick(playlist) },
-                    onPlayClick = { onQuickPlay(playlist) }
+            // Auto-Generated Playlists
+            item {
+                Text(
+                    "SMART PLAYLISTS",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+                )
+            }
+            items(playlists.size) { index ->
+                PlaylistCard(
+                    playlist = playlists[index],
+                    onClick = {
+                        onSelectedPlaylistChange(playlists[index])
+                        onCurrentViewChange(PlaylistView.Detail)
+                    }
                 )
             }
         }
+    }
 
-        Spacer(Modifier.height(32.dp))
-
-        Text(
-            text = "🎵 Your Playlists",
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp
+    // Create Playlist Dialog
+    if (showCreatePlaylistDialog) {
+        CreatePlaylistDialog(
+            allSongs = allSongs,
+            onDismiss = { onShowCreatePlaylistDialogChange(false) },
+            onCreate = { name, description, selectedSongs ->
+                coroutineScope.launch {
+                    auth.currentUser?.uid?.let { userId ->
+                        val songIds = selectedSongs.map { it.id }
+                        playlistRepo.createUserPlaylist(userId, name, description, songIds).onSuccess { newPlaylist ->
+                            onFirebaseUserPlaylistsChange(listOf(newPlaylist) + firebaseUserPlaylists)
+                            onShowCreatePlaylistDialogChange(false)
+                        }
+                    }
+                }
+            }
         )
+    }
 
-        Spacer(Modifier.height(16.dp))
-
-        userPlaylists.forEach { playlist ->
-            UserPlaylistRowItem(
-                playlist = playlist,
-                onClick = { onPlaylistClick(playlist) }
-            )
-        }
-
-        Spacer(Modifier.height(32.dp))
-
-        Text(
-            text = "⚡ Quick Create",
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp
+    // Manage Playlist Songs Dialog
+    selectedPlaylistForSongs?.let { playlist ->
+        ManagePlaylistSongsDialog(
+            playlist = playlist,
+            allSongs = allSongs,
+            onDismiss = {
+                onSelectedPlaylistForSongsChange(null)
+                // Reload playlists
+                coroutineScope.launch {
+                    auth.currentUser?.uid?.let { userId ->
+                        playlistRepo.getUserPlaylists(userId).onSuccess { playlists ->
+                            onFirebaseUserPlaylistsChange(playlists)
+                        }
+                    }
+                }
+            },
+            onAddSong = { songId ->
+                coroutineScope.launch {
+                    auth.currentUser?.uid?.let { userId ->
+                        playlistRepo.addSongToUserPlaylist(userId, playlist.id, songId)
+                    }
+                }
+            },
+            onRemoveSong = { songId ->
+                coroutineScope.launch {
+                    auth.currentUser?.uid?.let { userId ->
+                        playlistRepo.removeSongFromUserPlaylist(userId, playlist.id, songId)
+                    }
+                }
+            }
         )
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            QuickCreateCardItem(
-                title = "Liked Songs",
-                subtitle = "Auto playlist",
-                icon = Icons.Default.Favorite,
-                gradient = Brush.horizontalGradient(
-                    listOf(Color(0xFFE91E63), Color(0xFF9C27B0))
-                ),
-                modifier = Modifier.weight(1f),
-                onClick = {}
-            )
-            QuickCreateCardItem(
-                title = "Recently Added",
-                subtitle = "Last 30 days",
-                icon = Icons.Default.AccessTime,
-                gradient = Brush.horizontalGradient(
-                    listOf(Color(0xFF2196F3), Color(0xFF00BCD4))
-                ),
-                modifier = Modifier.weight(1f),
-                onClick = {}
-            )
-        }
     }
 }
 
@@ -496,7 +584,7 @@ fun AiPlaylistCardItem(
         Button(
             onClick = { onPlayClick() },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB040FF)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF818CF8)),
             shape = RoundedCornerShape(12.dp),
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
@@ -516,7 +604,7 @@ fun UserPlaylistRowItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF2D1B4E))
+            .background(Color(0xFF1E293B))
             .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -525,7 +613,7 @@ fun UserPlaylistRowItem(
             modifier = Modifier
                 .size(60.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -616,7 +704,7 @@ fun CreatePlaylistContent(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -659,7 +747,7 @@ fun CreatePlaylistContent(
                 .size(200.dp)
                 .align(Alignment.CenterHorizontally)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -689,9 +777,9 @@ fun CreatePlaylistContent(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFFB040FF),
+                focusedBorderColor = Color(0xFF818CF8),
                 unfocusedBorderColor = Color.White.copy(0.3f),
-                cursorColor = Color(0xFFB040FF)
+                cursorColor = Color(0xFF818CF8)
             ),
             shape = RoundedCornerShape(12.dp)
         )
@@ -717,9 +805,9 @@ fun CreatePlaylistContent(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFFB040FF),
+                focusedBorderColor = Color(0xFF818CF8),
                 unfocusedBorderColor = Color.White.copy(0.3f),
-                cursorColor = Color(0xFFB040FF)
+                cursorColor = Color(0xFF818CF8)
             ),
             shape = RoundedCornerShape(12.dp),
             maxLines = 4
@@ -737,8 +825,8 @@ fun CreatePlaylistContent(
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFB040FF),
-                disabledContainerColor = Color(0xFFB040FF).copy(0.5f)
+                containerColor = Color(0xFF818CF8),
+                disabledContainerColor = Color(0xFF818CF8).copy(0.5f)
             ),
             shape = RoundedCornerShape(16.dp),
             enabled = playlistName.isNotBlank()
@@ -760,7 +848,7 @@ fun CreatePlaylistContent(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
@@ -802,7 +890,7 @@ fun AudioSettingsContent(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -845,13 +933,13 @@ fun AudioSettingsContent(
                 .size(120.dp)
                 .align(Alignment.CenterHorizontally)
                 .clip(CircleShape)
-                .background(Color(0xFFB040FF).copy(alpha = 0.2f)),
+                .background(Color(0xFF818CF8).copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.GraphicEq,
                 contentDescription = null,
-                tint = Color(0xFFB040FF),
+                tint = Color(0xFF818CF8),
                 modifier = Modifier.size(60.dp)
             )
         }
@@ -961,7 +1049,7 @@ fun AudioControlCardItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1B4E)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
@@ -976,7 +1064,7 @@ fun AudioControlCardItem(
                     Icon(
                         icon,
                         contentDescription = null,
-                        tint = Color(0xFFB040FF),
+                        tint = Color(0xFF818CF8),
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(Modifier.width(12.dp))
@@ -992,7 +1080,7 @@ fun AudioControlCardItem(
                     text = valueText,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFB040FF)
+                    color = Color(0xFF818CF8)
                 )
             }
 
@@ -1003,8 +1091,8 @@ fun AudioControlCardItem(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFFB040FF),
-                    activeTrackColor = Color(0xFFB040FF),
+                    thumbColor = Color(0xFF818CF8),
+                    activeTrackColor = Color(0xFF818CF8),
                     inactiveTrackColor = Color.White.copy(alpha = 0.2f)
                 )
             )
@@ -1039,7 +1127,7 @@ fun PresetButtonItem(
     Button(
         onClick = onClick,
         modifier = modifier.height(48.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D1B4E)),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Text(
@@ -1292,7 +1380,7 @@ fun NowPlayingContent(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -1341,7 +1429,7 @@ fun NowPlayingContent(
             modifier = Modifier
                 .size(300.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -1379,7 +1467,7 @@ fun NowPlayingContent(
                 onValueChange = { progress = it },
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
-                    activeTrackColor = Color(0xFFB040FF),
+                    activeTrackColor = Color(0xFF818CF8),
                     inactiveTrackColor = Color.White.copy(alpha = 0.3f)
                 )
             )
@@ -1420,7 +1508,7 @@ fun NowPlayingContent(
 
             FloatingActionButton(
                 onClick = onPlayPauseClick,
-                containerColor = Color(0xFFB040FF),
+                containerColor = Color(0xFF818CF8),
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
@@ -1499,7 +1587,7 @@ fun NowPlayingContentFirebase(
     val bg = Brush.verticalGradient(
         listOf(
             Color(0xFF1A0B2E),
-            Color(0xFF2D1B4E),
+            Color(0xFF1E293B),
             Color(0xFF3D2766)
         )
     )
@@ -1548,7 +1636,7 @@ fun NowPlayingContentFirebase(
             modifier = Modifier
                 .size(300.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFB040FF)),
+                .background(Color(0xFF818CF8)),
             contentAlignment = Alignment.Center
         ) {
             if (song.coverUrl.isNotEmpty()) {
@@ -1594,7 +1682,7 @@ fun NowPlayingContentFirebase(
                 valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
-                    activeTrackColor = Color(0xFFB040FF),
+                    activeTrackColor = Color(0xFF818CF8),
                     inactiveTrackColor = Color.White.copy(alpha = 0.3f)
                 )
             )
@@ -1619,7 +1707,7 @@ fun NowPlayingContentFirebase(
                 Icon(
                     Icons.Default.Shuffle,
                     contentDescription = "Shuffle",
-                    tint = if (shuffleEnabled) Color(0xFFB040FF) else Color.White.copy(alpha = 0.7f),
+                    tint = if (shuffleEnabled) Color(0xFF818CF8) else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -1635,7 +1723,7 @@ fun NowPlayingContentFirebase(
 
             FloatingActionButton(
                 onClick = onPlayPauseClick,
-                containerColor = Color(0xFFB040FF),
+                containerColor = Color(0xFF818CF8),
                 modifier = Modifier.size(72.dp)
             ) {
                 Icon(
@@ -1661,7 +1749,7 @@ fun NowPlayingContentFirebase(
                     contentDescription = "Repeat",
                     tint = when(repeatMode) {
                         com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(alpha = 0.7f)
-                        else -> Color(0xFFB040FF)
+                        else -> Color(0xFF818CF8)
                     },
                     modifier = Modifier.size(28.dp)
                 )
@@ -1700,4 +1788,501 @@ private fun formatTime(millis: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
+}
+
+@Composable
+fun PlaylistCard(
+    playlist: Playlist,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF4A9B8E)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    playlist.name,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "${playlist.songCount} songs",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun UserPlaylistCard(
+    playlist: UserPlaylist,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF818CF8)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.LibraryMusic,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    playlist.name,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "${playlist.songIds.size} songs",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 14.sp
+                )
+            }
+
+            IconButton(onClick = { showDeleteDialog = true }) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Color(0xFFEF4444)
+                )
+            }
+        }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Playlist?", color = Color.White) },
+            text = { Text("Are you sure you want to delete \"${playlist.name}\"?", color = Color.White.copy(0.9f)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", color = Color.White)
+                }
+            },
+            containerColor = Color(0xFF1E293B)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreatePlaylistDialog(
+    allSongs: List<Song>,
+    onDismiss: () -> Unit,
+    onCreate: (String, String, List<Song>) -> Unit
+) {
+    var playlistName by remember { mutableStateOf("") }
+    var playlistDescription by remember { mutableStateOf("") }
+    var selectedSongs by remember { mutableStateOf(setOf<String>()) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredSongs = allSongs.filter {
+        it.title.contains(searchQuery, ignoreCase = true) ||
+        it.artist.contains(searchQuery, ignoreCase = true)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxHeight(0.9f)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF1E293B),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    "Create Playlist",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = playlistName,
+                    onValueChange = { playlistName = it },
+                    label = { Text("Playlist Name") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFF818CF8),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        focusedLabelColor = Color(0xFF818CF8),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                        cursorColor = Color.White
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = playlistDescription,
+                    onValueChange = { playlistDescription = it },
+                    label = { Text("Description (optional)") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFF818CF8),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        focusedLabelColor = Color(0xFF818CF8),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                        cursorColor = Color.White
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    "Add Songs (${selectedSongs.size} selected)",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search songs...") },
+                    leadingIcon = { Icon(Icons.Default.Search, null, tint = Color.White) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+                        focusedBorderColor = Color(0xFF818CF8),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        cursorColor = Color.White
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(filteredSongs.size) { index ->
+                        val song = filteredSongs[index]
+                        val isSelected = selectedSongs.contains(song.id)
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isSelected) Color(0xFF3D2766) else Color.Transparent)
+                                .clickable {
+                                    selectedSongs = if (isSelected) {
+                                        selectedSongs - song.id
+                                    } else {
+                                        selectedSongs + song.id
+                                    }
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = {
+                                    selectedSongs = if (it) {
+                                        selectedSongs + song.id
+                                    } else {
+                                        selectedSongs - song.id
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color(0xFF818CF8),
+                                    uncheckedColor = Color.White.copy(alpha = 0.5f)
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+                                Text(
+                                    song.title,
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    song.artist,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Cancel", color = Color.White)
+                    }
+
+                    Button(
+                        onClick = {
+                            if (playlistName.isNotBlank()) {
+                                val selected = allSongs.filter { selectedSongs.contains(it.id) }
+                                onCreate(playlistName, playlistDescription, selected)
+                            }
+                        },
+                        enabled = playlistName.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF818CF8)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Create")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ManagePlaylistSongsDialog(
+    playlist: UserPlaylist,
+    allSongs: List<Song>,
+    onDismiss: () -> Unit,
+    onAddSong: (String) -> Unit,
+    onRemoveSong: (String) -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    val playlistSongs = allSongs.filter { playlist.songIds.contains(it.id) }
+    val availableSongs = allSongs.filter { !playlist.songIds.contains(it.id) }
+
+    val filteredAvailable = availableSongs.filter {
+        it.title.contains(searchQuery, ignoreCase = true) ||
+        it.artist.contains(searchQuery, ignoreCase = true)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxHeight(0.9f)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFF1E293B),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            playlist.name,
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "${playlist.songIds.size} songs",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, "Close", tint = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Current Songs
+                if (playlistSongs.isNotEmpty()) {
+                    Text(
+                        "CURRENT SONGS",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    playlistSongs.take(3).forEach { song ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(song.title, color = Color.White, fontSize = 14.sp)
+                                Text(song.artist, color = Color.White.copy(0.7f), fontSize = 12.sp)
+                            }
+
+                            IconButton(onClick = { onRemoveSong(song.id) }) {
+                                Icon(Icons.Default.Remove, "Remove", tint = Color(0xFFEF4444))
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // Add Songs
+                Text(
+                    "ADD SONGS",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search songs...") },
+                    leadingIcon = { Icon(Icons.Default.Search, null, tint = Color.White) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+                        focusedBorderColor = Color(0xFF818CF8),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        cursorColor = Color.White
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(filteredAvailable.size) { index ->
+                        val song = filteredAvailable[index]
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF3D1F5C))
+                                .clickable { onAddSong(song.id) }
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    song.title,
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    song.artist,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 12.sp
+                                )
+                            }
+
+                            Icon(
+                                Icons.Default.Add,
+                                "Add",
+                                tint = Color(0xFF818CF8)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
