@@ -8,10 +8,13 @@ import com.example.musicplayerapplication.model.MusicSettings
 import com.example.musicplayerapplication.repository.SettingsRepository
 import com.example.musicplayerapplication.repository.SettingsRepoImpl
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for managing app settings
@@ -210,22 +213,38 @@ class SettingsViewModel(
             try {
                 val user = auth.currentUser
                 if (user != null) {
-                    // Clear settings first
+                    val userId = user.uid
+
+                    // Delete user settings from Firebase Database first
+                    try {
+                        repository.deleteUserDataFromFirebase(userId)
+                    } catch (e: Exception) {
+                        // Continue even if Firebase data deletion fails
+                    }
+
+                    // Clear local settings
                     repository.clearSettings()
 
-                    // Delete from Firebase
-                    user.delete().addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
+                    // Delete from Firebase Auth using await() for proper coroutine handling
+                    try {
+                        user.delete().await()
+                        withContext(Dispatchers.Main) {
                             onSuccess()
-                        } else {
-                            onError(task.exception?.message ?: "Failed to delete account")
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            onError(e.message ?: "Failed to delete account")
                         }
                     }
                 } else {
-                    onError("No user logged in")
+                    withContext(Dispatchers.Main) {
+                        onError("No user logged in")
+                    }
                 }
             } catch (e: Exception) {
-                onError(e.message ?: "Failed to delete account")
+                withContext(Dispatchers.Main) {
+                    onError(e.message ?: "Failed to delete account")
+                }
             }
         }
     }

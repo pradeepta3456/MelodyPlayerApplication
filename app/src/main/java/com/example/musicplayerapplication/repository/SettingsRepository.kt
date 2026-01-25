@@ -35,4 +35,7 @@ interface SettingsRepository {
 
     // Logout/clear
     suspend fun clearSettings()
+
+    // Delete user data from Firebase (for account deletion)
+    suspend fun deleteUserDataFromFirebase(userId: String)
 }
