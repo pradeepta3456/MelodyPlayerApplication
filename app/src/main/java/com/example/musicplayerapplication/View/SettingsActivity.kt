@@ -2,6 +2,7 @@ package com.example.musicplayerapplication.View
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -51,6 +52,7 @@ fun SettingsScreen() {
     var showDownloadQualityDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    var isDeletingAccount by remember { mutableStateOf(false) }
 
     // Show error snackbar if there's an error
     errorMessage?.let { error ->
@@ -373,7 +375,11 @@ fun SettingsScreen() {
     // Delete Account Dialog - Now using ViewModel (proper MVVM)
     if (showDeleteAccountDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteAccountDialog = false },
+            onDismissRequest = {
+                if (!isDeletingAccount) {
+                    showDeleteAccountDialog = false
+                }
+            },
             title = {
                 Text(
                     "Delete Account?",
@@ -383,47 +389,74 @@ fun SettingsScreen() {
             },
             text = {
                 Column {
-                    Text(
-                        "This action cannot be undone. All your data will be permanently deleted:",
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("• All uploaded songs", color = Color.Gray, fontSize = 13.sp)
-                    Text("• Playlists and favorites", color = Color.Gray, fontSize = 13.sp)
-                    Text("• User profile and settings", color = Color.Gray, fontSize = 13.sp)
-                    Text("• Play history", color = Color.Gray, fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        "Are you absolutely sure?",
-                        color = Color(0xFFDC2626),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
+                    if (isDeletingAccount) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color(0xFFDC2626)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                "Deleting account...",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        Text(
+                            "This action cannot be undone. All your data will be permanently deleted:",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("• All uploaded songs", color = Color.Gray, fontSize = 13.sp)
+                        Text("• Playlists and favorites", color = Color.Gray, fontSize = 13.sp)
+                        Text("• User profile and settings", color = Color.Gray, fontSize = 13.sp)
+                        Text("• Play history", color = Color.Gray, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "Are you absolutely sure?",
+                            color = Color(0xFFDC2626),
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
+                        isDeletingAccount = true
                         viewModel.deleteAccount(
                             onSuccess = {
+                                isDeletingAccount = false
+                                showDeleteAccountDialog = false
                                 val intent = Intent(context, SignInActivity::class.java)
                                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                 context.startActivity(intent)
                             },
                             onError = { error ->
-                                // Handle error - user might need to re-authenticate
+                                isDeletingAccount = false
                                 showDeleteAccountDialog = false
+                                Toast.makeText(context, error, Toast.LENGTH_LONG).show()
                             }
                         )
-                    }
+                    },
+                    enabled = !isDeletingAccount
                 ) {
-                    Text("Delete Forever", color = Color(0xFF991B1B), fontWeight = FontWeight.Bold)
+                    Text("Delete Forever", color = if (isDeletingAccount) Color.Gray else Color(0xFF991B1B), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteAccountDialog = false }) {
-                    Text("Cancel", color = Color(0xFF8B5CF6))
+                TextButton(
+                    onClick = { showDeleteAccountDialog = false },
+                    enabled = !isDeletingAccount
+                ) {
+                    Text("Cancel", color = if (isDeletingAccount) Color.Gray else Color(0xFF8B5CF6))
                 }
             },
             containerColor = Color(0xFF2A2A3E)

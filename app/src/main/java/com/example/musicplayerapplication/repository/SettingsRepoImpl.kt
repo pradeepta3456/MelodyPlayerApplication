@@ -125,4 +125,12 @@ class SettingsRepoImpl(private val context: Context) : SettingsRepository {
     override suspend fun clearSettings() {
         prefsManager.clearAllSettings()
     }
+
+    override suspend fun deleteUserDataFromFirebase(userId: String) {
+        try {
+            settingsRef.child(userId).removeValue().await()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
