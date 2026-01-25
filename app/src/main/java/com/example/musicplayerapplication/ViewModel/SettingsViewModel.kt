@@ -215,7 +215,7 @@ class SettingsViewModel(
                 if (user != null) {
                     val userId = user.uid
 
-                    // Delete user settings from Firebase Database first
+                    // Delete user settings from Firebase Database first (ignore errors)
                     try {
                         repository.deleteUserDataFromFirebase(userId)
                     } catch (e: Exception) {
@@ -226,20 +226,18 @@ class SettingsViewModel(
                     repository.clearSettings()
 
                     // Delete from Firebase Auth using await() for proper coroutine handling
-                    try {
-                        user.delete().await()
-                        withContext(Dispatchers.Main) {
-                            onSuccess()
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            onError(e.message ?: "Failed to delete account")
-                        }
+                    user.delete().await()
+                    withContext(Dispatchers.Main) {
+                        onSuccess()
                     }
                 } else {
                     withContext(Dispatchers.Main) {
                         onError("No user logged in")
                     }
+                }
+            } catch (e: com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException) {
+                withContext(Dispatchers.Main) {
+                    onError("Please sign out and sign in again before deleting your account")
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
