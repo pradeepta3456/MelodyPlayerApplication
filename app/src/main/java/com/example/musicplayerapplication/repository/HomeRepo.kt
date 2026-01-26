@@ -6,4 +6,7 @@ import com.example.musicplayerapplication.model.Song
 interface HomeRepo {
     fun getRecentSongs(): List<Song>
     fun getTrendingAlbums(): List<Album>
+    fun toggleFavorite(songId: String)
+    fun playSong(songId: String)
+    fun refreshData()
 }
