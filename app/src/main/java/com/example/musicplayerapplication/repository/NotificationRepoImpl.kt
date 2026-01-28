@@ -69,10 +69,23 @@ class NotificationRepositoryImpl(
             notificationsRef.child(notificationId).setValue(notification).await()
             Log.d(TAG, "Saved global notification: $notificationId")
 
-            // Get all users
-            val usersSnapshot = usersRef.get().await()
-            val allUserIds = usersSnapshot.children.mapNotNull { it.key }
-            Log.d(TAG, "Found ${allUserIds.size} total users")
+            // Get all users - try to read from users node
+            var allUserIds: List<String> = emptyList()
+            try {
+                val usersSnapshot = usersRef.get().await()
+                allUserIds = usersSnapshot.children.mapNotNull { it.key }
+                Log.d(TAG, "Found ${allUserIds.size} total users from /users")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not read /users, trying /userNotifications", e)
+                // Fallback: try to get user IDs from userNotifications node
+                try {
+                    val userNotifsSnapshot = userNotificationsRef.get().await()
+                    allUserIds = userNotifsSnapshot.children.mapNotNull { it.key }
+                    Log.d(TAG, "Found ${allUserIds.size} users from /userNotifications")
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Could not read users from any source", e2)
+                }
+            }
 
             // Send to all users except the sender
             val recipientIds = allUserIds.filter { it != senderId }
