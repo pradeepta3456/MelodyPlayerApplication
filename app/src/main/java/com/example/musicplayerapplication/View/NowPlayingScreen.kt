@@ -10,10 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-<<<<<<< HEAD:app/src/main/java/com/example/musicplayerapplication/NowPlayingScreen.kt
 
-=======
->>>>>>> eb26b974e0ca46d87a1665ab418a02830caf828f:app/src/main/java/com/example/musicplayerapplication/View/NowPlayingScreen.kt
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -22,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.musicplayerapplication.Utils.formatTime
+import com.example.musicplayerapplication.View.formatTime
 import com.example.musicplayerapplication.model.Song
 import kotlin.math.roundToInt
 
@@ -167,8 +166,11 @@ fun NowPlayingScreen(
                 Icon(
                     imageVector = Icons.Default.Repeat,
                     contentDescription = "Repeat",
-                    tint = when(repeatMode) {
-                        com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(alpha = 0.7f)
+                    tint = when (repeatMode) {
+                        com.example.musicplayerapplication.model.RepeatMode.OFF -> Color.White.copy(
+                            alpha = 0.7f
+                        )
+
                         else -> Color(0xFFE91E63)
                     },
                     modifier = Modifier.size(28.dp)
@@ -267,15 +269,12 @@ fun NowPlayingScreen(
 
         Spacer(modifier = Modifier.weight(1f))
     }
-<<<<<<< HEAD:app/src/main/java/com/example/musicplayerapplication/NowPlayingScreen.kt
-}
-=======
-}
 
-private fun formatTime(millis: Long): String {
-    val totalSeconds = millis / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
+
+    fun formatTime(millis: Long): String {
+        val totalSeconds = millis / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return String.format("%d:%02d", minutes, seconds)
+    }
 }
->>>>>>> eb26b974e0ca46d87a1665ab418a02830caf828f:app/src/main/java/com/example/musicplayerapplication/View/NowPlayingScreen.kt

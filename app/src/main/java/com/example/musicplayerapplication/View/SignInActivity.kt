@@ -31,6 +31,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.ViewModel.AuthState
 import com.example.musicplayerapplication.ViewModel.AuthViewModel
 
+
+
 class SignInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -213,6 +215,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
+
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF7FAFC),
@@ -270,6 +273,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
+
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF7FAFC),
@@ -296,8 +300,9 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable {
-                                showForgotPasswordDialog = true
-                            }
+                                showForgotPasswordDialog = true}
+
+
                         )
                     }
 
@@ -309,6 +314,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp)
+
                             .shadow(
                                 elevation = 12.dp,
                                 shape = RoundedCornerShape(16.dp),
@@ -387,6 +393,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                         context.startActivity(intent)
                         (context as? ComponentActivity)?.finish()
                     }
+
                 )
             }
         }
