@@ -214,7 +214,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                             )
                         },
                         modifier = Modifier.fillMaxWidth()
-                            .testTag("emailField"),
+                            .testTag("email"),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF7FAFC),
@@ -272,7 +272,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
-                            .testTag("passwordField"),
+                            .testTag("password"),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF7FAFC),
@@ -474,7 +474,7 @@ fun ForgotPasswordDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                modifier = Modifier.testTag("cancelResetLinkButton")
+                modifier = Modifier
             )
             {
                 Text("Cancel")
