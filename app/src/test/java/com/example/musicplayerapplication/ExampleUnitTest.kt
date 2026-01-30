@@ -1,4 +1,4 @@
 package com.example.musicplayerapplication
 
-class ExampleUnitTest {
+class UserviewModelTest {
 }
