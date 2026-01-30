@@ -1,14 +1,23 @@
 package com.example.musicplayerapplication.repository
-import com.example.musicplayerapplication.R
+import com.example.musicplayerapplication.model.Album
 import com.example.musicplayerapplication.model.LibraryArtist
+import com.example.musicplayerapplication.model.MusicGenre
+import com.example.musicplayerapplication.model.Song
 
 class LibraryRepoImpl : LibraryRepo {
-    override fun getArtists(): List<LibraryArtist> {
-        return listOf(
-            LibraryArtist("Luna Eclipse", 15, 2, R.drawable.img_1),
-            LibraryArtist("Sunshine", 20, 3, R.drawable.img_2),
-            LibraryArtist("Poster Girl", 10, 1, R.drawable.img_3),
-            LibraryArtist("Disco Drive", 30, 4, R.drawable.img_4)
-        )
-    }
+
+    // All data now comes from Firebase via MusicViewModel
+    override fun getArtists(): List<LibraryArtist> = emptyList()
+
+    override fun getSongs(): List<Song> = emptyList()
+
+    override fun getAlbums(): List<Album> = emptyList()
+
+    override fun getGenres(): List<MusicGenre> = emptyList()
+
+    override fun getFolders(): List<String> = emptyList()
+
+    override fun scanDevice(): List<Song> = emptyList()
+
+    override fun searchArtists(query: String): List<LibraryArtist> = emptyList()
 }

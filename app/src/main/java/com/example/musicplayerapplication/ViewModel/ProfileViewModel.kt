@@ -1,0 +1,289 @@
+package com.example.musicplayerapplication.ViewModel
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.musicplayerapplication.model.*
+import com.example.musicplayerapplication.repository.MusicRepository
+import com.example.musicplayerapplication.repository.MusicRepoImpl
+import com.example.musicplayerapplication.repository.ProfileRepository
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+/**
+ * ViewModel for user profile and statistics
+ * Follows MVVM architecture with Firebase Realtime Database
+ */
+class ProfileViewModel(
+    private val repository: ProfileRepository,
+    private val context: Context,
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+) : ViewModel() {
+
+    private val musicRepository: MusicRepository
+
+    private val _userProfile = MutableStateFlow<UserProfile?>(null)
+    val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
+
+    private val _userStats = MutableStateFlow<UserStats?>(null)
+    val userStats: StateFlow<UserStats?> = _userStats.asStateFlow()
+
+    private val _topSongs = MutableStateFlow<List<TopSong>>(emptyList())
+    val topSongs: StateFlow<List<TopSong>> = _topSongs.asStateFlow()
+
+    private val _topArtists = MutableStateFlow<List<TopArtist>>(emptyList())
+    val topArtists: StateFlow<List<TopArtist>> = _topArtists.asStateFlow()
+
+    private val _achievements = MutableStateFlow<List<Achievement>>(emptyList())
+    val achievements: StateFlow<List<Achievement>> = _achievements.asStateFlow()
+
+    private val _weeklyPattern = MutableStateFlow<List<WeeklyPattern>>(emptyList())
+    val weeklyPattern: StateFlow<List<WeeklyPattern>> = _weeklyPattern.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _uploadedSongs = MutableStateFlow<List<Song>>(emptyList())
+    val uploadedSongs: StateFlow<List<Song>> = _uploadedSongs.asStateFlow()
+
+    private val _isDeletingSong = MutableStateFlow(false)
+    val isDeletingSong: StateFlow<Boolean> = _isDeletingSong.asStateFlow()
+
+    init {
+        musicRepository = MusicRepoImpl(context)
+        loadProfileData()
+    }
+
+    /**
+     * Load all profile data from Firebase
+     */
+    fun loadProfileData() {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val userId = auth.currentUser?.uid
+
+                if (userId != null) {
+                    // Load all data in parallel
+                    launch { loadUserProfile(userId) }
+                    launch { loadUserStats(userId) }
+                    launch { loadTopSongs(userId) }
+                    launch { loadTopArtists(userId) }
+                    launch { loadAchievements(userId) }
+                    launch { loadWeeklyPattern(userId) }
+                } else {
+                    _errorMessage.value = "User not logged in"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to load profile data: ${e.message}"
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private suspend fun loadUserProfile(userId: String) {
+        try {
+            val profile = repository.getUserProfile(userId)
+            _userProfile.value = profile ?: UserProfile(
+                userId = userId,
+                email = auth.currentUser?.email ?: "",
+                displayName = auth.currentUser?.displayName
+                    ?: auth.currentUser?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() }
+                    ?: "Music Lover"
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun loadUserStats(userId: String) {
+        try {
+            val stats = repository.getUserStats(userId)
+            _userStats.value = stats ?: UserStats()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun loadTopSongs(userId: String) {
+        try {
+            android.util.Log.d("ProfileViewModel", "Loading top songs for user: $userId")
+            val songs = repository.getTopSongs(userId, 10)
+            android.util.Log.d("ProfileViewModel", "Loaded ${songs.size} top songs")
+            _topSongs.value = songs
+        } catch (e: Exception) {
+            android.util.Log.e("ProfileViewModel", "Error loading top songs", e)
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun loadTopArtists(userId: String) {
+        try {
+            val artists = repository.getTopArtists(userId, 4)
+            _topArtists.value = artists
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun loadAchievements(userId: String) {
+        try {
+            val achievements = repository.getAchievements(userId)
+            _achievements.value = achievements
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private suspend fun loadWeeklyPattern(userId: String) {
+        try {
+            val pattern = repository.getWeeklyPattern(userId)
+            _weeklyPattern.value = pattern
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Update user profile
+     */
+    fun updateProfile(displayName: String, bio: String) {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                val currentProfile = _userProfile.value ?: return@launch
+
+                val updatedProfile = currentProfile.copy(
+                    displayName = displayName,
+                    bio = bio
+                )
+
+                val success = repository.updateUserProfile(userId, updatedProfile)
+                if (success) {
+                    _userProfile.value = updatedProfile
+                } else {
+                    _errorMessage.value = "Failed to update profile"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error updating profile: ${e.message}"
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Initialize user data (called on first login)
+     */
+    fun initializeUserData() {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                val email = auth.currentUser?.email ?: ""
+                val displayName = auth.currentUser?.displayName ?: "Music Lover"
+
+                repository.initializeUserData(userId, email, displayName)
+                loadProfileData()
+            } catch (e: Exception) {
+                _errorMessage.value = "Error initializing user data: ${e.message}"
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Format listening time for display
+     */
+    fun getFormattedListeningTime(): String {
+        val stats = _userStats.value ?: return "0m"
+        val totalMinutes = stats.totalListeningTime / 60000
+
+        return when {
+            totalMinutes >= 60 -> {
+                val hours = totalMinutes / 60
+                val minutes = totalMinutes % 60
+                if (minutes > 0) "${hours}h ${minutes}m" else "${hours}h"
+            }
+            totalMinutes > 0 -> "${totalMinutes}m"
+            else -> "0m"
+        }
+    }
+
+    /**
+     * Format member since date
+     */
+    fun getFormattedMemberSince(): String {
+        val profile = _userProfile.value ?: return "Recently joined"
+        val date = java.util.Date(profile.memberSince)
+        val format = java.text.SimpleDateFormat("MMM yyyy", java.util.Locale.getDefault())
+        return "Member since ${format.format(date)}"
+    }
+
+    /**
+     * Clear error message
+     */
+    fun clearError() {
+        _errorMessage.value = null
+    }
+
+    /**
+     * Load songs uploaded by the current user
+     */
+    fun loadUploadedSongs() {
+        viewModelScope.launch {
+            try {
+                val userId = auth.currentUser?.uid ?: return@launch
+                android.util.Log.d("ProfileViewModel", "Loading uploaded songs for userId: $userId")
+                val result = musicRepository.getUserUploadedSongs(userId)
+                result.onSuccess { songs ->
+                    android.util.Log.d("ProfileViewModel", "Loaded ${songs.size} uploaded songs")
+                    _uploadedSongs.value = songs
+                }.onFailure { error ->
+                    android.util.Log.e("ProfileViewModel", "Failed to load uploaded songs: ${error.message}")
+                    _errorMessage.value = "Failed to load uploaded songs: ${error.message}"
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Error loading uploaded songs", e)
+                _errorMessage.value = "Error loading uploaded songs: ${e.message}"
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Delete a song (only allowed for songs uploaded by current user)
+     */
+    fun deleteSong(songId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                _isDeletingSong.value = true
+                val userId = auth.currentUser?.uid ?: return@launch
+
+                val result = musicRepository.deleteSong(songId, userId)
+                result.onSuccess {
+                    // Remove from local list
+                    _uploadedSongs.value = _uploadedSongs.value.filter { it.id != songId }
+                    onSuccess()
+                }.onFailure { error ->
+                    val errorMsg = error.message ?: "Failed to delete song"
+                    _errorMessage.value = errorMsg
+                    onError(errorMsg)
+                }
+            } catch (e: Exception) {
+                val errorMsg = "Error deleting song: ${e.message}"
+                _errorMessage.value = errorMsg
+                onError(errorMsg)
+                e.printStackTrace()
+            } finally {
+                _isDeletingSong.value = false
+            }
+        }
+    }
+}
