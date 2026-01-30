@@ -16,13 +16,12 @@ sealed class UserState {
 }
 
 class UserViewModel(
-    private val repository: UserRepository = UserRepositoryImpl()
+    private val repository: UserRepository = UserRepositoryImpl(),
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ViewModel() {
 
     var userState = mutableStateOf<UserState>(UserState.Idle)
         private set
-
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     companion object {
         private const val TAG = "UserViewModel"
@@ -65,7 +64,6 @@ class UserViewModel(
             isArtist = isArtist,
             onSuccess = {
                 Log.d(TAG, "Artist status updated successfully, refreshing user profile")
-                // Refresh profile
                 loadCurrentUser()
             },
             onFailure = { exception ->
