@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -30,8 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapplication.ViewModel.AuthState
 import com.example.musicplayerapplication.ViewModel.AuthViewModel
-
-
 
 class SignInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -214,8 +213,8 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                                 tint = Color(0xFF764BA2)
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
-
+                        modifier = Modifier.fillMaxWidth()
+                            .testTag("email"),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF7FAFC),
@@ -272,8 +271,8 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                                 )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-
+                        modifier = Modifier.fillMaxWidth()
+                            .testTag("password"),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF7FAFC),
@@ -300,9 +299,9 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable {
-                                showForgotPasswordDialog = true}
-
-
+                                showForgotPasswordDialog = true
+                            }
+                                .testTag("forgotPasswordButton")
                         )
                     }
 
@@ -314,7 +313,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(58.dp)
-
+                            .testTag("signInButton")
                             .shadow(
                                 elevation = 12.dp,
                                 shape = RoundedCornerShape(16.dp),
@@ -393,7 +392,7 @@ fun SignInScreen(viewModel: AuthViewModel = viewModel()) {
                         context.startActivity(intent)
                         (context as? ComponentActivity)?.finish()
                     }
-
+                        .testTag("signUpButton")
                 )
             }
         }
@@ -453,7 +452,8 @@ fun ForgotPasswordDialog(
                     leadingIcon = {
                         Icon(Icons.Default.Email, contentDescription = "Email")
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .testTag("resetEmailField") ,
                     singleLine = true
                 )
             }
@@ -465,13 +465,18 @@ fun ForgotPasswordDialog(
                         android.util.Patterns.EMAIL_ADDRESS.matcher(resetEmail).matches()) {
                         onConfirm(resetEmail)
                     }
-                }
+                },
+                modifier = Modifier.testTag("sendResetLinkButton")
             ) {
                 Text("Send Reset Link")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier
+            )
+            {
                 Text("Cancel")
             }
         }

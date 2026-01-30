@@ -1,6 +1,7 @@
 package com.example.musicplayerapplication.View
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -219,6 +220,20 @@ fun PlaylistScreen(musicViewModel: MusicViewModel) {
                         currentView = PlaylistView.NowPlaying
                     }
                 },
+                onPlayUserPlaylist = { userPlaylist ->
+                    // Get all songs from the user playlist by matching song IDs
+                    val playlistSongs = userPlaylist.songIds.mapNotNull { songId ->
+                        allSongs.firstOrNull { song -> song.id == songId }
+                    }
+
+                    if (playlistSongs.isNotEmpty()) {
+                        musicViewModel.setPlaylist(playlistSongs)
+                        currentSong = playlistSongs.first()
+                        musicViewModel.playSong(playlistSongs.first())
+                        isPlaying = true
+                        currentView = PlaylistView.NowPlaying
+                    }
+                },
                 onCreatePlaylist = {
                     currentView = PlaylistView.Create
                 }
@@ -376,6 +391,7 @@ fun PlaylistListContent(
     onCurrentViewChange: (PlaylistView) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     onQuickPlay: (Playlist) -> Unit,
+    onPlayUserPlaylist: (UserPlaylist) -> Unit,
     onCreatePlaylist: () -> Unit
 ) {
     val aiPlaylists = playlists.filter { it.isAiGenerated }
@@ -452,7 +468,9 @@ fun PlaylistListContent(
                     val userPlaylist = firebaseUserPlaylists[index]
                     UserPlaylistCard(
                         playlist = userPlaylist,
+                        allSongs = allSongs,
                         onClick = { onSelectedPlaylistForSongsChange(userPlaylist) },
+                        onPlay = { onPlayUserPlaylist(userPlaylist) },
                         onDelete = {
                             coroutineScope.launch {
                                 auth.currentUser?.uid?.let { userId ->
@@ -490,18 +508,28 @@ fun PlaylistListContent(
 
     // Create Playlist Dialog
     if (showCreatePlaylistDialog) {
+        val context = LocalContext.current
         CreatePlaylistDialog(
             allSongs = allSongs,
             onDismiss = { onShowCreatePlaylistDialogChange(false) },
             onCreate = { name, description, selectedSongs ->
                 coroutineScope.launch {
-                    auth.currentUser?.uid?.let { userId ->
-                        val songIds = selectedSongs.map { it.id }
-                        playlistRepo.createUserPlaylist(userId, name, description, songIds).onSuccess { newPlaylist ->
+                    val userId = auth.currentUser?.uid
+                    if (userId == null) {
+                        Toast.makeText(context, "Please sign in to create a playlist", Toast.LENGTH_LONG).show()
+                        return@launch
+                    }
+                    val songIds = selectedSongs.map { it.id }
+                    playlistRepo.createUserPlaylist(userId, name, description, songIds)
+                        .onSuccess { newPlaylist ->
                             onFirebaseUserPlaylistsChange(listOf(newPlaylist) + firebaseUserPlaylists)
                             onShowCreatePlaylistDialogChange(false)
+                            Toast.makeText(context, "Playlist created successfully!", Toast.LENGTH_SHORT).show()
                         }
-                    }
+                        .onFailure { error ->
+                            onShowCreatePlaylistDialogChange(false)
+                            Toast.makeText(context, "Failed to create playlist: ${error.message}", Toast.LENGTH_LONG).show()
+                        }
                 }
             }
         )
@@ -1845,10 +1873,13 @@ fun PlaylistCard(
 @Composable
 fun UserPlaylistCard(
     playlist: UserPlaylist,
+    allSongs: List<Song>,
     onClick: () -> Unit,
+    onPlay: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val hasSongs = playlist.songIds.isNotEmpty()
 
     Card(
         modifier = Modifier
@@ -1863,19 +1894,30 @@ fun UserPlaylistCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Play button overlay on the album art
             Box(
                 modifier = Modifier
                     .size(60.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF818CF8)),
+                    .background(Color(0xFF818CF8))
+                    .clickable(enabled = hasSongs) { onPlay() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.LibraryMusic,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(30.dp)
-                )
+                if (hasSongs) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = "Play",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.LibraryMusic,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -1894,6 +1936,16 @@ fun UserPlaylistCard(
                 )
             }
 
+            // Edit button
+            IconButton(onClick = { onClick() }) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Edit",
+                    tint = Color(0xFF818CF8)
+                )
+            }
+
+            // Delete button
             IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(
                     Icons.Default.Delete,
@@ -1941,14 +1993,15 @@ fun CreatePlaylistDialog(
     var playlistDescription by remember { mutableStateOf("") }
     var selectedSongs by remember { mutableStateOf(setOf<String>()) }
     var searchQuery by remember { mutableStateOf("") }
+    var isCreating by remember { mutableStateOf(false) }
 
     val filteredSongs = allSongs.filter {
         it.title.contains(searchQuery, ignoreCase = true) ||
-        it.artist.contains(searchQuery, ignoreCase = true)
+                it.artist.contains(searchQuery, ignoreCase = true)
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isCreating) onDismiss() },
         modifier = Modifier.fillMaxHeight(0.9f)
     ) {
         Surface(
@@ -2099,23 +2152,33 @@ fun CreatePlaylistDialog(
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
+                        enabled = !isCreating,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel", color = Color.White)
+                        Text("Cancel", color = if (isCreating) Color.Gray else Color.White)
                     }
 
                     Button(
                         onClick = {
                             if (playlistName.isNotBlank()) {
+                                isCreating = true
                                 val selected = allSongs.filter { selectedSongs.contains(it.id) }
                                 onCreate(playlistName, playlistDescription, selected)
                             }
                         },
-                        enabled = playlistName.isNotBlank(),
+                        enabled = playlistName.isNotBlank() && !isCreating,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF818CF8)),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Create")
+                        if (isCreating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Create")
+                        }
                     }
                 }
             }
@@ -2138,7 +2201,7 @@ fun ManagePlaylistSongsDialog(
 
     val filteredAvailable = availableSongs.filter {
         it.title.contains(searchQuery, ignoreCase = true) ||
-        it.artist.contains(searchQuery, ignoreCase = true)
+                it.artist.contains(searchQuery, ignoreCase = true)
     }
 
     AlertDialog(
